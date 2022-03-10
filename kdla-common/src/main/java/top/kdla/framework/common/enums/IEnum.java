@@ -1,0 +1,22 @@
+package top.kdla.framework.common.enums;
+
+/**
+ * 枚举定义模板
+ *
+ * @author vincent.li
+ * @date 2021/10/2 10:09
+ */
+public interface IEnum<T> {
+
+    /**
+     * 获得编码
+     * @return String
+     */
+    T getCode();
+    /**
+     * 获得描述
+     * @return String
+     */
+    String getDesc();
+
+}

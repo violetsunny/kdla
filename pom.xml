@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>top.kdla.framework</groupId>
+    <artifactId>kdla</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <modules>
+        <module>kdla-common</module>
+        <module>kdla-dal</module>
+        <module>kdla-domain</module>
+        <module>kdla-model</module>
+        <module>kdla-exception</module>
+        <module>kdla-validator</module>
+        <module>kdla-supplement</module>
+    </modules>
+    <packaging>pom</packaging>
+    <name>${project.artifactId}:${project.version}</name>
+    <description>${project.artifactId}</description>
+    <!--<url>http://www.51metaverse.top</url>-->
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <java.version>1.8</java.version>
+        <kdla.framework.version>1.0.0-SNAPSHOT</kdla.framework.version>
+        <spring.boot.version>2.6.4</spring.boot.version>
+        <spring.version>5.2.8.RELEASE</spring.version>
+        <lombok.version>1.18.20</lombok.version>
+        <logback.version>1.2.0</logback.version>
+        <commons.lang.version>2.6</commons.lang.version>
+        <commons.io.version>2.5</commons.io.version>
+        <commons.configuration.version>1.10</commons.configuration.version>
+        <commons.fileupload.version>1.4</commons.fileupload.version>
+        <commons.codec.version>1.10</commons.codec.version>
+        <commons-lang3.version>3.11</commons-lang3.version>
+        <joda.time.version>2.9.9</joda.time.version>
+        <guava.version>20.0</guava.version>
+        <gson.version>2.8.6</gson.version>
+        <slf4j-api.version>1.7.9</slf4j-api.version>
+        <fastjson.version>1.2.70</fastjson.version>
+        <commons-cli.version>1.4</commons-cli.version>
+        <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
+        <jackson.version>2.12.4</jackson.version>
+        <mybatis-plus-boot-starter.version>3.4.2</mybatis-plus-boot-starter.version>
+        <jsqlparser.version>3.2</jsqlparser.version>
+        <mybatis-spring-boot-starter.version>1.3.2</mybatis-spring-boot-starter.version>
+        <hutool-all.version>5.4.6</hutool-all.version>
+        <redisson.version>3.9.1</redisson.version>
+        <easyexcel.version>2.1.6</easyexcel.version>
+    </properties>
+    <distributionManagement>
+        <repository>
+            <id>maven-releases</id>
+            <!-- 根据不同公司配置 -->
+            <url>http://nexus.enncloud.cn/repository/releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>maven-snapshots</id>
+            <!-- 根据不同公司配置 -->
+            <url>http://nexus.enncloud.cn/repository/snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>maven-releases</id>
+            <!-- 根据不同公司配置 -->
+            <url>http://nexus.enncloud.cn/repository/releases/</url>
+        </repository>
+        <repository>
+            <id>maven-snapshots</id>
+            <!-- 根据不同公司配置 -->
+            <url>http://nexus.enncloud.cn/repository/snapshots/</url>
+        </repository>
+    </repositories>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- kdla组件 begin -->
+            <dependency>
+                <groupId>top.kdla.framework</groupId>
+                <artifactId>kdla-common</artifactId>
+                <version>${kdla.framework.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>top.kdla.framework</groupId>
+                <artifactId>kdla-dal</artifactId>
+                <version>${kdla.framework.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>top.kdla.framework</groupId>
+                <artifactId>kdla-domain</artifactId>
+                <version>${kdla.framework.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>top.kdla.framework</groupId>
+                <artifactId>kdla-model</artifactId>
+                <version>${kdla.framework.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>top.kdla.framework</groupId>
+                <artifactId>kdla-exception</artifactId>
+                <version>${kdla.framework.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>top.kdla.framework</groupId>
+                <artifactId>kdla-supplement</artifactId>
+                <version>${kdla.framework.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>top.kdla.framework</groupId>
+                <artifactId>kdla-validator</artifactId>
+                <version>${kdla.framework.version}</version>
+            </dependency>
+
+            <!-- kdla组件 end -->
+
+            <!-- spring-boot-starter -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-autoconfigure</artifactId>
+                <version>${spring.boot.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-configuration-processor</artifactId>
+                <version>${spring.boot.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-aop</artifactId>
+                <version>${spring.boot.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+                <version>${spring.boot.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-test</artifactId>
+                <version>${spring.boot.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-validation</artifactId>
+                <version>${spring.boot.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- 日志 -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j-api.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>${logback.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- 工具包 -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>fastjson</artifactId>
+                <version>${fastjson.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-cli</groupId>
+                <artifactId>commons-cli</artifactId>
+                <version>${commons-cli.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.annotation</groupId>
+                <artifactId>javax.annotation-api</artifactId>
+                <version>${javax.annotation-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-lang</groupId>
+                <artifactId>commons-lang</artifactId>
+                <version>${commons.lang.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-fileupload</groupId>
+                <artifactId>commons-fileupload</artifactId>
+                <version>${commons.fileupload.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons.io.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${commons.codec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-configuration</groupId>
+                <artifactId>commons-configuration</artifactId>
+                <version>${commons.configuration.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>${gson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>joda-time</groupId>
+                <artifactId>joda-time</artifactId>
+                <version>${joda.time.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <version>${mybatis-plus-boot-starter.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>mybatis</artifactId>
+                        <groupId>org.mybatis</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>com.github.jsqlparser</artifactId>
+                        <groupId>jsqlparser</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-starter</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.github.jsqlparser</groupId>
+                <artifactId>jsqlparser</artifactId>
+                <version>${jsqlparser.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mybatis.spring.boot</groupId>
+                <artifactId>mybatis-spring-boot-starter</artifactId>
+                <version>${mybatis-spring-boot-starter.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool-all.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson</artifactId>
+                <version>${redisson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>easyexcel</artifactId>
+                <version>${easyexcel.version}</version>
+            </dependency>
+
+            <!-- 测试包 -->
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.13.1</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>
