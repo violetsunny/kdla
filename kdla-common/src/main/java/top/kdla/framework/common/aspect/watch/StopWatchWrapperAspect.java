@@ -5,12 +5,14 @@
 package top.kdla.framework.common.aspect.watch;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.TimeUnit;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.google.common.base.Stopwatch;
@@ -26,6 +28,12 @@ import lombok.extern.slf4j.Slf4j;
 @Aspect
 @Component
 public class StopWatchWrapperAspect {
+
+    @Value("${stop.watch.error.timeout:2000}")
+    private Integer errorTimeOut;
+
+    @Value("${stop.watch.warn.timeout:200}")
+    private Integer warnTimeOut;
 
     @Pointcut("@annotation(top.kdla.framework.common.aspect.watch.StopWatchWrapper)")
     public void pointcut() {
@@ -47,7 +55,15 @@ public class StopWatchWrapperAspect {
         Stopwatch sw = Stopwatch.createStarted();
         Object ob = joinPoint.proceed();
         sw.stop();
-        log.info(logTitle+"运行日志:{}", sw.toString());
+        //不同的级别打印日志不同
+        if(sw.elapsed(TimeUnit.MILLISECONDS) > errorTimeOut) {
+            log.error(logTitle+errorTimeOut+"接口超时:{}", sw.toString());
+        } else
+        if(sw.elapsed(TimeUnit.MILLISECONDS) > warnTimeOut) {
+            log.warn(logTitle+warnTimeOut+"接口过慢:{}", sw.toString());
+        } else {
+            log.info(logTitle+"运行日志:{}", sw.toString());
+        }
         return ob;
     }
 }

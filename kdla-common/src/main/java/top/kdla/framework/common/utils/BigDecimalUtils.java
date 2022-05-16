@@ -5,14 +5,17 @@ import java.math.BigInteger;
 
 /**
  * BigDecimalUtils filter
+ *
  * @author kll
  */
 public class BigDecimalUtils {
 
-    private BigDecimalUtils() {}
+    private BigDecimalUtils() {
+    }
 
     /**
      * add --> filter.add
+     *
      * @param bd1
      * @param bd2
      * @return
@@ -22,7 +25,22 @@ public class BigDecimalUtils {
     }
 
     /**
+     * divide --> filter.divide
+     *
+     * @param bd1
+     * @param bd2
+     * @return
+     */
+    public static BigDecimal divide(BigDecimal bd1, BigDecimal bd2) {
+        if (BigDecimal.ZERO.equals(filter(bd1)) || BigDecimal.ZERO.equals(filter(bd2))) {
+            return BigDecimal.ZERO;
+        }
+        return filter(bd1).divide(filter(bd2), 4, BigDecimal.ROUND_HALF_UP);
+    }
+
+    /**
      * toBigDecimal, null --> 0
+     *
      * @param val
      * @return new
      */
@@ -55,65 +73,73 @@ public class BigDecimalUtils {
     }
 
     /**
-     * default --> 4,ROUND_HALF_UP 后四位，四舍五入
+     * default --> ROUND_HALF_UP 四舍五入
+     *
      * @param val
+     * @param scale 指定后几位
      * @return
      */
-    public static BigDecimal scale(BigDecimal val) {
-        return null == val ? new BigDecimal(0) : val.setScale(4, BigDecimal.ROUND_HALF_UP);
+    public static BigDecimal filterScale(BigDecimal val,int scale) {
+        return null == val ? new BigDecimal(0) : val.setScale(scale, BigDecimal.ROUND_HALF_UP);
     }
 
     /**
      * 小于0
+     *
      * @param val
      * @return
      */
-    public static Boolean lt0(BigDecimal val){
+    public static Boolean lt0(BigDecimal val) {
         return BigDecimal.ZERO.compareTo(filter(val)) > 0;
     }
 
     /**
      * 大于0
+     *
      * @param val
      * @return
      */
-    public static Boolean gt0(BigDecimal val){
+    public static Boolean gt0(BigDecimal val) {
         return BigDecimal.ZERO.compareTo(filter(val)) < 0;
     }
 
     /**
      * 等于0
+     *
      * @param val
      * @return
      */
-    public static Boolean eq0(BigDecimal val){
+    public static Boolean eq0(BigDecimal val) {
         return BigDecimal.ZERO.compareTo(filter(val)) == 0;
     }
 
     /**
      * 不等于0
+     *
      * @param val
      * @return
      */
-    public static Boolean ne0(BigDecimal val){
+    public static Boolean ne0(BigDecimal val) {
         return BigDecimal.ZERO.compareTo(filter(val)) != 0;
     }
 
     /**
      * 大于等于0
+     *
      * @param val
      * @return
      */
-    public static Boolean ge0(BigDecimal val){
+    public static Boolean ge0(BigDecimal val) {
         return BigDecimal.ZERO.compareTo(filter(val)) <= 0;
     }
 
     /**
      * 小于等于0
+     *
      * @param val
      * @return
      */
-    public static Boolean le0(BigDecimal val){
+    public static Boolean le0(BigDecimal val) {
         return BigDecimal.ZERO.compareTo(filter(val)) >= 0;
     }
 }
