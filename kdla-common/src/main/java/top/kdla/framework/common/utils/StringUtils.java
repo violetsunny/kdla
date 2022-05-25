@@ -99,7 +99,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
      * @return true：为空 false：非空
      */
     public static boolean isEmpty(String str) {
-        return isNull(str) || EMPTY_STR.equals(str.trim());
+        return isNull(str) || EMPTY_STR.equals(str.trim()) || str.length() == 0;
     }
 
     /**

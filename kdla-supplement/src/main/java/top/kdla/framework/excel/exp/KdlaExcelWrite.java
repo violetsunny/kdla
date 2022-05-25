@@ -4,11 +4,14 @@
  */
 package top.kdla.framework.excel.exp;
 
-import cn.hutool.core.io.FileUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.util.FileUtils;
 import com.alibaba.excel.write.metadata.WriteSheet;
-import org.apache.commons.io.FileUtils;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import org.apache.commons.collections4.MapUtils;
+import top.kdla.framework.common.help.MultiThreadInvokeHelp;
 import top.kdla.framework.excel.BaseExcel;
 
 import javax.servlet.ServletOutputStream;
@@ -18,6 +21,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 /**
@@ -63,20 +67,64 @@ public class KdlaExcelWrite<T extends BaseExcel> {
         }
     }
 
-    public byte[] getExcelByte(Supplier<T> supplier, String fileUrl) throws IOException {
-        //分页获取数据
-        List<T> tList = (List<T>) supplier.get();
-        if (tList == null || tList.size() == 0) {
+    public File writeDataFile(List<T> list, String fileUrl) {
+        if (list == null || list.size() == 0) {
             return null;
         }
         //fileUrl文件全路径
         File file = new File(fileUrl);
         //填充导excel 一个请求对应多个excel,一个excel可以有多个sheet
-        writeFile(file, tList);
-        //上传oss或者直接导出页面
-        byte[] bytes = FileUtils.readFileToByteArray(file);
-        byte[] bytes2 = FileUtil.readBytes(file);
-        byte[] bytes3 = com.alibaba.excel.util.FileUtils.readFileToByteArray(file);
-        return bytes;
+        writeFile(file, list);
+        return file;
+    }
+
+    public File getExcelFile(Supplier<List<T>> supplier, String fileUrl) {
+        //获取数据
+        List<T> tList = supplier.get();
+        //转成文件
+        return writeDataFile(tList, fileUrl);
+    }
+
+    public byte[] writeDataByte(List<T> list, String fileUrl) throws IOException {
+        File file = writeDataFile(list, fileUrl);
+        //转成byte
+        return FileUtils.readFileToByteArray(file);
+    }
+
+    public byte[] getExcelByte(Supplier<List<T>> supplier, String fileUrl) throws IOException {
+        //获取数据
+        List<T> tList = supplier.get();
+        //转成byte
+        return writeDataByte(tList, fileUrl);
+    }
+
+    public Map<String, File> multiGetExcelFile(Map<String, Supplier<List<T>>> supplierMap, Executor executor) throws Exception {
+        //将每个key对应的请求转换成每个key对应生成的excel文件
+        Map<String, File> fileMap = Maps.newHashMap();
+        //先将supplierMap转换成k,v的suppliers
+        List<Supplier<Map<String, List<T>>>> suppliers = Lists.newArrayList();
+        supplierMap.forEach((k, v) -> {
+            Supplier<Map<String, List<T>>> supplier = () -> {
+                //这样map就只有一个数据，每个key对应一个请求
+                Map<String, List<T>> map = Maps.newHashMap();
+                map.put(k, v.get());
+                return map;
+            };
+            suppliers.add(supplier);
+        });
+        //CompletableFuture异步执行，同步等待suppliers结果数据
+        List<Map<String, List<T>>> resultList = MultiThreadInvokeHelp.invokeGet(suppliers, executor);
+        resultList.forEach(listMap -> {
+            if (MapUtils.isEmpty(listMap)) {
+                return;
+            }
+            //map应该只有一个数据，每个key对应返回结果数据
+            listMap.forEach((k, v) -> {
+                //转换成excel文件
+                fileMap.put(k, writeDataFile(v, k));
+            });
+        });
+
+        return fileMap;
     }
 }

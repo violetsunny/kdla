@@ -1,6 +1,6 @@
 package top.kdla.framework.exception;
 
-import org.apache.commons.lang3.StringUtils;
+import top.kdla.framework.common.utils.StringUtils;
 import top.kdla.framework.dto.ErrorCodeI;
 
 /**

@@ -78,6 +78,7 @@
                     <groupId>org.springframework</groupId>
                 </exclusion>
             </exclusions>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
