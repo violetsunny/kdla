@@ -3,7 +3,7 @@ package top.kdla.framework.sequence.no.model.rules.epoch;
 import lombok.Data;
 
 /**
- * @author hjs
+ * @author kll
  * @date 2022/2/28
  */
 @Data

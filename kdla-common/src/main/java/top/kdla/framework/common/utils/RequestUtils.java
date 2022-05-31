@@ -3,7 +3,7 @@ package top.kdla.framework.common.utils;
 import java.util.UUID;
 
 /**
- * @author vincent.li
+ * @author kll
  * @Description Request工具类
  * @since 2021/7/13
  */

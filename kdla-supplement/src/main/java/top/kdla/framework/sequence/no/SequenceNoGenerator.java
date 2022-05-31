@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * 序列号生成器
  *
- * @author hjs
+ * @author kll
  */
 @Slf4j
 public class SequenceNoGenerator {

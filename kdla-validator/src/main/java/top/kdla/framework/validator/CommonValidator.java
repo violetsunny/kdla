@@ -16,7 +16,7 @@ import static com.baidu.unbiz.fluentvalidator.ResultCollectors.toSimple;
 
 /**
  * 通用的默认校验器
- * @author vincent.li
+ * @author kll
  */
 @Component
 public class CommonValidator {

@@ -6,7 +6,7 @@ import top.kdla.framework.sequence.no.model.rules.epoch.EpochRule;
 import java.util.List;
 
 /**
- * @author hjs
+ * @author kll
  * @date 2022/2/28
  */
 @Data

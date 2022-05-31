@@ -4,7 +4,7 @@ import lombok.Data;
 
 /**
  * 固定字符型规则
- * @author hjs
+ * @author kll
  * @date 2022/2/25
  */
 @Data

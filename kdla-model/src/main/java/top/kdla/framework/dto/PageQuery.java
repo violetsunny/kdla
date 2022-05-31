@@ -3,7 +3,7 @@ package top.kdla.framework.dto;
 /**
  * Page Query Param
  *
- * @author vincent.li
+ * @author kll
  * @since 2021/7/9 14:15
  */
 public abstract class PageQuery extends Query {

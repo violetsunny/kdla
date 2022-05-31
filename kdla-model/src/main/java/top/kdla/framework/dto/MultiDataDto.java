@@ -3,7 +3,7 @@ package top.kdla.framework.dto;
 import java.util.Collection;
 
 /**
- * @author vincent.li
+ * @author kll
  * @Description 批量数据DTO
  * @since 2021/7/16
  */

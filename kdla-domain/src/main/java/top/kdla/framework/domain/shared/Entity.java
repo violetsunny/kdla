@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * Entity interface
  *
- * @author vincent.li
+ * @author kll
  * @since 2021/7/9 14:15
  **/
 public interface Entity<T> extends Serializable {

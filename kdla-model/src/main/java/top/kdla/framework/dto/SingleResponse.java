@@ -3,7 +3,7 @@ package top.kdla.framework.dto;
 /**
  * Response with single record to return
  *
- * @author vincent.li
+ * @author kll
  * @since 2021/7/9 14:15
  */
 public class SingleResponse<T> extends Response {

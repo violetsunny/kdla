@@ -3,7 +3,7 @@ package top.kdla.framework.catchlog;
 /**
  * CatchAndLog
  *
- * @author vincent.li
+ * @author kll
  * @since 2021/7/9 14:15
  */
 

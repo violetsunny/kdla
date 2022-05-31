@@ -10,7 +10,7 @@ import static java.lang.System.currentTimeMillis;
 /**
  * 时间支撑类
  *
- * @author vincent.li
+ * @author kll
  * @date 2021/8/2
  */
 @Component("timeUtilSupport")

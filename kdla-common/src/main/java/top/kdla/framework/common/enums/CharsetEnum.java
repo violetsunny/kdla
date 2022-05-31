@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * 字符编码枚举
- * @author vincent.li
+ * @author kll
  */
 @AllArgsConstructor
 @Getter

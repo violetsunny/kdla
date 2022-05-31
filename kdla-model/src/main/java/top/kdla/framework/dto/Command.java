@@ -3,7 +3,7 @@ package top.kdla.framework.dto;
 /**
  * Command request from Client.
  *
- * @author vincent.li
+ * @author kll
  * @since 2021/7/9 14:15
  */
 public abstract class Command extends BaseDto {

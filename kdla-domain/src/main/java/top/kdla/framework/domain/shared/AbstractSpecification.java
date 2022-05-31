@@ -5,7 +5,7 @@ package top.kdla.framework.domain.shared;
  * Abstract base implementation of composite {@link Specification} with default
  * implementations for {@code and}, {@code or} and {@code not}.
  *
- * @author vincent.li
+ * @author kll
  * @since 2021/7/9 14:15
  */
 public abstract class AbstractSpecification<T> implements Specification<T> {

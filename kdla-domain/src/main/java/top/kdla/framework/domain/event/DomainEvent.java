@@ -6,7 +6,7 @@ import lombok.ToString;
 /**
  * 领域事件基类
  *
- * @author vincent.li
+ * @author kll
  * @since 2021/7/21
  */
 @ToString

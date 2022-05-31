@@ -5,7 +5,7 @@ import javax.validation.GroupSequence;
 /**
  * 定义校验顺序，如果AddGroup组失败，则UpdateGroup组不会再校验
  *
- * @author vincent.li
+ * @author kll
  * @since 2021/7/9 14:15
  */
 @GroupSequence({AddGroup.class, UpdateGroup.class})

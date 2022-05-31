@@ -3,7 +3,7 @@ package top.kdla.framework.exception;
 /**
  * Base Exception is the parent of all exceptions
  *
- * @author vincent.li
+ * @author kll
  * @since 2021/7/9 14:15
  */
 public abstract class BaseException extends RuntimeException {

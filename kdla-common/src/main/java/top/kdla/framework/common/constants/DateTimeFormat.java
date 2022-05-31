@@ -5,7 +5,7 @@ import java.util.Locale;
 
 /**
  * 时间格式的常量
- * @author vincent.li
+ * @author kll
  */
 public class DateTimeFormat {
 

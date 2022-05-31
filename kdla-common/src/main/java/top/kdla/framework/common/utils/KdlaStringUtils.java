@@ -1,6 +1,7 @@
 package top.kdla.framework.common.utils;
 
 import cn.hutool.core.text.StrFormatter;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.AntPathMatcher;
 import top.kdla.framework.common.constants.CommonConstants;
 
@@ -9,9 +10,9 @@ import java.util.*;
 /**
  * 字符串工具类
  *
- * @author vincent.li
+ * @author kll
  */
-public class StringUtils extends org.apache.commons.lang3.StringUtils {
+public class KdlaStringUtils extends StringUtils {
     /**
      * 空字符串
      */
@@ -240,7 +241,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
      * @return 结果
      */
     public static boolean isHttp(String link) {
-        return StringUtils.startsWithAny(link, CommonConstants.HTTP, CommonConstants.HTTPS);
+        return startsWithAny(link, CommonConstants.HTTP, CommonConstants.HTTPS);
     }
 
     /**
@@ -265,17 +266,17 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
      */
     public static final List<String> str2List(String str, String sep, boolean filterBlank, boolean trim) {
         List<String> list = new ArrayList<String>();
-        if (StringUtils.isEmpty(str)) {
+        if (isEmpty(str)) {
             return list;
         }
 
         // 过滤空白字符串
-        if (filterBlank && StringUtils.isBlank(str)) {
+        if (filterBlank && isBlank(str)) {
             return list;
         }
         String[] split = str.split(sep);
         for (String string : split) {
-            if (filterBlank && StringUtils.isBlank(string)) {
+            if (filterBlank && isBlank(string)) {
                 continue;
             }
             if (trim) {

@@ -25,7 +25,7 @@ import java.util.Map;
  *
  * This class is empowered by  {@link org.springframework.util.Assert}
  *
- * @author vincent.li
+ * @author kll
  * @since 2021/7/9 14:15
  */
 public abstract class BaseAssert {

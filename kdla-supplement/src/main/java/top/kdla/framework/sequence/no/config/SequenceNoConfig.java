@@ -14,7 +14,7 @@ import top.kdla.framework.sequence.no.SequenceNoGenerator;
 import top.kdla.framework.sequence.no.mapper.CodeGeneratorCfgV2Mapper;
 
 /**
- * @author hjs
+ * @author kll
  * @date 2022/1/11
  */
 @Slf4j

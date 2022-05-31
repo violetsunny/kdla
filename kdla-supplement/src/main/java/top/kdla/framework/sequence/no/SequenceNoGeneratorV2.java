@@ -25,16 +25,16 @@ import java.util.stream.Collectors;
 /**
  * 序列号生成器
  *
- * @author hjs
+ * @author kll
  */
 @Slf4j
 public class SequenceNoGeneratorV2 {
 
-
     private CodeGeneratorCfgV2Mapper codeGeneratorCfgMapper;
-    private RedissonClient redissonClient;
-    private String sequenceNoLockKey;
 
+    private RedissonClient redissonClient;
+
+    private String sequenceNoLockKey;
 
     public void setCodeGeneratorCfgMapper(CodeGeneratorCfgV2Mapper codeGeneratorCfgMapper) {
         this.codeGeneratorCfgMapper = codeGeneratorCfgMapper;
@@ -50,8 +50,6 @@ public class SequenceNoGeneratorV2 {
 
     private static Map<String, Map<String, ConcurrentLinkedQueue<String>>> noCacheMap = new ConcurrentHashMap();
     private static Map<String, GenerateNoRuleContainer> ruleContainerCacheMap = new ConcurrentHashMap();
-
-
 
     private static final long WAITE_TIME = 1_000;
     private static final long LEASE_TIME = 10_000;
@@ -162,14 +160,10 @@ public class SequenceNoGeneratorV2 {
             boolean isLocked = false;
             try {
                 isLocked = lock.tryLock(WAITE_TIME, LEASE_TIME, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                log.error("createNo,tryLock exception:", e);
-            }
-            if (!isLocked) {
-                log.warn("createNo failed,get lock failed");
-                throw new BizException("生成流水号失败");
-            }
-            try {
+                if (!isLocked) {
+                    log.warn("createNo failed,get lock failed");
+                    throw new BizException("生成流水号失败");
+                }
                 //各种锁加上后，开始生成编号,这里开始会和数据库打交道，导致数据变更
                 sequenceNo = generateSequenceNo(code);
             } catch (Exception e) {

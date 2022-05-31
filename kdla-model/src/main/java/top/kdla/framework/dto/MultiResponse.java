@@ -8,7 +8,7 @@ import java.util.Objects;
  * Response with batch record to return,
  * usually use in conditional query
  * <p/>
- * @author vincent.li
+ * @author kll
  * @since 2021/7/9 14:15
  */
 public class MultiResponse<T> extends Response {

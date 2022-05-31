@@ -5,7 +5,7 @@ import lombok.Getter;
 
 /**
  * 响应码枚举
- * @author vincent.li
+ * @author kll
  * @since 2021/7/12 11:15
  */
 @Getter

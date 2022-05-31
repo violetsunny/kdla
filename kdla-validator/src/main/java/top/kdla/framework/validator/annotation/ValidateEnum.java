@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 /**
  * 枚举校验注解
  *
- * @author vincent.li
+ * @author kll
  * @date 2021/10/3 10:36
  */
 @Target({ElementType.FIELD})

@@ -2,7 +2,7 @@ package top.kdla.framework.domain.event;
 
 /**
  * 领域事件处理类
- * @author vincent.li
+ * @author kll
  * @since 2021/7/21
  */
 public interface EventHandler {

@@ -9,7 +9,7 @@ import java.util.List;
  * Response with batch page record to return,
  * usually use in page query
  * <p/>
- * @author vincent.li
+ * @author kll
  * @since 2021/7/9 14:15
  */
 public class PageResponse<T> extends Response {

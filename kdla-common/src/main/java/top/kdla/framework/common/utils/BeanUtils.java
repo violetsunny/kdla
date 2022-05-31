@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * bean对象转换成Map
  *
- * @author vincent.li
+ * @author kll
  * @date 2022/1/21 19:41
  */
 public class BeanUtils {

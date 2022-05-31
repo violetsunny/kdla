@@ -3,7 +3,7 @@ package top.kdla.framework.common.enums;
 /**
  * 枚举定义模板
  *
- * @author vincent.li
+ * @author kll
  * @date 2021/10/2 10:09
  */
 public interface IEnum<T> {

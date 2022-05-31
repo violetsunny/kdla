@@ -8,7 +8,7 @@ import lombok.Getter;
  * 是否删除枚举
  * </p>
  *
- * @author vincent.li
+ * @author kll
  * @since 2020-12-31
  */
 

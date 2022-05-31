@@ -2,7 +2,7 @@ package top.kdla.framework.dto;
 
 /**
  * 错误编码描述声明
- * @author vincent.li
+ * @author kll
  * @since 2021/7/12
  */
 public interface ErrorCodeI {

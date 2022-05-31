@@ -1,7 +1,7 @@
 package top.kdla.framework.common.constants;
 
 /**
- * @author vincent.li
+ * @author kll
  * @Description kdla常量
  * @since 2021/7/13
  */

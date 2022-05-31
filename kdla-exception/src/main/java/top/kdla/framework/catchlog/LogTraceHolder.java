@@ -3,7 +3,7 @@ package top.kdla.framework.catchlog;
 import java.util.Objects;
 
 /**
- * @author vincent.li
+ * @author kll
  * @Description 日志
  * @since 2021/7/19
  */

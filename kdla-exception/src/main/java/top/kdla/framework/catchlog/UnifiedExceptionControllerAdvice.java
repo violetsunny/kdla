@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 /**
  * 通用异常处理
  *
- * @author vincent.li
+ * @author kll
  * @since  2021-01-07 16:22
  **/
 @Slf4j

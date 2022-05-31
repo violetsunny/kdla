@@ -16,11 +16,11 @@ import java.io.InputStreamReader;
 /**
  * http请求wrapper
  *
- * @author vincent.li
+ * @author kll
  * @date 2021/8/2
  */
 @Slf4j
-public class KdlaHttpServletRequestWrapper extends javax.servlet.http.HttpServletRequestWrapper {
+public class KdlaHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
     /**
      * 保存request body的数据

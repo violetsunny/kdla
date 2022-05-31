@@ -6,7 +6,7 @@ import org.springframework.http.MediaType;
 
 /**
  * 字符编码枚举
- * @author vincent.li
+ * @author kll
  */
 @AllArgsConstructor
 @Getter

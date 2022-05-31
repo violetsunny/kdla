@@ -10,7 +10,7 @@ import java.security.NoSuchAlgorithmException;
  * MD5加解密工具类
  * </p>
  *
- * @author vincent.li
+ * @author kll
  * @since 2020-06-12
  */
 @Slf4j

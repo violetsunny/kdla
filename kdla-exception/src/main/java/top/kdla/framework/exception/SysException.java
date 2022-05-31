@@ -1,12 +1,12 @@
 package top.kdla.framework.exception;
 
-import top.kdla.framework.common.utils.StringUtils;
+import top.kdla.framework.common.utils.KdlaStringUtils;
 import top.kdla.framework.dto.ErrorCodeI;
 
 /**
  * System Exception is unexpected Exception, retry might work again
  *
- * @author vincent.li
+ * @author kll
  * @since 2021/7/9 14:15
  */
 public class SysException extends BaseException {
@@ -36,7 +36,7 @@ public class SysException extends BaseException {
     }
 
     public SysException(ErrorCodeI errCode, String errMessage) {
-       this(errCode.getCode(), StringUtils.isEmpty(errMessage) ? errCode.getMsg() : errMessage);
+       this(errCode.getCode(), KdlaStringUtils.isEmpty(errMessage) ? errCode.getMsg() : errMessage);
     }
 
     public SysException(ErrorCodeI errCode) {

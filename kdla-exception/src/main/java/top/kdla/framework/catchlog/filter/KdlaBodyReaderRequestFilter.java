@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import top.kdla.framework.catchlog.filter.wrapper.KdlaHttpServletRequestWrapper;
-import top.kdla.framework.common.utils.StringUtils;
+import top.kdla.framework.common.utils.KdlaStringUtils;
 
 import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
@@ -17,7 +17,7 @@ import java.util.Objects;
 /**
  * kdlaBodyReaderRequest过滤器,解决Request的Body只能读取一次的解决方法
  *
- * @author vincent.li
+ * @author kll
  * @date 2021/8/9
  */
 @Component
@@ -44,7 +44,7 @@ public class KdlaBodyReaderRequestFilter implements Filter {
             return;
         }
         KdlaHttpServletRequestWrapper requestWrapper = null;
-        if (request instanceof HttpServletRequest && StringUtils
+        if (request instanceof HttpServletRequest && KdlaStringUtils
             .startsWithIgnoreCase(request.getContentType(), MediaType.APPLICATION_JSON_VALUE)) {
             requestWrapper = new KdlaHttpServletRequestWrapper(request);
         }
@@ -62,6 +62,6 @@ public class KdlaBodyReaderRequestFilter implements Filter {
         if (method == null || method.matches(METHOD_DELETE)) {
             return true;
         }
-        return StringUtils.matches(url, excludes);
+        return KdlaStringUtils.matches(url, excludes);
     }
 }

@@ -3,7 +3,7 @@ package top.kdla.framework.domain.shared;
 /**
  * AND specification, used to create a new specifcation that is the AND of two other specifications.
  *
- * @author vincent.li
+ * @author kll
  * @since 2021/7/9 14:15
  */
 public class AndSpecification<T> extends AbstractSpecification<T> {

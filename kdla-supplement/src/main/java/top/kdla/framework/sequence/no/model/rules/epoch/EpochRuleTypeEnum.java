@@ -1,7 +1,7 @@
 package top.kdla.framework.sequence.no.model.rules.epoch;
 
 /**
- * @author hjs
+ * @author kll
  * @date 2022/2/28
  */
 public enum EpochRuleTypeEnum {

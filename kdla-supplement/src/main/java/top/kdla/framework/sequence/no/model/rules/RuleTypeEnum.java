@@ -8,7 +8,7 @@ import top.kdla.framework.sequence.no.model.rules.sequence.SequenceTypeRule;
 /**
  * 序列编号的类型
  *
- * @author hjs
+ * @author kll
  * @date 2022/2/25
  */
 @Getter

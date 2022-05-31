@@ -10,7 +10,7 @@ import javax.validation.ConstraintValidatorContext;
 /**
  * 枚举校验器
  *
- * @author vincent.li
+ * @author kll
  * @date 2021/10/3 10:38
  */
 public class EnumValidator implements ConstraintValidator<ValidateEnum,String> {

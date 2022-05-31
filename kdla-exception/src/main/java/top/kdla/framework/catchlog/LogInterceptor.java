@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * 日志拦截器
- * @author vincent.li
+ * @author kll
  * @data 2021/7/15
  */
 public class LogInterceptor extends HandlerInterceptorAdapter {

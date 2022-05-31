@@ -3,7 +3,7 @@ package top.kdla.framework.domain.shared;
 /**
  * NOT decorator, used to create a new specifcation that is the inverse (NOT) of the given spec.
  *
- * @author vincent.li
+ * @author kll
  * @since 2021/7/9 14:15
  */
 public class NotSpecification<T> extends AbstractSpecification<T> {

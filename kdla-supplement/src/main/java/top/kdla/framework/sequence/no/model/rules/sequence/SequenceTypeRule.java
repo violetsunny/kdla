@@ -5,7 +5,7 @@ import top.kdla.framework.sequence.no.model.rules.GenerateNoRuleContent;
 
 /**
  * 序列增长型规则
- * @author hjs
+ * @author kll
  * @date 2022/2/25
  */
 @Data
