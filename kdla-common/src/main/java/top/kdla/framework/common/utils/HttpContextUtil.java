@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletRequest;
  * @author haoxin
  * @date 2021-01-25
  **/
-public class HttpContextUtils {
+public class HttpContextUtil {
 
     public static HttpServletRequest getHttpServletRequest() {
         return ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();

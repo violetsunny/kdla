@@ -15,7 +15,7 @@ import top.kdla.framework.common.constants.DateTimeFormat;
  * @author kanglele
  * @version $Id: LocalDateTimeUtils, v 0.1 2022/1/11 19:09 Exp $
  */
-public class LocalDateTimeUtils {
+public class LocalDateTimeUtil {
 
     /**
      * LocalDate --> Date

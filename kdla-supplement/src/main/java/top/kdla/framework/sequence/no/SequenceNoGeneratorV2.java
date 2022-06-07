@@ -67,8 +67,7 @@ public class SequenceNoGeneratorV2 {
                 return sequenceNoFromLocalCache;
             }
             //创建新编号
-            String result = createNo(code, currentEpoch);
-            return result;
+            return createNo(code, currentEpoch);
         } catch (BizException e) {
             log.error("[SequenceNoGenerator.createMaxNo.error]业务处理异常", e);
             throw e;

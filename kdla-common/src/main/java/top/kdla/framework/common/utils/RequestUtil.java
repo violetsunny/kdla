@@ -7,7 +7,7 @@ import java.util.UUID;
  * @Description Request工具类
  * @since 2021/7/13
  */
-public class RequestUtils {
+public class RequestUtil {
     /**
      * 获取一个请求TRACE_ID，做接口追踪使用
      */

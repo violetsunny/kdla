@@ -13,7 +13,7 @@ import javax.crypto.spec.SecretKeySpec;
  * @author kll
  * @version $Id: AESUtils $
  */
-public class AESUtils {
+public class AESUtil {
 
     private static final int PASSWORD_LENGTH = 16;
     private static final String AES_PATH = "AES/CBC/PKCS5Padding";

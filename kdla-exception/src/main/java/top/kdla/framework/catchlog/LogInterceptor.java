@@ -9,8 +9,8 @@ import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 import top.kdla.framework.catchlog.filter.wrapper.KdlaHttpServletRequestWrapper;
 import top.kdla.framework.common.constants.CommonConstants;
 import top.kdla.framework.common.utils.JacksonUtil;
-import top.kdla.framework.common.utils.RequestUtils;
-import top.kdla.framework.common.utils.TimeUtilSupport;
+import top.kdla.framework.common.utils.RequestUtil;
+import top.kdla.framework.common.utils.TimeUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,13 +22,13 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class LogInterceptor extends HandlerInterceptorAdapter {
 
-    private TimeUtilSupport timeUtilSupport;
+    private TimeUtil timeUtil;
     private ThreadLocal<Long> beginTimestamp;
     private Logger logger;
 
-    public LogInterceptor(final TimeUtilSupport timeUtilSupport, final ThreadLocal<Long> beginTimestamp,
+    public LogInterceptor(final TimeUtil timeUtil, final ThreadLocal<Long> beginTimestamp,
                           final Logger logger) {
-        this.timeUtilSupport = timeUtilSupport;
+        this.timeUtil = timeUtil;
         this.beginTimestamp = beginTimestamp;
         this.logger = logger;
     }
@@ -50,11 +50,11 @@ public class LogInterceptor extends HandlerInterceptorAdapter {
        //日志跟踪标识traceId
         if (StringUtils.isEmpty(MDC.get(CommonConstants.LOG_TRACE_ID))) {
             JSONObject traceIdInfo = new JSONObject();
-            traceIdInfo.put(CommonConstants.LOG_TRACE_ID, RequestUtils.getTraceId());
+            traceIdInfo.put(CommonConstants.LOG_TRACE_ID, RequestUtil.getTraceId());
             MDC.put(CommonConstants.LOG_TRACE_ID, traceIdInfo.toJSONString());
         }
         LogTraceHolder.set(Boolean.TRUE);
-        beginTimestamp.set(timeUtilSupport.now());
+        beginTimestamp.set(timeUtil.now());
         printHttpRequestHeaderInfo(request);
         return true;
     }
@@ -67,7 +67,7 @@ public class LogInterceptor extends HandlerInterceptorAdapter {
     @Override
     public void afterCompletion(final HttpServletRequest request, final HttpServletResponse response,
         final Object handler, final Exception ex) throws Exception {
-        Long executionTime = timeUtilSupport.now() - beginTimestamp.get();
+        Long executionTime = timeUtil.now() - beginTimestamp.get();
         logger.info(String.format("### uri: %s, remote-addr: %s, execution: %d",
             request.getRequestURI(), request.getRemoteAddr(), executionTime));
         if (LogTraceHolder.get()) {

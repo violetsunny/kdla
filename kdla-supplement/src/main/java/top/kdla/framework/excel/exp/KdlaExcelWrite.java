@@ -32,7 +32,7 @@ import java.util.function.Supplier;
  */
 public class KdlaExcelWrite<T extends BaseExcel> {
 
-    private KdlaExcelWrite() {
+    public KdlaExcelWrite() {
     }
 
     public void writeWeb(HttpServletResponse response, List<T> list, String fileName) throws IOException {

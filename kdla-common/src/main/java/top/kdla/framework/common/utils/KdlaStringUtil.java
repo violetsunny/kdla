@@ -12,7 +12,7 @@ import java.util.*;
  *
  * @author kll
  */
-public class KdlaStringUtils extends StringUtils {
+public class KdlaStringUtil extends StringUtils {
     /**
      * 空字符串
      */

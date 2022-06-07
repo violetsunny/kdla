@@ -14,7 +14,7 @@ import static java.lang.System.currentTimeMillis;
  * @date 2021/8/2
  */
 @Component("timeUtilSupport")
-public class TimeUtilSupport {
+public class TimeUtil {
 
     public static final int MILLION_SECOND_UNIT = 1000;
     public static final int MINUTE_UNIT = 60;

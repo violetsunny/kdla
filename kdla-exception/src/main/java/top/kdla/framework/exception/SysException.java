@@ -1,6 +1,6 @@
 package top.kdla.framework.exception;
 
-import top.kdla.framework.common.utils.KdlaStringUtils;
+import top.kdla.framework.common.utils.KdlaStringUtil;
 import top.kdla.framework.dto.ErrorCodeI;
 
 /**
@@ -36,7 +36,7 @@ public class SysException extends BaseException {
     }
 
     public SysException(ErrorCodeI errCode, String errMessage) {
-       this(errCode.getCode(), KdlaStringUtils.isEmpty(errMessage) ? errCode.getMsg() : errMessage);
+       this(errCode.getCode(), KdlaStringUtil.isEmpty(errMessage) ? errCode.getMsg() : errMessage);
     }
 
     public SysException(ErrorCodeI errCode) {

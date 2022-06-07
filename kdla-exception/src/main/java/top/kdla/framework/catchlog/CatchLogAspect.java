@@ -16,7 +16,7 @@ import org.springframework.util.StopWatch;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import top.kdla.framework.common.constants.CommonConstants;
-import top.kdla.framework.common.utils.RequestUtils;
+import top.kdla.framework.common.utils.RequestUtil;
 import top.kdla.framework.exception.BaseException;
 import top.kdla.framework.exception.BizException;
 import top.kdla.framework.exception.SysException;
@@ -53,7 +53,7 @@ public class CatchLogAspect {
         //添加traceId
         if (StringUtils.isEmpty(MDC.get(CommonConstants.LOG_TRACE_ID))) {
             JSONObject traceIdInfo = new JSONObject();
-            traceIdInfo.put(CommonConstants.LOG_TRACE_ID, RequestUtils.getTraceId());
+            traceIdInfo.put(CommonConstants.LOG_TRACE_ID, RequestUtil.getTraceId());
             MDC.put(CommonConstants.LOG_TRACE_ID, traceIdInfo.toJSONString());
         }
 

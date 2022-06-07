@@ -1,7 +1,7 @@
 /**
  * kanglele Inc. Copyright (c) 2022 All Rights Reserved.
  */
-package top.kdla.framework.common.utils;
+package top.kdla.framework.common.help;
 
 import java.nio.charset.Charset;
 
@@ -14,7 +14,7 @@ import com.google.common.hash.Funnels;
  * @author kanglele
  * @version $Id: BloomFilterUtils, v 0.1 2022/1/12 15:02 Exp $
  */
-public class BloomFilterUtils {
+public class BloomFilterHelp {
 
     /**
      * 存储int值的布隆过滤器

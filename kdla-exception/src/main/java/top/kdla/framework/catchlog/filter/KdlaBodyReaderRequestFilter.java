@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import top.kdla.framework.catchlog.filter.wrapper.KdlaHttpServletRequestWrapper;
-import top.kdla.framework.common.utils.KdlaStringUtils;
+import top.kdla.framework.common.utils.KdlaStringUtil;
 
 import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
@@ -44,7 +44,7 @@ public class KdlaBodyReaderRequestFilter implements Filter {
             return;
         }
         KdlaHttpServletRequestWrapper requestWrapper = null;
-        if (request instanceof HttpServletRequest && KdlaStringUtils
+        if (request instanceof HttpServletRequest && KdlaStringUtil
             .startsWithIgnoreCase(request.getContentType(), MediaType.APPLICATION_JSON_VALUE)) {
             requestWrapper = new KdlaHttpServletRequestWrapper(request);
         }
@@ -62,6 +62,6 @@ public class KdlaBodyReaderRequestFilter implements Filter {
         if (method == null || method.matches(METHOD_DELETE)) {
             return true;
         }
-        return KdlaStringUtils.matches(url, excludes);
+        return KdlaStringUtil.matches(url, excludes);
     }
 }

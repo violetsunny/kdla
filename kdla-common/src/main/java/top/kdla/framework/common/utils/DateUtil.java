@@ -19,7 +19,7 @@ import java.util.Date;
  * @date 2021-02-02
  **/
 @Slf4j
-public class DateUtils {
+public class DateUtil {
 	/** 时间格式(yyyy-MM-dd) */
 	public final static String DATE_PATTERN = "yyyy-MM-dd";
 	/** 时间格式(yyyy-MM-dd HH:mm:ss) */
@@ -53,10 +53,6 @@ public class DateUtils {
 
         }
         return null;
-    }
-
-    public static void main(String[] args) {
-
     }
 
     /**
@@ -170,5 +166,54 @@ public class DateUtils {
     public static Date addDateYears(Date date, int years) {
         DateTime dateTime = new DateTime(date);
         return dateTime.plusYears(years).toDate();
+    }
+
+    //=======================================
+    /**
+     *  秒转换成具体时间
+     * @param time
+     * @return
+     */
+    public static String secToTime(Long time) {
+        if (time == null || Long.valueOf(0L).equals(time)) {
+            return "00分钟00秒";
+        }
+        String timeStr = null;
+        Long hour = 0L;
+        Long minute = 0L;
+        Long second = 0L;
+        if (time <= 0){
+            return "00分钟00秒";
+        }
+        else {
+            minute = time / 60;
+            if (minute < 60) {
+                second = time % 60;
+                timeStr = unitFormat(minute) + "分钟" + unitFormat(second) + "秒";
+            } else {
+                hour = minute / 60;
+                minute = minute % 60;
+                second = time - hour * 3600 - minute * 60;
+                timeStr = unitFormat(hour) + "时" + unitFormat(minute) + "分钟" + unitFormat(second) + "秒";
+            }
+        }
+        return timeStr;
+    }
+
+    /**
+     * 格式补0
+     *
+     * @param i
+     * @return
+     */
+    private static String unitFormat(Long i) {
+        String retStr = null;
+        if (i >= 0 && i < 10){
+            retStr = "0" + Long.toString(i);
+        }
+        else {
+            retStr = "" + i;
+        }
+        return retStr;
     }
 }

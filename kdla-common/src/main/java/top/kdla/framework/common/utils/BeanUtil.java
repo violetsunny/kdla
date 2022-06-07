@@ -13,7 +13,7 @@ import java.util.Map;
  * @author kll
  * @date 2022/1/21 19:41
  */
-public class BeanUtils {
+public class BeanUtil {
     public static Map<String, Object> objectToMap(Object obj) throws Exception {
         if (obj == null) {
             return null;

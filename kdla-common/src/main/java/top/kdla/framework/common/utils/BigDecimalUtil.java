@@ -8,9 +8,9 @@ import java.math.BigInteger;
  *
  * @author kll
  */
-public class BigDecimalUtils {
+public class BigDecimalUtil {
 
-    private BigDecimalUtils() {
+    private BigDecimalUtil() {
     }
 
     /**

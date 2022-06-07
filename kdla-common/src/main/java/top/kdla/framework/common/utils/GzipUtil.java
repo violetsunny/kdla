@@ -13,7 +13,7 @@ import java.util.zip.GZIPOutputStream;
  * @author kll
  * @version $Id: GzipUtils.java $
  */
-public class GzipUtils {
+public class GzipUtil {
 
     /**
      * 对参数进行压缩，再转码

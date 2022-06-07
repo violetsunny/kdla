@@ -20,7 +20,6 @@ public class Md5Util {
      * MD5加密方法
      * **/
     public static String md5(String input) {
-
         try {
 
             // 拿到一个MD5转换器（如果想要SHA1参数换成”SHA1”）
@@ -42,7 +41,7 @@ public class Md5Util {
      * 将字节数组换成成16进制的字符串
      * */
     private static String byteArrayToHex(byte[] byteArray) {
-
+        // 密钥
         // 首先初始化一个字符数组，用来存放每个16进制字符
         char[] hexDigits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9','a', 'b', 'c', 'd', 'e', 'f' };
 
