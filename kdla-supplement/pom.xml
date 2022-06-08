@@ -31,53 +31,73 @@
         </dependency>
 
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>netty-buffer</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>netty-codec</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>netty-common</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>netty-handler</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>netty-resolver</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>netty-transport</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>reactor-core</artifactId>
+                    <groupId>io.projectreactor</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
             <groupId>org.mybatis.spring.boot</groupId>
             <artifactId>mybatis-spring-boot-starter</artifactId>
             <scope>provided</scope>
-<!--            <exclusions>-->
-<!--                <exclusion>-->
-<!--                    <artifactId>spring-aop</artifactId>-->
-<!--                    <groupId>org.springframework</groupId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <artifactId>spring-beans</artifactId>-->
-<!--                    <groupId>org.springframework</groupId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <artifactId>spring-boot</artifactId>-->
-<!--                    <groupId>org.springframework.boot</groupId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <artifactId>spring-boot-starter</artifactId>-->
-<!--                    <groupId>org.springframework.boot</groupId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <artifactId>spring-boot-starter-jdbc</artifactId>-->
-<!--                    <groupId>org.springframework.boot</groupId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <artifactId>spring-boot-starter-logging</artifactId>-->
-<!--                    <groupId>org.springframework.boot</groupId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <artifactId>spring-core</artifactId>-->
-<!--                    <groupId>org.springframework</groupId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <artifactId>spring-jdbc</artifactId>-->
-<!--                    <groupId>org.springframework</groupId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <artifactId>spring-tx</artifactId>-->
-<!--                    <groupId>org.springframework</groupId>-->
-<!--                </exclusion>-->
-<!--            </exclusions>-->
         </dependency>
 
         <dependency>
             <groupId>org.redisson</groupId>
-            <artifactId>redisson</artifactId>
+            <artifactId>redisson-spring-boot-starter</artifactId>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>jackson-databind</artifactId>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jackson-datatype-jsr310</artifactId>
+                    <groupId>com.fasterxml.jackson.datatype</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>snakeyaml</artifactId>
+                    <groupId>org.yaml</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>spring-boot</artifactId>
+                    <groupId>org.springframework.boot</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>spring-data-redis</artifactId>
+                    <groupId>org.springframework.data</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
