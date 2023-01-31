@@ -51,7 +51,7 @@ public class CatchLogAspect {
     @Before(value = "pointcut()")
     public void doBefore(JoinPoint joinPoint) {
         //添加traceId
-        if (StringUtils.isEmpty(MDC.get(CommonConstants.LOG_TRACE_ID))) {
+        if (!StringUtils.hasText(MDC.get(CommonConstants.LOG_TRACE_ID))) {
             JSONObject traceIdInfo = new JSONObject();
             traceIdInfo.put(CommonConstants.LOG_TRACE_ID, RequestUtil.getTraceId());
             MDC.put(CommonConstants.LOG_TRACE_ID, traceIdInfo.toJSONString());
