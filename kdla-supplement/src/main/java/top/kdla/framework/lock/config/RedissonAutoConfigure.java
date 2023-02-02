@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import top.kdla.framework.lock.RedissonRedDisLock;
+import top.kdla.framework.lock.properties.RedissonConfigProperties;
 
 /**
  * @author kll
@@ -19,11 +20,11 @@ import top.kdla.framework.lock.RedissonRedDisLock;
  */
 @Configuration
 @ConditionalOnClass({RedissonRedDisLock.class})
-@EnableConfigurationProperties({RedissonConfig.class})
+@EnableConfigurationProperties({RedissonConfigProperties.class})
 @Order
 public class RedissonAutoConfigure {
     @Autowired
-    private RedissonConfig config;
+    private RedissonConfigProperties config;
 
     public RedissonAutoConfigure() {
     }

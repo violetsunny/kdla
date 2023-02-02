@@ -29,10 +29,10 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class StopWatchWrapperAspect {
 
-    @Value("${stop.watch.error.timeout:2000}")
+    @Value("${kdla.stop.watch.error.timeout:2000}")
     private Integer errorTimeOut;
 
-    @Value("${stop.watch.warn.timeout:200}")
+    @Value("${kdla.stop.watch.warn.timeout:200}")
     private Integer warnTimeOut;
 
     @Pointcut("@annotation(top.kdla.framework.common.aspect.watch.StopWatchWrapper)")

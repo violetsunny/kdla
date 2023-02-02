@@ -9,7 +9,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import top.kdla.framework.lock.config.RedissonConfig;
+import top.kdla.framework.lock.properties.RedissonConfigProperties;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -24,11 +24,11 @@ import java.util.stream.Collectors;
  */
 public class RedissonRedDisLock implements DistributeLock {
     private static Logger logger = LoggerFactory.getLogger(RedissonRedDisLock.class);
-    private RedissonConfig config;
+    private RedissonConfigProperties config;
     private List<RedissonClient> redissonClientList;
     private static final String SHADOW_KEY = "R_SHADOW:";
 
-    public RedissonRedDisLock(RedissonConfig config) {
+    public RedissonRedDisLock(RedissonConfigProperties config) {
         this.config = config;
     }
 

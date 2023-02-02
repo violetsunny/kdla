@@ -2,7 +2,7 @@
  * kll Inc.
  * Copyright (c) 2021 All Rights Reserved.
  */
-package top.kdla.framework.lock.config;
+package top.kdla.framework.lock.properties;
 
 import io.netty.channel.nio.NioEventLoopGroup;
 import lombok.Data;
@@ -27,8 +27,8 @@ import java.util.List;
         prefix = "kdla.redisson"
 )
 @Data
-public class RedissonConfig {
-    private static Logger logger = LoggerFactory.getLogger(RedissonConfig.class);
+public class RedissonConfigProperties {
+    private static Logger logger = LoggerFactory.getLogger(RedissonConfigProperties.class);
     /**
      * 必填
      */
@@ -61,7 +61,7 @@ public class RedissonConfig {
     private int thread = 4;
 
 
-    public RedissonConfig() {
+    public RedissonConfigProperties() {
         this.readMode = ReadMode.MASTER;
         this.scanInterval = 1000;
         this.type = RedisClusterType.REPLICATE;

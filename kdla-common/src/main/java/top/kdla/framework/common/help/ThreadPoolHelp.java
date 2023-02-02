@@ -119,6 +119,23 @@ public class ThreadPoolHelp {
     }
 
     /**
+     * 获取常用的线程的线程池
+     *
+     * @return ExecutorService
+     */
+    public ExecutorService getDefaultExecutorService() {
+        ExecutorService threadPool = new ThreadPoolExecutor(
+                CPUS + 1,
+                initMirrorIOMaxPoolSize(),
+                0L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>(),
+                Executors.defaultThreadFactory(),
+                defaultHandler);
+        return TtlExecutors.getTtlExecutorService(threadPool);
+    }
+
+    /**
      * corePoolSize 保留在池中的线程数
      * maximumPoolSize 最大线程数
      * keepAliveTime 当线程数大于内核数时，这是多余的空闲线程将在终止之前等待新任务的最长时间。
@@ -226,27 +243,27 @@ public class ThreadPoolHelp {
     }
 
     /**
-     * 初始化 maximunPoolSize----IO密集型
-     * maximumPoolSize cpu的4倍
+     * IO密集型
+     * cpu的16倍
      *
      * @return Integer
      */
     public Integer initMirrorIOMaxPoolSize() {
-        return CPUS << 2;
+        return CPUS << 4;
     }
 
     /**
-     * 初始化 maximunPoolSize----IO密集型
-     * maximumPoolSize cpu的10倍
+     * IO密集型
+     * cpu的20倍
      *
      * @return
      */
     public Integer initFullIOMaxPoolSize() {
-        return (int) (CPUS / (1 - 0.9));
+        return (int) (CPUS / (1 - 0.8));
     }
 
     /**
-     * 初始化 maximunPoolSize----CPU密集型
+     * CPU密集型
      *
      * @return Integer
      */

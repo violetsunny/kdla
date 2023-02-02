@@ -17,30 +17,30 @@ import java.util.concurrent.TimeUnit;
  * @version $Id: Gcache, v 0.1 2022/6/7 15:18 kanglele Exp $
  */
 @Slf4j
-public class Gcache<T, E> {
+public class KdlaGcache<T, E> {
 
     /**
      * 缓存并发级别
      */
-    @Value("${gcache.concurrency.level:4}")
+    @Value("${kdla.gcache.concurrency.level:4}")
     private Integer concurrencyLevel;
     /**
      * 缓存过期时间，毫秒
      */
-    @Value("${gcache.expire.after.write:1000}")
+    @Value("${kdla.gcache.expire.after.write:1000}")
     private Long duration;
     /**
      * 缓存初始容量
      */
-    @Value("${gcache.initial.capacity:10}")
+    @Value("${kdla.gcache.initial.capacity:10}")
     private Integer initialCapacity;
     /**
      * 缓存最大容量
      */
-    @Value("${gcache.maximum.size:100}")
+    @Value("${kdla.gcache.maximum.size:100}")
     private Integer maximumSize;
 
-    public Gcache() {
+    public KdlaGcache() {
         super();
         init();
     }
@@ -65,8 +65,7 @@ public class Gcache<T, E> {
                 // 设置缓存的移除通知
                 .removalListener(new RemovalListener<T, E>() {
                     public void onRemoval(RemovalNotification<T, E> notification) {
-                        log.info(
-                                notification.getKey() + " was removed, cause is " + notification.getCause());
+                        log.info("{} was removed, cause is {}", notification.getKey(), notification.getCause());
                     }
                 })
                 // build方法中可以指定CacheLoader，在缓存不存在时通过CacheLoader的实现自动加载缓存
@@ -74,13 +73,13 @@ public class Gcache<T, E> {
 
                     @Override
                     public E load(T t) throws Exception {
-                        log.info("cache load "+t.toString());
+                        log.info("cache load {}", t.toString());
                         return null;
                     }
                 });
     }
 
-    public LoadingCache<T, E> getGcache(){
+    public LoadingCache<T, E> getGcache() {
         return this.loadingCache;
     }
 }
