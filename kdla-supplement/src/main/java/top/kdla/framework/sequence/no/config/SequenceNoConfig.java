@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import top.kdla.framework.lock.RedissonRedDisLock;
 import top.kdla.framework.sequence.no.SequenceNoGeneratorV2;
 import top.kdla.framework.sequence.no.mapper.CodeGeneratorCfgMapper;
 import top.kdla.framework.sequence.no.SequenceNoGenerator;
@@ -27,10 +28,10 @@ public class SequenceNoConfig {
     private String sequenceNoLockKey;
 
     @Bean
-    public SequenceNoGenerator sequenceNoGenerator(@Autowired CodeGeneratorCfgMapper codeGeneratorCfgMapper, @Autowired RedissonClient redissonClient) {
+    public SequenceNoGenerator sequenceNoGenerator(@Autowired CodeGeneratorCfgMapper codeGeneratorCfgMapper, @Autowired RedissonRedDisLock redissonRedDisLock) {
         SequenceNoGenerator sequenceNoGenerator = new SequenceNoGenerator();
         sequenceNoGenerator.setCodeGeneratorCfgMapper(codeGeneratorCfgMapper);
-        sequenceNoGenerator.setRedissonClient(redissonClient);
+        sequenceNoGenerator.setRedissonClient(redissonRedDisLock);
         sequenceNoGenerator.setSequenceNoLockKey(sequenceNoLockKey);
 
         log.info("sequenceNoGenerator injeted...");
@@ -38,10 +39,10 @@ public class SequenceNoConfig {
     }
 
     @Bean
-    public SequenceNoGeneratorV2 sequenceNoGeneratorV2(@Autowired CodeGeneratorCfgV2Mapper codeGeneratorCfgMapper, @Autowired RedissonClient redissonClient) {
+    public SequenceNoGeneratorV2 sequenceNoGeneratorV2(@Autowired CodeGeneratorCfgV2Mapper codeGeneratorCfgMapper, @Autowired RedissonRedDisLock redissonRedDisLock) {
         SequenceNoGeneratorV2 generatorV2 = new SequenceNoGeneratorV2();
         generatorV2.setCodeGeneratorCfgMapper(codeGeneratorCfgMapper);
-        generatorV2.setRedissonClient(redissonClient);
+        generatorV2.setRedissonClient(redissonRedDisLock);
         generatorV2.setSequenceNoLockKey(sequenceNoLockKey);
 
         log.info("generatorV2 injeted...");

@@ -16,27 +16,27 @@ import org.springframework.core.annotation.Order;
  * @author kll
  * @date 2022/1/11
  */
-@Slf4j
-@ConditionalOnMissingBean(RedissonClient.class)
-@Configuration
-@Order
-public class RedissonClientConfig {
-
-    @Value("${redisson.database}")
-    private Integer database;
-    @Value("${redisson.password}")
-    private String password;
-    @Value("${redisson.address}")
-    private String address;
-
-
-    @Bean(destroyMethod = "shutdown")
-    public RedissonClient redissonClient() {
-        Config config = new Config();
-        config.useSingleServer().setAddress(address).setPassword(password).setDatabase(database);
-        RedissonClient redisson = Redisson.create(config);
-
-        log.info("RedissonClient injeted...");
-        return redisson;
-    }
-}
+//@Slf4j
+//@ConditionalOnMissingBean(RedissonClient.class)
+//@Configuration
+//@Order
+//public class RedissonClientConfig {
+//
+//    @Value("${kdla.redisson.database}")
+//    private Integer database;
+//    @Value("${kdla.redisson.password}")
+//    private String password;
+//    @Value("${kdla.redisson.address}")
+//    private String address;
+//
+//
+//    @Bean(destroyMethod = "shutdown")
+//    public RedissonClient redissonClient() {
+//        Config config = new Config();
+//        config.useSingleServer().setAddress(address).setPassword(password).setDatabase(database);
+//        RedissonClient redisson = Redisson.create(config);
+//
+//        log.info("RedissonClient injeted...");
+//        return redisson;
+//    }
+//}

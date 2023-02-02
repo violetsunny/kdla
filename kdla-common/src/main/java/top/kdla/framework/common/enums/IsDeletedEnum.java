@@ -3,6 +3,8 @@ package top.kdla.framework.common.enums;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Optional;
+
 /**
  * <p>
  * 是否删除枚举
@@ -14,7 +16,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum IsDeletedEnum {
+public enum IsDeletedEnum implements IEnum<Integer> {
     /**
      * 是
      */
@@ -48,6 +50,13 @@ public enum IsDeletedEnum {
             }
         }
         return null;
+    }
+
+    /**
+     * 根据code获取枚举(默认值为否)
+     */
+    public static IsDeletedEnum getDefaultByCode(Integer code) {
+        return Optional.ofNullable(getByCode(code)).orElse(IS_DELETED_NO);
     }
 }
 

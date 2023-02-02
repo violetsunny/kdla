@@ -10,43 +10,47 @@ package top.kdla.framework.common.help;
  */
 
 import com.alibaba.ttl.threadpool.TtlExecutors;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.concurrent.*;
 
 /**
  * 自定义线程池
- *	<p>
- *		1，maximunPoolSize设置大小依据：
- *		有业务类型类配置，分为以下两种类型，由Runtime.getRuntime().availableProcessors()
- *			来判断服务器可使用的cpu核数在根据以下的两种类型来判断。
- *      - CPU密集型
- *        该任务需要大量的运算，而且没有阻塞，需要CPU一直全速运行，
- *        CPU密集任务只有在真正的多核CPU上才可能得到加速。
- *        一般计算公式：CPU核数 + 1个线程的线程池
- *      - IO密集型
- *        即该任务需要大量的IO，即大量的阻塞，这种类型分以下两种情况设置
- *        1，如果IO密集型任务线程并非一直在执行任务，则应配置尽可能多的线程，如CPU核数 * 2
- *        2，参考公式：CPU核数 /1 - 阻塞系数                  阻塞系数在0.8~0.9之间
- *          比如：8核CPU：8/1 - 0.9 = 80个线程数
- *
- *	    2，阻塞队列种类：
- *        - ArrayBlockingQueue 由数组结构组成的有界阻塞队列
- *        - LinkedBlockingQueue 由链表结构组成的有界（但大小默认值为Integer.MAX_VALUE）阻塞队列
- *        - PriorityBlockingQueue 支持优先级排序的无界阻塞队列
- *        - DelayQueue 使用优先级队列实现的延迟无界阻塞队列
- *        - SynchronousQueue 不存储元素的阻塞队列，也即单个元素的阻塞队列
- *        - LinkedTransferQueue 由链表结构组成的无界阻塞队列
- *        - LinkedBlockingDeque 由链表组成的双向阻塞队列
- *
- *      3，拒绝策略
- *        - AbortPolicy  直接抛异常阻止系统正常运行
- *        - CallerRunsPolicy  由调用线程处理该任务
- *        - DiscardOldestPolicy 丢弃队列最前面的任务，然后重新尝试执行任务（重复此过程）
- *        - DiscardPolicy  也是丢弃任务，但是不抛出异常。
- *  </p>
+ * <p>
+ * 1，maximunPoolSize设置大小依据：
+ * 有业务类型类配置，分为以下两种类型，由Runtime.getRuntime().availableProcessors()
+ * 来判断服务器可使用的cpu核数在根据以下的两种类型来判断。
+ * - CPU密集型
+ * 该任务需要大量的运算，而且没有阻塞，需要CPU一直全速运行，
+ * CPU密集任务只有在真正的多核CPU上才可能得到加速。
+ * 一般计算公式：CPU核数 + 1个线程的线程池
+ * - IO密集型
+ * 即该任务需要大量的IO，即大量的阻塞，这种类型分以下两种情况设置
+ * 1，如果IO密集型任务线程并非一直在执行任务，则应配置尽可能多的线程，如CPU核数 * 2
+ * 2，参考公式：CPU核数 /1 - 阻塞系数                  阻塞系数在0.8~0.9之间
+ * 比如：8核CPU：8/1 - 0.9 = 80个线程数
+ * <p>
+ * 2，阻塞队列种类：
+ * - ArrayBlockingQueue 由数组结构组成的有界阻塞队列
+ * - LinkedBlockingQueue 由链表结构组成的有界（但大小默认值为Integer.MAX_VALUE）阻塞队列
+ * - PriorityBlockingQueue 支持优先级排序的无界阻塞队列
+ * - DelayQueue 使用优先级队列实现的延迟无界阻塞队列
+ * - SynchronousQueue 不存储元素的阻塞队列，也即单个元素的阻塞队列
+ * - LinkedTransferQueue 由链表结构组成的无界阻塞队列
+ * - LinkedBlockingDeque 由链表组成的双向阻塞队列
+ * <p>
+ * 3，拒绝策略
+ * - AbortPolicy  直接抛异常阻止系统正常运行
+ * - CallerRunsPolicy  由调用线程处理该任务
+ * - DiscardOldestPolicy 丢弃队列最前面的任务，然后重新尝试执行任务（重复此过程）
+ * - DiscardPolicy  也是丢弃任务，但是不抛出异常。
+ * </p>
  */
 @Data
+@Builder
 public class ThreadPoolHelp {
     //核心线程数
     private volatile Integer corePoolSize;
@@ -65,6 +69,9 @@ public class ThreadPoolHelp {
     //默认直接抛异常
     private static final RejectedExecutionHandler defaultHandler = new ThreadPoolExecutor.AbortPolicy();
 
+    public ThreadPoolHelp() {
+    }
+
     //自定义线程的参数
     public ThreadPoolHelp(Integer corePoolSize,
                           Integer maximumPoolSize,
@@ -82,6 +89,7 @@ public class ThreadPoolHelp {
 
     /**
      * 获取只有单个线程的线程池
+     *
      * @return ExecutorService
      */
     public ExecutorService getSingleExecutorService() {
@@ -94,6 +102,20 @@ public class ThreadPoolHelp {
                 Executors.defaultThreadFactory(),
                 defaultHandler);
         return TtlExecutors.getTtlExecutorService(threadPool);
+    }
+
+    /**
+     * 自定义线程池
+     *
+     * @return
+     */
+    public ExecutorService getExecutorService() {
+        return getExecutorService(this.corePoolSize,
+                this.maximumPoolSize,
+                this.keepAliveTime,
+                this.unit,
+                this.workQueue,
+                this.handler);
     }
 
     /**
@@ -119,9 +141,10 @@ public class ThreadPoolHelp {
     /**
      * 得到线程执行对象ExecutorService
      * 固定拒绝策略为：AbortPolicy
+     *
      * @return ExecutorService
      */
-    public ExecutorService getExecutorService(Integer corePoolSize,Integer maximumPoolSize,
+    public ExecutorService getExecutorService(Integer corePoolSize, Integer maximumPoolSize,
                                               Long keepAliveTime,
                                               TimeUnit unit,
                                               BlockingQueue<Runnable> workQueue,
@@ -161,6 +184,7 @@ public class ThreadPoolHelp {
     /**
      * 当前业务为较多IO密集型的场景
      * 获取初始化好maximunPoolSize的线程池
+     *
      * @return ExecutorService
      */
     public ExecutorService getFullIOExecutorService(Integer corePoolSize,
@@ -182,6 +206,7 @@ public class ThreadPoolHelp {
     /**
      * 当前业务为CPU计算密集型的场景
      * 获取初始化好maximunPoolSize的线程池
+     *
      * @return ExecutorService
      */
     public ExecutorService getCPUExecutorService(Integer corePoolSize,
@@ -203,29 +228,29 @@ public class ThreadPoolHelp {
     /**
      * 初始化 maximunPoolSize----IO密集型
      * maximumPoolSize cpu的4倍
+     *
      * @return Integer
      */
     public Integer initMirrorIOMaxPoolSize() {
-        maximumPoolSize = CPUS << 2;
-        return maximumPoolSize;
+        return CPUS << 2;
     }
 
     /**
      * 初始化 maximunPoolSize----IO密集型
      * maximumPoolSize cpu的10倍
+     *
      * @return
      */
     public Integer initFullIOMaxPoolSize() {
-        maximumPoolSize = (int) (CPUS/(1-0.9));
-        return maximumPoolSize;
+        return (int) (CPUS / (1 - 0.9));
     }
 
     /**
      * 初始化 maximunPoolSize----CPU密集型
+     *
      * @return Integer
      */
     public Integer initCPUMaxPoolSize() {
-        maximumPoolSize = CPUS + 1;
-        return maximumPoolSize;
+        return CPUS + 1;
     }
 }

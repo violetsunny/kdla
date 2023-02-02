@@ -7,6 +7,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import top.kdla.framework.common.utils.JacksonUtil;
 import top.kdla.framework.exception.BizException;
+import top.kdla.framework.lock.RedissonRedDisLock;
 import top.kdla.framework.sequence.no.mapper.CodeGeneratorCfgV2Mapper;
 import top.kdla.framework.sequence.no.model.rules.*;
 import top.kdla.framework.sequence.no.model.entity.CodeGeneratorCfgV2;
@@ -32,7 +33,7 @@ public class SequenceNoGeneratorV2 {
 
     private CodeGeneratorCfgV2Mapper codeGeneratorCfgMapper;
 
-    private RedissonClient redissonClient;
+    private RedissonRedDisLock redissonRedDisLock;
 
     private String sequenceNoLockKey;
 
@@ -40,8 +41,8 @@ public class SequenceNoGeneratorV2 {
         this.codeGeneratorCfgMapper = codeGeneratorCfgMapper;
     }
 
-    public void setRedissonClient(RedissonClient redissonClient) {
-        this.redissonClient = redissonClient;
+    public void setRedissonClient(RedissonRedDisLock redissonRedDisLock) {
+        this.redissonRedDisLock = redissonRedDisLock;
     }
 
     public void setSequenceNoLockKey(String sequenceNoLockKey) {
@@ -54,7 +55,7 @@ public class SequenceNoGeneratorV2 {
     private static final long WAITE_TIME = 1_000;
     private static final long LEASE_TIME = 10_000;
 
-    public String getMaxNo(String code) {
+    public String getMaxNo(String code) throws Exception {
         if (StringUtils.isBlank(code)) {
             throw new BizException("code不能为空");
         }
@@ -147,7 +148,7 @@ public class SequenceNoGeneratorV2 {
         }
         return sequenceNo;
     }
-    private String createNo(String code,Long epoch) {
+    private String createNo(String code,Long epoch) throws Exception {
         synchronized (this) {
             //进入同步块后，再次尝试从缓存中获取编号
             String sequenceNo = getSequenceNoFromLocalCache(code, epoch);
@@ -155,7 +156,7 @@ public class SequenceNoGeneratorV2 {
                 return sequenceNo;
             }
 
-            RLock lock = redissonClient.getLock(sequenceNoLockKey + code);
+            RLock lock = redissonRedDisLock.lock(sequenceNoLockKey + code);
             boolean isLocked = false;
             try {
                 isLocked = lock.tryLock(WAITE_TIME, LEASE_TIME, TimeUnit.MILLISECONDS);

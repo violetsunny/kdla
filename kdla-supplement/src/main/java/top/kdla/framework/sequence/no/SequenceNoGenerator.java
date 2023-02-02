@@ -5,11 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StopWatch;
 import top.kdla.framework.exception.BizException;
+import top.kdla.framework.lock.RedissonRedDisLock;
 import top.kdla.framework.sequence.no.mapper.CodeGeneratorCfgMapper;
 import top.kdla.framework.sequence.no.model.entity.CodeGeneratorCfg;
 
@@ -26,18 +26,18 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class SequenceNoGenerator {
 
-
     private CodeGeneratorCfgMapper codeGeneratorCfgMapper;
-    private RedissonClient redissonClient;
-    private String sequenceNoLockKey;
 
+    private RedissonRedDisLock redissonRedDisLock;
+
+    private String sequenceNoLockKey;
 
     public void setCodeGeneratorCfgMapper(CodeGeneratorCfgMapper codeGeneratorCfgMapper) {
         this.codeGeneratorCfgMapper = codeGeneratorCfgMapper;
     }
 
-    public void setRedissonClient(RedissonClient redissonClient) {
-        this.redissonClient = redissonClient;
+    public void setRedissonClient(RedissonRedDisLock redDisLock) {
+        this.redissonRedDisLock = redDisLock;
     }
 
     public void setSequenceNoLockKey(String sequenceNoLockKey) {
@@ -56,7 +56,7 @@ public class SequenceNoGenerator {
     private static final long LEASE_TIME = 10_000;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public String getMaxNo(String code) {
+    public String getMaxNo(String code) throws Exception {
         try {
             return this.createNo(code, getKey(code));
         } catch (BizException e) {
@@ -69,7 +69,7 @@ public class SequenceNoGenerator {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public List<String> batchGetMaxNo(String code, int count) {
+    public List<String> batchGetMaxNo(String code, int count) throws Exception {
         try {
             if (count < 1) {
                 throw new BizException("不合法的入参count:" + count);
@@ -90,7 +90,7 @@ public class SequenceNoGenerator {
         }
     }
 
-    private String createNo(String code,String key) {
+    private String createNo(String code,String key) throws Exception {
         if (StringUtils.isBlank(code)) {
             throw new BizException("参数code为空");
         }
@@ -99,7 +99,7 @@ public class SequenceNoGenerator {
         synchronized (this) {
             sequenceNo = getSequenceNoFromLocalCache(code, key);
             if (sequenceNo == null) {
-                RLock lock = redissonClient.getLock(sequenceNoLockKey + code);
+                RLock lock = redissonRedDisLock.lock(sequenceNoLockKey + code);
                 boolean isLocked = false;
                 try {
                     isLocked = lock.tryLock(WAITE_TIME, LEASE_TIME, TimeUnit.MILLISECONDS);
