@@ -15,6 +15,7 @@
         <module>kdla-exception</module>
         <module>kdla-validator</module>
         <module>kdla-supplement</module>
+        <module>kdla-supplement-dingding</module>
     </modules>
     <packaging>pom</packaging>
     <name>${project.artifactId}:${project.version}</name>
@@ -134,6 +135,12 @@
             <dependency>
                 <groupId>top.kdla.framework</groupId>
                 <artifactId>kdla-supplement</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>top.kdla.framework</groupId>
+                <artifactId>kdla-supplement-dingding</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
