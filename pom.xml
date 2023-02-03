@@ -39,7 +39,7 @@
         <!--架构配置 -->
         <!--项目工具配置 -->
         <lombok.version>1.18.24</lombok.version>
-        <logback.version>1.4.5</logback.version>
+        <logback.version>1.2.11</logback.version>
         <commons-lang.version>2.6</commons-lang.version>
         <commons-io.version>2.11.0</commons-io.version>
         <commons-configuration.version>1.10</commons-configuration.version>
@@ -70,6 +70,7 @@
         <jtidy.version>r938</jtidy.version>
         <freemarker.version>2.3.31</freemarker.version>
         <mockito-junit-jupiter.version>4.6.1</mockito-junit-jupiter.version>
+        <org.mapstruct.version>1.5.2.Final</org.mapstruct.version>
         <vertx.version>4.3.1</vertx.version>
         <!--项目工具配置 -->
     </properties>
@@ -221,6 +222,12 @@
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
                 <version>${logback.version}</version>
                 <scope>provided</scope>
             </dependency>
@@ -488,6 +495,20 @@
                 <scope>provided</scope>
             </dependency>
             <!-- pdf:end -->
+
+            <!--mapstruct -->
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>${org.mapstruct.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct-processor</artifactId>
+                <version>${org.mapstruct.version}</version>
+                <scope>provided</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

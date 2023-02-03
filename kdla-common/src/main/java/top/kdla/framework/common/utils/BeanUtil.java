@@ -14,6 +14,13 @@ import java.util.Map;
  * @date 2022/1/21 19:41
  */
 public class BeanUtil {
+
+    /**
+     * 对象转换成map
+     * @param obj
+     * @return
+     * @throws Exception
+     */
     public static Map<String, Object> objectToMap(Object obj) throws Exception {
         if (obj == null) {
             return null;

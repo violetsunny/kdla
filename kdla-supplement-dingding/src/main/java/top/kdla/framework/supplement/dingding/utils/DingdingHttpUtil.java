@@ -23,8 +23,8 @@ import java.nio.charset.StandardCharsets;
  * @author kanglele
  * @version $Id: HttpUtil, v 0.1 2023/2/2 14:34 kanglele Exp $
  */
-public class HttpUtil {
-    public HttpUtil() {
+public class DingdingHttpUtil {
+    public DingdingHttpUtil() {
     }
 
     public static String doRequest(String requestUrl, String parameterData, RequestMethod requestMethod, CharsetEnum charset, ContentTypeEnum contentType, int timeOut) throws Exception {

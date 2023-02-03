@@ -157,6 +157,11 @@
             <artifactId>logback-classic</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- 工具包 -->
         <dependency>
@@ -236,6 +241,11 @@
                     <groupId>commons-codec</groupId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpmime</artifactId>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -422,6 +432,17 @@
         </dependency>
         <!-- pdf:end -->
 
+        <!--mapstruct -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
 </project>
