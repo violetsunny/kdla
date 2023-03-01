@@ -5,17 +5,18 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>top.kdla.framework</groupId>
-    <artifactId>kdla</artifactId>
+    <artifactId>kdla-comments</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <modules>
-        <module>kdla-common</module>
-        <module>kdla-dal</module>
-        <module>kdla-domain</module>
-        <module>kdla-model</module>
-        <module>kdla-exception</module>
-        <module>kdla-validator</module>
-        <module>kdla-supplement</module>
-        <module>kdla-supplement-dingding</module>
+        <module>kdla-comment-common</module>
+        <module>kdla-comment-dal</module>
+        <module>kdla-comment-domain</module>
+        <module>kdla-comment-model</module>
+        <module>kdla-comment-exception</module>
+        <module>kdla-comment-validator</module>
+        <module>kdla-comment-supplement</module>
+        <module>kdla-comment-supplement-dingding</module>
+        <module>kdla-comment-reactor</module>
     </modules>
     <packaging>pom</packaging>
     <name>${project.artifactId}:${project.version}</name>
@@ -36,6 +37,7 @@
         <mybatis-spring-boot.version>2.2.2</mybatis-spring-boot.version>
         <mybatis-plus-boot.version>3.5.2</mybatis-plus-boot.version>
         <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
+        <reactor.version>2022.0.2</reactor.version>
         <!--架构配置 -->
         <!--项目工具配置 -->
         <lombok.version>1.18.24</lombok.version>
@@ -56,7 +58,7 @@
         <fastjson.version>2.0.23</fastjson.version>
         <jackson.version>2.14.2</jackson.version>
         <jsqlparser.version>3.2</jsqlparser.version>
-        <hutool-all.version>5.4.6</hutool-all.version>
+        <hutool-all.version>5.7.16</hutool-all.version>
         <redisson-spring-boot.version>3.17.1</redisson-spring-boot.version>
         <easyexcel.version>3.1.1</easyexcel.version>
         <transmittable.version>2.11.5</transmittable.version>
@@ -72,6 +74,9 @@
         <mockito-junit-jupiter.version>4.6.1</mockito-junit-jupiter.version>
         <org.mapstruct.version>1.5.2.Final</org.mapstruct.version>
         <vertx.version>4.3.1</vertx.version>
+        <caffeine.version>2.9.3</caffeine.version>
+        <opentelemetry.version>1.23.0</opentelemetry.version>
+        <zxing.version>3.5.0</zxing.version>
         <!--项目工具配置 -->
     </properties>
     <distributionManagement>
@@ -105,49 +110,49 @@
             <!-- kdla组件 begin -->
             <dependency>
                 <groupId>top.kdla.framework</groupId>
-                <artifactId>kdla-common</artifactId>
+                <artifactId>kdla-comment-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>top.kdla.framework</groupId>
-                <artifactId>kdla-dal</artifactId>
+                <artifactId>kdla-comment-dal</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>top.kdla.framework</groupId>
-                <artifactId>kdla-domain</artifactId>
+                <artifactId>kdla-comment-domain</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>top.kdla.framework</groupId>
-                <artifactId>kdla-model</artifactId>
+                <artifactId>kdla-comment-model</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>top.kdla.framework</groupId>
-                <artifactId>kdla-exception</artifactId>
+                <artifactId>kdla-comment-exception</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>top.kdla.framework</groupId>
-                <artifactId>kdla-supplement</artifactId>
+                <artifactId>kdla-comment-supplement</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>top.kdla.framework</groupId>
-                <artifactId>kdla-supplement-dingding</artifactId>
+                <artifactId>kdla-comment-supplement-dingding</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>top.kdla.framework</groupId>
-                <artifactId>kdla-validator</artifactId>
+                <artifactId>kdla-comment-validator</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- kdla组件 end -->
@@ -210,6 +215,15 @@
                 <scope>test</scope>
             </dependency>
             <!-- spring-boot-starter -->
+
+            <!--reactor -->
+            <dependency>
+                <groupId>io.projectreactor</groupId>
+                <artifactId>reactor-bom</artifactId>
+                <version>${reactor.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
 
             <dependency>
                 <groupId>org.mockito</groupId>
@@ -507,6 +521,48 @@
                 <groupId>org.mapstruct</groupId>
                 <artifactId>mapstruct-processor</artifactId>
                 <version>${org.mapstruct.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- opentelemetry-->
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-api</artifactId>
+                <version>${opentelemetry.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-exporter-logging</artifactId>
+                <version>${opentelemetry.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-sdk-trace</artifactId>
+                <version>${opentelemetry.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-sdk</artifactId>
+                <version>${opentelemetry.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.zxing</groupId>
+                <artifactId>javase</artifactId>
+                <version>${zxing.version}</version>
                 <scope>provided</scope>
             </dependency>
         </dependencies>
