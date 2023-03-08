@@ -5,18 +5,18 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>top.kdla.framework</groupId>
-    <artifactId>kdla-comments</artifactId>
+    <artifactId>kdla-components</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <modules>
-        <module>kdla-comment-common</module>
-        <module>kdla-comment-dal</module>
-        <module>kdla-comment-domain</module>
-        <module>kdla-comment-model</module>
-        <module>kdla-comment-exception</module>
-        <module>kdla-comment-validator</module>
-        <module>kdla-comment-supplement</module>
-        <module>kdla-comment-supplement-dingding</module>
-        <module>kdla-comment-reactor</module>
+        <module>kdla-component-common</module>
+        <module>kdla-component-dal</module>
+        <module>kdla-component-domain</module>
+        <module>kdla-component-model</module>
+        <module>kdla-component-exception</module>
+        <module>kdla-component-validator</module>
+        <module>kdla-component-supplement</module>
+        <module>kdla-component-supplement-dingding</module>
+        <module>kdla-component-reactor</module>
     </modules>
     <packaging>pom</packaging>
     <name>${project.artifactId}:${project.version}</name>
@@ -110,49 +110,49 @@
             <!-- kdla组件 begin -->
             <dependency>
                 <groupId>top.kdla.framework</groupId>
-                <artifactId>kdla-comment-common</artifactId>
+                <artifactId>kdla-component-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>top.kdla.framework</groupId>
-                <artifactId>kdla-comment-dal</artifactId>
+                <artifactId>kdla-component-dal</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>top.kdla.framework</groupId>
-                <artifactId>kdla-comment-domain</artifactId>
+                <artifactId>kdla-component-domain</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>top.kdla.framework</groupId>
-                <artifactId>kdla-comment-model</artifactId>
+                <artifactId>kdla-component-model</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>top.kdla.framework</groupId>
-                <artifactId>kdla-comment-exception</artifactId>
+                <artifactId>kdla-component-exception</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>top.kdla.framework</groupId>
-                <artifactId>kdla-comment-supplement</artifactId>
+                <artifactId>kdla-component-supplement</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>top.kdla.framework</groupId>
-                <artifactId>kdla-comment-supplement-dingding</artifactId>
+                <artifactId>kdla-component-supplement-dingding</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>top.kdla.framework</groupId>
-                <artifactId>kdla-comment-validator</artifactId>
+                <artifactId>kdla-component-validator</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- kdla组件 end -->
