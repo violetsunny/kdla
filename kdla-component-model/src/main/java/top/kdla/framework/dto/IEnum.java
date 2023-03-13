@@ -1,4 +1,4 @@
-package top.kdla.framework.common.enums;
+package top.kdla.framework.dto;
 
 /**
  * 枚举定义模板

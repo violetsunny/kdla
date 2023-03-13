@@ -94,6 +94,12 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- 日志 -->
         <dependency>
             <groupId>ch.qos.logback</groupId>

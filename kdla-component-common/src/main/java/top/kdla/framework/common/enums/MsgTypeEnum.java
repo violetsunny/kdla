@@ -6,6 +6,7 @@ package top.kdla.framework.common.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import top.kdla.framework.dto.IEnum;
 
 /**
  * @author kanglele

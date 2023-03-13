@@ -3,7 +3,7 @@ package top.kdla.framework.dto.biz;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import top.kdla.framework.dto.ErrorCodeI;
+import top.kdla.framework.dto.IEnum;
 
 /**
  * @author dongguo.tao
@@ -12,7 +12,7 @@ import top.kdla.framework.dto.ErrorCodeI;
  */
 @AllArgsConstructor
 @NoArgsConstructor
-public enum QrCodeTypeEnum implements ErrorCodeI {
+public enum QrCodeTypeEnum implements IEnum {
     /**
      * 二维码
      */
@@ -27,5 +27,5 @@ public enum QrCodeTypeEnum implements ErrorCodeI {
     private String code;
 
     @Getter
-    private String msg;
+    private String desc;
 }

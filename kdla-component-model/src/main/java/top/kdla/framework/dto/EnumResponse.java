@@ -1,8 +1,14 @@
 package top.kdla.framework.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class EnumResponse<T> extends BaseModel {
     /**
      * 枚举的code
