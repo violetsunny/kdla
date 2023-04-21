@@ -6,7 +6,6 @@ import java.lang.annotation.*;
  * 分布式锁注解类
  *
  * @author kll
- * @auther wangjyc@enn.cn
  * @date 2021-05-17
  */
 @Target(value = {ElementType.METHOD})

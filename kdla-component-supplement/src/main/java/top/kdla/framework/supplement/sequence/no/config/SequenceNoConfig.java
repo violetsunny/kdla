@@ -23,7 +23,7 @@ import top.kdla.framework.supplement.sequence.no.mapper.CodeGeneratorCfgV2Mapper
 @ConditionalOnProperty(name = "top.kdla.framework.supplement.sequence.no.enable", havingValue = "true")
 public class SequenceNoConfig {
 
-    @Value("${kdla.sequence.lock.key.prefix:enn::sequenceNo::}")
+    @Value("${kdla.sequence.lock.key.prefix:top::sequenceNo::}")
     private String sequenceNoLockKey;
 
     @Bean

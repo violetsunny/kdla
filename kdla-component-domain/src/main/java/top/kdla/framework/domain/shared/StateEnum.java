@@ -2,9 +2,7 @@ package top.kdla.framework.domain.shared;
 
 
 import lombok.Getter;
-import top.kdla.framework.dto.IEnum;
-
-import java.util.Objects;
+import org.springframework.util.StringUtils;
 
 /**
  * 用户状态枚举
@@ -13,17 +11,17 @@ import java.util.Objects;
  * @date 2021-02-02
  **/
 @Getter
-public enum StateEnum implements ValueObject<StateEnum>, IEnum<Integer> {
+public enum StateEnum implements ValueObject<StateEnum> {
 
     /**
      * 有效
      */
-    ENABLE(0, "有效"),
+    ENABLE(0,"有效"),
 
     /**
      * 禁用
      */
-    DISABLE(1, "禁用");
+    DISABLE(1,"禁用");
 
 
     private Integer code;
@@ -42,12 +40,12 @@ public enum StateEnum implements ValueObject<StateEnum>, IEnum<Integer> {
      * @param code
      * @return
      */
-    public static String getDescByCode(Integer code) {
-        if (Objects.isNull(code)) {
+    public static String getDescByCode(Integer code){
+        if(StringUtils.isEmpty(code)) {
             return "";
         }
         for (StateEnum s : StateEnum.values()) {
-            if (code.equals(s.getCode())) {
+            if(code.equals(s.getCode())){
                 return s.getDesc();
             }
         }
@@ -60,12 +58,12 @@ public enum StateEnum implements ValueObject<StateEnum>, IEnum<Integer> {
      * @param code
      * @return
      */
-    public static StateEnum getStateEnum(Integer code) {
-        if (Objects.isNull(code)) {
+    public static StateEnum getStateEnum(Integer code){
+        if(StringUtils.isEmpty(code)) {
             return null;
         }
         for (StateEnum s : StateEnum.values()) {
-            if (code.equals(s.getCode())) {
+            if(code.equals(s.getCode())){
                 return s;
             }
         }

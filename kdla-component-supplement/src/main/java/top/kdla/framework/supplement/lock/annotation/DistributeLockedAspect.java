@@ -21,7 +21,6 @@ import javax.annotation.Resource;
 import java.lang.reflect.Method;
 
 /**
- * @auther wangjyc@enn.cn
  * @date 2021-05-17
  */
 @Component

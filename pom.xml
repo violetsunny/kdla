@@ -21,7 +21,6 @@
     <packaging>pom</packaging>
     <name>${project.artifactId}:${project.version}</name>
     <description>${project.artifactId}</description>
-    <!--<url>http://www.51metaverse.top</url>-->
 
     <properties>
         <!--基础配置 -->

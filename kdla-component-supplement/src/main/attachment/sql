@@ -15,7 +15,7 @@ CREATE TABLE `code_generator_cfg` (
 `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
 PRIMARY KEY (`id`),
 UNIQUE KEY `uk_key` (`code`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=1  COMMENT='流水号配置表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  COMMENT='流水号配置表';
 
 2)新增规则的语句V1
 insert into code_generator_cfg
