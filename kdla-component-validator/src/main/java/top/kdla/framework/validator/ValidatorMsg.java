@@ -31,7 +31,7 @@ public class ValidatorMsg {
 
     /**
      * 按照逻辑校验后，输出信息 booleanSupplier有一次错误就不会再执行，resultMsg只返回第一次报错的信息。
-     * 
+     *
      * @param booleanSupplier
      * @param msg
      * @return
@@ -46,7 +46,7 @@ public class ValidatorMsg {
 
     /**
      * 按照逻辑校验后，输出信息 booleanSupplier每一个都执行，resultMsgList将所有错误信息收集。
-     * 
+     *
      * @param booleanSupplier
      * @param msg
      * @return

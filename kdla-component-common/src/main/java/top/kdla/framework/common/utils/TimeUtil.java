@@ -1,7 +1,5 @@
 package top.kdla.framework.common.utils;
 
-import org.springframework.stereotype.Component;
-
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -13,7 +11,6 @@ import static java.lang.System.currentTimeMillis;
  * @author kll
  * @date 2021/8/2
  */
-@Component("timeUtilSupport")
 public class TimeUtil {
 
     public static final int MILLION_SECOND_UNIT = 1000;
@@ -23,7 +20,7 @@ public class TimeUtil {
      * 获得当前时间的ms
      * @return long
      */
-    public long now() {
+    public static long now() {
         return currentTimeMillis();
     }
 
@@ -33,7 +30,7 @@ public class TimeUtil {
      * @param days 天数
      * @return long
      */
-    public long getTimestampWithFewDaysAgo(final long timestamp, final int days) {
+    public static long getTimestampWithFewDaysAgo(final long timestamp, final int days) {
         long fewDaysAgo = timestamp - TimeUnit.DAYS.toMillis(days);
         if (fewDaysAgo <= 0) {
             return 0;
@@ -46,7 +43,7 @@ public class TimeUtil {
      * @param minutes  分钟数
      * @return long
      */
-    public long getTimestampWithFewMinutes(final long timestamp, final int minutes) {
+    public static long getTimestampWithFewMinutes(final long timestamp, final int minutes) {
         long fewMinutesAgo = timestamp - TimeUnit.MINUTES.toMillis(minutes);
         if (fewMinutesAgo <= 0) {
             return 0;
@@ -60,7 +57,7 @@ public class TimeUtil {
      * @param end  结束时间ms
      * @return long
      */
-    public long getMinutesBetween(final Optional<Long> begin,
+    public static long getMinutesBetween(final Optional<Long> begin,
         final Optional<Long> end) {
         if (!begin.isPresent() || !end.isPresent()) {
             return -1;

@@ -3,7 +3,6 @@
 package top.kdla.framework.common.utils;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -22,8 +21,14 @@ import java.util.Date;
 public class DateUtil {
 	/** 时间格式(yyyy-MM-dd) */
 	public final static String DATE_PATTERN = "yyyy-MM-dd";
+    /** 时间格式(yyyy/MM/dd) */
+    public final static String DATE_PATTERN_1 = "yyyy/MM/dd";
 	/** 时间格式(yyyy-MM-dd HH:mm:ss) */
 	public final static String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
+    /** 时间格式(yyyy/MM/dd HH:mm:ss) */
+    public final static String DATE_TIME_PATTERN_1 = "yyyy/MM/dd HH:mm:ss";
+    /** 时间格式(yyyy-MM-dd HH:mm:ss.SSS) */
+    public final static String DATE_TIME_PATTERN_2 = "yyyy-MM-dd HH:mm:ss.SSS";
 
     /**
      * 日期格式化 日期格式为：yyyy-MM-dd
@@ -41,7 +46,7 @@ public class DateUtil {
      * @return  返回yyyy-MM-dd格式日期
      */
     public static String format(Date date, String pattern) {
-        if(null != date && StringUtils.isNotEmpty(pattern)) {
+        if(null != date && KdlaStringUtil.isNotEmpty(pattern)) {
             ThreadLocal<SimpleDateFormat> formatThreadLocal = ThreadLocal.withInitial(() -> new SimpleDateFormat(pattern));
             try {
                 return formatThreadLocal.get().format(date);
@@ -61,7 +66,7 @@ public class DateUtil {
      * @param pattern 日期的格式，如：DateUtils.DATE_TIME_PATTERN
      */
     public static Date stringToDate(String strDate, String pattern) {
-        if (StringUtils.isBlank(strDate)){
+        if (KdlaStringUtil.isBlank(strDate)){
             return null;
         }
 

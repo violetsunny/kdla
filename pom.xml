@@ -16,6 +16,8 @@
         <module>kdla-component-validator</module>
         <module>kdla-component-supplement</module>
         <module>kdla-component-supplement-dingding</module>
+        <module>kdla-component-supplement-cache</module>
+        <module>kdla-component-supplement-monitor</module>
         <module>kdla-component-reactor</module>
     </modules>
     <packaging>pom</packaging>
@@ -26,8 +28,8 @@
         <!--基础配置 -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
         <java.version>1.8</java.version>
         <kdla.framework.version>1.0.0-SNAPSHOT</kdla.framework.version>
         <!--基础配置 -->
@@ -72,10 +74,11 @@
         <freemarker.version>2.3.31</freemarker.version>
         <mockito-junit-jupiter.version>4.6.1</mockito-junit-jupiter.version>
         <org.mapstruct.version>1.5.2.Final</org.mapstruct.version>
-        <vertx.version>4.3.1</vertx.version>
+        <vertx.version>4.4.2</vertx.version>
         <caffeine.version>2.9.3</caffeine.version>
         <opentelemetry.version>1.23.0</opentelemetry.version>
         <zxing.version>3.5.0</zxing.version>
+        <prometheus.version>0.16.0</prometheus.version>
         <!--项目工具配置 -->
     </properties>
     <distributionManagement>
@@ -146,6 +149,18 @@
             <dependency>
                 <groupId>top.kdla.framework</groupId>
                 <artifactId>kdla-component-supplement-dingding</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>top.kdla.framework</groupId>
+                <artifactId>kdla-component-supplement-cache</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>top.kdla.framework</groupId>
+                <artifactId>kdla-component-supplement-monitor</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -382,6 +397,18 @@
 
             <dependency>
                 <groupId>io.vertx</groupId>
+                <artifactId>vertx-web-client</artifactId>
+                <version>${vertx.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-codegen</artifactId>
+                <version>${vertx.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.vertx</groupId>
                 <artifactId>vertx-core</artifactId>
                 <version>${vertx.version}</version>
                 <scope>provided</scope>
@@ -562,6 +589,19 @@
                 <groupId>com.google.zxing</groupId>
                 <artifactId>javase</artifactId>
                 <version>${zxing.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>simpleclient_httpserver</artifactId>
+                <version>${prometheus.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>simpleclient_pushgateway</artifactId>
+                <version>${prometheus.version}</version>
                 <scope>provided</scope>
             </dependency>
         </dependencies>

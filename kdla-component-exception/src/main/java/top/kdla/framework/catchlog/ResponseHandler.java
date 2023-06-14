@@ -15,11 +15,9 @@ public class ResponseHandler {
 
     public static Object handle(Class returnType, String code, String message) {
         //TODO other response
-
         if (isKdlaResponse(returnType)) {
             return handleKdlaResponse(returnType, code, message);
         }
-
         return Response.buildFailure(code, message);
     }
 

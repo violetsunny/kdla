@@ -55,7 +55,7 @@ public class RegexUtil {
     private static Pattern DATE_TIME_PATTERN_2 = Pattern.compile("^\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2}$");
 
     /**
-     * 日期时间格式 yyyy:MM:dd HH:mm:ss.SSS
+     * 日期时间格式 yyyy-MM-dd HH:mm:ss.SSS
      */
     private static Pattern DATETIME_WITH_MILLISECOND_PATTERN_1 = Pattern.compile("^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}$");
 

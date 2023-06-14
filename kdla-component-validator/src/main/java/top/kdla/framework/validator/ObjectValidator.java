@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * 对复杂对象中有需要校验的注解进行校验
  *
  * @author kanglele
- * @version $Id: InventoryValidator, v 0.1 2021/9/29 19:00 Exp $
+ * @version $Id: ObjectValidator, v 0.1 2021/9/29 19:00 Exp $
  */
 public class ObjectValidator<T> extends ValidatorHandler<T> implements Validator<T> {
 
@@ -51,8 +51,12 @@ public class ObjectValidator<T> extends ValidatorHandler<T> implements Validator
     /**
      * 对象越复杂层级越深，性能就越差
      *
-     * @param t          被匹配的对象
+     * @param t          需要被校验的实例对象
      * @param annotation 标记的注解，必须要指定（match，nonMatch，message）
+     *                   例如：
+     *                   Object[] match() default {};
+     *                   Object[] nonMatch() default {};
+     *                   String message() default "{validator's value is invalid}";
      * @param bizObj     当前需要匹配的数据
      * @param msg        错误信息
      * @param <T>
@@ -66,13 +70,13 @@ public class ObjectValidator<T> extends ValidatorHandler<T> implements Validator
             Object fieldObject = field.get(t);
 
             if (field.isAnnotationPresent(annotation)) {
-                Method method_match = annotation.getMethod("match" , null);
-                Method method_nonMatch = annotation.getMethod("nonMatch" , null);
-                Method method_message = annotation.getMethod("message" , null);
+                Method method_match = annotation.getMethod("match", null);
+                Method method_nonMatch = annotation.getMethod("nonMatch", null);
+                Method method_message = annotation.getMethod("message", null);
 
                 // 获取到注解对象
                 Object annotationObj = field.getAnnotation(annotation);
-                // 反射调用方法
+                // 反射调用方法 method.invoke(静态方法是null非静态方法是所属实例Obj,参数)
                 Object[] objs_match = (Object[]) method_match.invoke(annotationObj, null);
                 Object[] objs_nonMatch = (Object[]) method_nonMatch.invoke(annotationObj, null);
                 //空是都校验，不需要校验则跳过
@@ -126,7 +130,7 @@ public class ObjectValidator<T> extends ValidatorHandler<T> implements Validator
 
     /**
      * 如果实体中有新的基本类型，不能再往子属性中校验的，一定要在getCommonlyClass加入，剔除掉。
-     * 不然会报 StackOverflowError：InventoryValidator.getClassErrorMsg
+     * 不然会报 StackOverflowError：ObjectValidator.getClassErrorMsg
      *
      * @return
      */
