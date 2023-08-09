@@ -38,8 +38,9 @@ public class VertxHttpConfig {
     private int maxWaitQueueSize;
 
     @Bean
-    public Vertx vertx() {
-        return Vertx.vertx();
+    @ConditionalOnMissingBean(VertxHttpClient.class)
+    public VertxHttpClient vertxHttpClient() {
+        return new VertxHttpClient(webClient());
     }
 
     @Bean
@@ -57,10 +58,16 @@ public class VertxHttpConfig {
                 .setMaxWaitQueueSize(maxWaitQueueSize));
     }
 
+    @Bean
+    public Vertx vertx() {
+        return Vertx.vertx();
+    }
+
     @PreDestroy
     public void close() {
         webClient().close();
         vertx().close();
     }
+
 
 }

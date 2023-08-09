@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
 
@@ -35,11 +36,18 @@ public class RestHttpConfig {
     private int connectReqTimeout;
 
     @Bean
+    @ConditionalOnMissingBean(BaseHttpClient.class)
+    public BaseHttpClient baseHttpClient() {
+        return new BaseHttpClient(restTemplate());
+    }
+
+    @Bean
     @ConditionalOnMissingBean(RestTemplate.class)
     public RestTemplate restTemplate() {
-    	RestTemplate restTemplate = new RestTemplate();
+        RestTemplate restTemplate = new RestTemplate();
         restTemplate.setRequestFactory(httpRequestFactory());
-    	return restTemplate;
+        restTemplate.setErrorHandler(new DefaultResponseErrorHandler());
+        return restTemplate;
     }
 
     @Bean

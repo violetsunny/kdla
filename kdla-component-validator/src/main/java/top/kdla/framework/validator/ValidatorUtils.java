@@ -29,15 +29,14 @@ public class ValidatorUtils {
      * @param groups 待校验的组
      * @throws BizException 校验不通过，则报BizException异常
      */
-    public static void validate(Object object, Class<?>... groups)
-            throws BizException {
+    public static void validate(Object object, Class<?>... groups) throws BizException {
         Set<ConstraintViolation<Object>> constraintViolations = validator.validate(object, groups);
         if (!constraintViolations.isEmpty()) {
             StringBuilder msg = new StringBuilder();
             for (ConstraintViolation<Object> constraint : constraintViolations) {
                 msg.append(constraint.getMessage()).append("<br>");
             }
-            throw new BizException(ErrorCode.PARAMETER_ERROR,msg.toString());
+            throw new BizException(ErrorCode.PARAMETER_ERROR, msg.toString());
         }
     }
 
@@ -47,15 +46,14 @@ public class ValidatorUtils {
      * @param object 待校验对象
      * @throws BizException 校验不通过，则报BizException异常
      */
-    public static void validate(Object object)
-            throws BizException {
+    public static void validate(Object object) throws BizException {
         Set<ConstraintViolation<Object>> constraintViolations = validator.validate(object);
         if (!constraintViolations.isEmpty()) {
             StringBuilder msg = new StringBuilder();
             for (ConstraintViolation<Object> constraint : constraintViolations) {
                 msg.append(constraint.getMessage()).append("<br>");
             }
-            throw new BizException(ErrorCode.PARAMETER_ERROR,msg.toString());
+            throw new BizException(ErrorCode.PARAMETER_ERROR, msg.toString());
         }
     }
 }

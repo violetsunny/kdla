@@ -5,6 +5,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
+ * 条形码/二维码
  * @author dongguo.tao
  * @description
  * @date 2021-12-22 09:48:58

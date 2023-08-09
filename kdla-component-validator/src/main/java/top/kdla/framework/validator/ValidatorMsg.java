@@ -3,6 +3,9 @@
  */
 package top.kdla.framework.validator;
 
+import top.kdla.framework.dto.ErrorCode;
+import top.kdla.framework.exception.BizException;
+
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
@@ -32,8 +35,8 @@ public class ValidatorMsg {
     /**
      * 按照逻辑校验后，输出信息 booleanSupplier有一次错误就不会再执行，resultMsg只返回第一次报错的信息。
      *
-     * @param booleanSupplier
-     * @param msg
+     * @param booleanSupplier 正确结果的反
+     * @param msg             输出信息
      * @return
      */
     public ValidatorMsg resultMsg(BooleanSupplier booleanSupplier, String msg) {
@@ -45,10 +48,36 @@ public class ValidatorMsg {
     }
 
     /**
+     * 按照逻辑校验后，输出信息 booleanSupplier有一次错误就不会再执行,并且会向外抛出异常，resultMsg只返回第一次报错的信息。
+     *
+     * @param booleanSupplier 正确结果的反
+     * @param msg             输出信息
+     * @return
+     */
+    public static void resultMsgException(BooleanSupplier booleanSupplier, String msg) throws BizException {
+        if (booleanSupplier.getAsBoolean()) {
+            throw new BizException(ErrorCode.PARAMETER_ERROR, msg);
+        }
+    }
+
+    /**
+     * 按照逻辑校验后，输出信息 booleanSupplier有一次错误就不会再执行,并且会向外抛出异常，resultMsg只返回第一次报错的信息。
+     *
+     * @param booleanSupplier 正确结果的反
+     * @param msg             输出信息
+     * @return
+     */
+    public static void resultMsgException(BooleanSupplier booleanSupplier, String msg, Object... objs) throws BizException {
+        if (booleanSupplier.getAsBoolean()) {
+            throw new BizException(ErrorCode.PARAMETER_ERROR.getCode(), msg, objs);
+        }
+    }
+
+    /**
      * 按照逻辑校验后，输出信息 booleanSupplier每一个都执行，resultMsgList将所有错误信息收集。
      *
-     * @param booleanSupplier
-     * @param msg
+     * @param booleanSupplier 正确结果的反
+     * @param msg             输出信息
      * @return
      */
     public ValidatorMsg resultMsgList(BooleanSupplier booleanSupplier, String msg) {

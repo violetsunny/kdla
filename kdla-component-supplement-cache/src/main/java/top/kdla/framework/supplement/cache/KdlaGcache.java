@@ -4,11 +4,17 @@
  */
 package top.kdla.framework.supplement.cache;
 
-import com.google.common.cache.*;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheStats;
+import com.google.common.cache.RemovalListener;
+import lombok.Data;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * guava缓存
@@ -25,61 +31,159 @@ public class KdlaGcache<T, E> {
     @Value("${kdla.gcache.concurrency.level:4}")
     private Integer concurrencyLevel;
     /**
-     * 缓存过期时间，毫秒
+     * 缓存过期时间，秒
      */
-    @Value("${kdla.gcache.expire.after.write:1000}")
+    @Value("${kdla.gcache.expire.after.write:600}")
     private Long duration;
     /**
      * 缓存初始容量
      */
-    @Value("${kdla.gcache.initial.capacity:10}")
+    @Value("${kdla.gcache.initial.capacity:100}")
     private Integer initialCapacity;
     /**
      * 缓存最大容量
      */
-    @Value("${kdla.gcache.maximum.size:100}")
+    @Value("${kdla.gcache.maximum.size:10000}")
     private Integer maximumSize;
 
-    public KdlaGcache() {
-        super();
-        init();
+    public void initKdlaGcache() {
+        this.init();
     }
 
-    private LoadingCache<T, E> loadingCache;
+    /**
+     * @param duration    超时时间，秒
+     * @param maximumSize 最大容量，超过则移除
+     */
+    public void initKdlaGcache(Long duration, Integer maximumSize) {
+        this.setGCache(duration, maximumSize);
+        this.init();
+    }
 
+    private Cache<T, CacheValue<E>> loadingCache;
+
+    @Setter
+    private Function<T, E> loaderFunction;
+
+    /**
+     * 设置超时时间和最大容量，并初始化GCache
+     *
+     * @param duration    超时时间，秒
+     * @param maximumSize 最大容量，超过则移除
+     */
+    private void setGCache(Long duration, Integer maximumSize) {
+        this.duration = duration != null && duration != 0 ? this.duration = duration : this.duration;
+        this.maximumSize = maximumSize != null && maximumSize != 0 ? this.maximumSize = maximumSize : this.maximumSize;
+    }
+
+    /**
+     * 初始化GCache
+     */
     private void init() {
         // 缓存接口这里是LoadingCache，LoadingCache在缓存项不存在时可以自动加载缓存
-        loadingCache
+        this.loadingCache
                 // CacheBuilder的构造函数是私有的，只能通过其静态方法newBuilder()来获得CacheBuilder的实例
                 = CacheBuilder.newBuilder()
                 // 设置并发级别，并发级别是指可以同时写缓存的线程数
-                .concurrencyLevel(concurrencyLevel)
+                .concurrencyLevel(this.concurrencyLevel)
                 // 设置写缓存过期
-                .expireAfterWrite(duration, TimeUnit.MILLISECONDS)
+                .expireAfterWrite(this.duration, TimeUnit.SECONDS)
                 // 设置缓存容器的初始容量
-                .initialCapacity(initialCapacity)
+                .initialCapacity(this.initialCapacity)
                 // 设置缓存最大容量，按照LRU最近虽少使用算法来移除缓存项
-                .maximumSize(maximumSize)
+                .maximumSize(this.maximumSize)
                 // 设置要统计缓存的命中率
                 .recordStats()
                 // 设置缓存的移除通知
-                .removalListener(new RemovalListener<T, E>() {
-                    public void onRemoval(RemovalNotification<T, E> notification) {
-                        log.info("{} was removed, cause is {}", notification.getKey(), notification.getCause());
-                    }
-                })
+                .removalListener((RemovalListener<T, CacheValue<E>>) notification -> log.info("KdlaGcache {} was removed, cause is {}", notification.getKey(), notification.getCause()))
                 // build方法中可以指定CacheLoader，在缓存不存在时通过CacheLoader的实现自动加载缓存
-                .build(new CacheLoader<T, E>() {
-
-                    @Override
-                    public E load(T t) throws Exception {
-                        log.info("cache load {}", t.toString());
-                        return null;
-                    }
-                });
+                .build();
     }
 
-    public LoadingCache<T, E> getGcache() {
+    /**
+     * 获取Cache
+     *
+     * @return
+     */
+    public Cache<T, CacheValue<E>> getGCache() {
         return this.loadingCache;
     }
+
+    /**
+     * cache value
+     */
+    @Data
+    private static class CacheValue<E> {
+        //cache value
+        private E value;
+        //秒
+        private Long expiryTime;
+
+        CacheValue(E value, Long expiryTime) {
+            this.value = value;
+            this.expiryTime = expiryTime;
+        }
+    }
+
+    /**
+     * 放入缓存
+     *
+     * @param key
+     * @param duration 秒
+     */
+    public synchronized void put(T key, Long duration) {
+        E value = this.loaderFunction == null ? null : this.loaderFunction.apply(key);
+        assert value != null;
+        long expiryTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(duration);
+        this.loadingCache.put(key, new CacheValue<>(value, expiryTime));
+    }
+
+    /**
+     * 获取
+     *
+     * @param key
+     */
+    public synchronized E get(T key) {
+        CacheValue<E> cacheValue = this.loadingCache.getIfPresent(key);
+        if (cacheValue == null || System.currentTimeMillis() > cacheValue.getExpiryTime()) {
+            this.loadingCache.invalidate(key);
+            return null;
+        }
+        return cacheValue.getValue();
+    }
+
+
+    /**
+     * 删除
+     *
+     * @param key
+     */
+    public void del(T key) {
+        this.loadingCache.invalidate(key);
+    }
+
+    /**
+     * 清除
+     */
+    public void clear() {
+        this.loadingCache.invalidateAll();
+    }
+
+    /**
+     * 缓存大小
+     *
+     * @return
+     */
+    public long size() {
+        return this.loadingCache.size();
+    }
+
+    /**
+     * 统计信息
+     *
+     * @return
+     */
+    public CacheStats getStats() {
+        return this.loadingCache.stats();
+    }
+
 }

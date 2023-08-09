@@ -43,22 +43,27 @@ public class StopWatchWrapperAspect {
         Class<?> classTarget = joinPoint.getTarget().getClass();
         String methodName = joinPoint.getSignature().getName();
         Class<?>[] par = ((MethodSignature) joinPoint.getSignature()).getParameterTypes();
-
+        //Object[] args = joinPoint.getArgs();
         Method objMethod = classTarget.getMethod(methodName, par);
 
         StopWatchWrapper stopWatchWrapper = objMethod.getAnnotation(StopWatchWrapper.class);
+        //StopWatchWrapper stopWatchWrapper =  ((MethodSignature) joinPoint.getSignature()).getMethod().getAnnotation(StopWatchWrapper.class);
         String logTitle = stopWatchWrapper.logHead() + " " + className + " " + methodName + " " + stopWatchWrapper.msg();
 
         Stopwatch sw = Stopwatch.createStarted();
-        Object ob = joinPoint.proceed();
-        sw.stop();
-        //不同的级别打印日志不同
-        if (sw.elapsed(TimeUnit.MILLISECONDS) > errorTimeOut) {
-            log.error(logTitle + " " + "接口超过" + errorTimeOut + "ms 运行:{}", sw.toString());
-        } else if (sw.elapsed(TimeUnit.MILLISECONDS) > warnTimeOut) {
-            log.warn(logTitle + " " + "接口超过" + warnTimeOut + "ms 运行:{}", sw.toString());
-        } else {
-            log.info(logTitle + " " + "运行:{}", sw.toString());
+        Object ob;
+        try {
+            ob = joinPoint.proceed();
+        } finally {
+            sw.stop();
+            //不同的级别打印日志不同
+            if (sw.elapsed(TimeUnit.MILLISECONDS) > errorTimeOut) {
+                log.error(logTitle + " " + "接口超过" + errorTimeOut + "ms 运行:{}", sw.toString());
+            } else if (sw.elapsed(TimeUnit.MILLISECONDS) > warnTimeOut) {
+                log.warn(logTitle + " " + "接口超过" + warnTimeOut + "ms 运行:{}", sw.toString());
+            } else {
+                log.info(logTitle + " " + "运行:{}", sw.toString());
+            }
         }
         return ob;
     }

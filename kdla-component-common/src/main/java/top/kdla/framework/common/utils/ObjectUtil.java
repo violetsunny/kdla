@@ -22,17 +22,14 @@ public class ObjectUtil {
 
             bo.close();
             oo.close();
-
-
         } catch (Exception e) {
-            System.out.println("translation" + e.getMessage());
-            e.printStackTrace();
+            log.error("ObjectUtil ObjectToByte Exception", e);
         }
         return bytes;
     }
 
 
-    public static Object ByteToObject(byte[] bytes) {
+    public static Object byteToObject(byte[] bytes) {
         Object obj = null;
         try {
             // bytearray to object
@@ -40,11 +37,11 @@ public class ObjectUtil {
             ObjectInputStream oi = new ObjectInputStream(bi);
 
             obj = oi.readObject();
+
             bi.close();
             oi.close();
         } catch (Exception e) {
-            System.out.println("translation" + e.getMessage());
-            e.printStackTrace();
+            log.error("ObjectUtil byteToObject Exception", e);
         }
         return obj;
     }

@@ -6,13 +6,14 @@ import lombok.NoArgsConstructor;
 import top.kdla.framework.dto.IEnum;
 
 /**
+ * 条形码/二维码
  * @author dongguo.tao
  * @description
  * @date 2021-12-21 10:51:19
  */
 @AllArgsConstructor
 @NoArgsConstructor
-public enum QrCodeTypeEnum implements IEnum {
+public enum QrCodeTypeEnum implements IEnum<String> {
     /**
      * 二维码
      */

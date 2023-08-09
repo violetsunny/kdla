@@ -43,7 +43,7 @@ public class PrometheusPointAspect {
         Counter counter = Counter.build(prometheusCounter.name(), prometheusCounter.help()).labelNames("type").register(registry);
         counter.labels(prometheusCounter.type()).inc();
         Object ob = joinPoint.proceed();
-        log.info("{} {} 进行统计打点", prometheusCounter.name(), prometheusCounter.help());
+        log.info("PrometheusCounter {} {} 进行统计打点", prometheusCounter.name(), prometheusCounter.help());
         return ob;
     }
 

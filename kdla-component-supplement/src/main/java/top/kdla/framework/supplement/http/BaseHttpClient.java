@@ -1,59 +1,47 @@
 package top.kdla.framework.supplement.http;
 
 
+import com.alibaba.fastjson.JSON;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.annotation.Resource;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
-@Component
 public class BaseHttpClient {
 
-    @Autowired
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
-    private HttpHeaders headers;
+    @Getter
+    private final HttpHeaders headers;
 
-    protected BaseHttpClient() {
-        headers = new HttpHeaders();
+    public BaseHttpClient(RestTemplate restTemplate) {
+        this.headers = new HttpHeaders();
+        this.restTemplate = restTemplate;
     }
 
     public void setHeaders(Map<String, String> headerMap) {
         this.headers.setAll(headerMap);
     }
 
-    public HttpHeaders getHeaders() {
-        return this.headers;
-    }
-
-    public HttpEntity<String> get(String url) {
-        log.info("BaseHttpClient.get:URL:{}" ,url);
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
-        return restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.GET, entity, String.class);
-    }
 
     public ResponseEntity<String> get(String url, Map<String, Object> params) {
-        log.info("BaseHttpClient.get:URL:" + url + ";params:" + params.toString());
+        log.info("BaseHttpClient.get:URL:{};params:{}", url, JSON.toJSONString(params));
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
-        for (Map.Entry<String, Object> entry : params.entrySet()) {
-            builder.queryParam(entry.getKey(), entry.getValue());
+        if (params != null) {
+            for (Map.Entry<String, Object> entry : params.entrySet()) {
+                builder.queryParam(entry.getKey(), entry.getValue());
+            }
         }
         HttpEntity<?> entity = new HttpEntity<>(headers);
-
-        restTemplate.setErrorHandler(new DefaultResponseErrorHandler());
         ResponseEntity<String> response = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.GET, entity, String.class);
 
         if (response.getStatusCode().is2xxSuccessful()
@@ -62,27 +50,37 @@ public class BaseHttpClient {
         }
 
         log.error("Get error: {}", response.getBody());
-        throw new RestClientException(response.getBody());
+        throw new RestClientException(url + " 请求异常");
     }
 
 
-    public HttpEntity<String> put(String url, Map<String, Object> body) {
+    public ResponseEntity<String> put(String url, Map<String, Object> body) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
-        return restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.PUT, entity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.PUT, entity, String.class);
+
+        if (response.getStatusCode().is2xxSuccessful()
+                || response.getStatusCode().is4xxClientError()) {
+            return response;
+        }
+
+        log.error("put error: {}", response.getBody());
+        throw new RestClientException(url + " 请求异常");
     }
 
-    public HttpEntity<String> post(String url, Map body) {
+    public ResponseEntity<String> post(String url, Object body) {
+        log.info("BaseHttpClient.post URL:{} body:{}", url, JSON.toJSONString(body));
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
-        return restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity, String.class);
-    }
+        ResponseEntity<String> response = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity, String.class);
 
+        if (response.getStatusCode().is2xxSuccessful()
+                || response.getStatusCode().is4xxClientError()) {
+            return response;
+        }
 
-    public HttpEntity<String> post(String url, List body) {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
-        HttpEntity<?> entity = new HttpEntity<>(body, headers);
-        return restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity, String.class);
+        log.error("post error: {}", response.getBody());
+        throw new RestClientException(url + " 请求异常");
     }
 
 }
