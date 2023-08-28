@@ -19,6 +19,8 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.util.CharsetUtil;
+import io.netty.util.ReferenceCountUtil;
+import io.netty.util.concurrent.DefaultPromise;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -28,15 +30,20 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import top.kdla.framework.common.help.ThreadPoolHelp;
+import top.kdla.framework.dto.ErrorCode;
+import top.kdla.framework.exception.BizException;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author kanglele
@@ -52,11 +59,15 @@ public class NettyHttpClient {
     @Setter
     private Map<String, String> headers;
 
+    private final ThreadPoolHelp threadPoolHelp = new ThreadPoolHelp();
+
     @Getter
     private final TransmittableThreadLocal<String> response = new TransmittableThreadLocal<>();
 
-    public void connect(String url, Object msg, HttpMethod method) throws Exception {
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+    public String connect(String url, Object msg, HttpMethod method) throws Exception {
+        EventLoopGroup workerGroup = new NioEventLoopGroup(1, threadPoolHelp.getDefaultExecutorService());
+        AtomicBoolean close = new AtomicBoolean(false);
+        OutputResultHandler2 outputHandler = new OutputResultHandler2();
         try {
             Bootstrap b = new Bootstrap();
             b.group(workerGroup)
@@ -64,44 +75,64 @@ public class NettyHttpClient {
                     .channel(NioSocketChannel.class)
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000)
                     .option(ChannelOption.SO_KEEPALIVE, this.keepAlive)
-                    .handler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        public void initChannel(SocketChannel ch) throws Exception {
-                            if (ssl) {
-                                //配置Https通信
-                                SslContext context = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build();
-                                ch.pipeline().addLast(context.newHandler(ch.alloc()));
-                                //SSLEngine engine = SslContextFactory.getClientContext().createSSLEngine();
-                                //engine.setUseClientMode(true);
-                                //ch.pipeline().addLast("ssl", new SslHandler(engine));
-                            }
-                            ch.pipeline().addLast(new HttpClientCodec());
-                            //HttpObjectAggregator会将多个HttpResponse和HttpContents对象再拼装成一个单一的FullHttpRequest或是FullHttpResponse
-                            ch.pipeline().addLast("aggre", new HttpObjectAggregator(10 * 1024 * 1024));
-                            //解压
-                            ch.pipeline().addLast("decompressor", new HttpContentDecompressor());
-                            // 客户端接收到的是httpResponse响应，所以要使用HttpResponseDecoder进行解码
-                            ch.pipeline().addLast(new HttpResponseDecoder());
-                            // 客户端发送的是httprequest，所以要使用HttpRequestEncoder进行编码
-                            ch.pipeline().addLast(new HttpRequestEncoder());
-                            // 获取返回
-                            ch.pipeline().addLast(new OutputResultHandler2());
-                        }
-                    });
+                    .handler(new HttpClientInitializer(ssl, outputHandler));
 
             // Start the client.
-            ChannelFuture f = b.connect().sync();
-
+            ChannelFuture f = b.connect();
+            DefaultPromise<String> respPromise = new DefaultPromise<>(f.channel().eventLoop());
+            outputHandler.setResp(respPromise);
             HttpRequest request = getRequestMethod(url, method, msg);
             // 发送http请求
-            f.channel().write(request);
-            f.channel().flush();
-            //f.channel().closeFuture().sync();
-            f.channel().closeFuture();
+            f.channel().writeAndFlush(request);
+            //f.channel().closeFuture().sync();//不建议使用阻塞方式
+            f.channel().closeFuture().addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    workerGroup.shutdownGracefully();
+                    close.set(true);
+                    log.info(future.channel().toString() + "链路关闭");
+                }
+            });
+
+            //response
+            return respPromise.get();
         } finally {
-            workerGroup.shutdownGracefully();
+            if (!close.get()) {
+                workerGroup.shutdownGracefully();
+            }
         }
 
+    }
+
+    private class HttpClientInitializer extends ChannelInitializer<SocketChannel> {
+        private final boolean ssl;
+
+        private final OutputResultHandler2 outputHandler;
+
+        public HttpClientInitializer(boolean ssl, OutputResultHandler2 outputHandler) {
+            this.ssl = ssl;
+            this.outputHandler = outputHandler;
+        }
+
+        @Override
+        protected void initChannel(SocketChannel ch) throws Exception {
+            if (this.ssl) {
+                //配置Https通信
+                SslContext context = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+                ch.pipeline().addLast(context.newHandler(ch.alloc()));
+                //SSLEngine engine = SslContextFactory.getClientContext().createSSLEngine();
+                //engine.setUseClientMode(true);
+                //ch.pipeline().addLast("ssl", new SslHandler(engine));
+            }
+            ch.pipeline().addLast(new HttpClientCodec());
+            //HttpObjectAggregator会将多个HttpResponse和HttpContents对象再拼装成一个单一的FullHttpRequest或是FullHttpResponse
+            ch.pipeline().addLast("aggre", new HttpObjectAggregator(10 * 1024 * 1024));
+            //解压
+            ch.pipeline().addLast("decompressor", new HttpContentDecompressor());
+            // 获取返回
+            ch.pipeline().addLast(outputHandler);
+
+        }
     }
 
     private SocketAddress getInetAddress(String url) throws Exception {
@@ -128,8 +159,8 @@ public class NettyHttpClient {
     private HttpRequest getRequestMethod(String url, HttpMethod method, Object msg) throws Exception {
         URI uri2 = new URI(url);
         String host = uri2.getHost();
-        String postPath = uri2.getRawPath();//post
-        String getPath = uri2.toString();//get
+        String path = uri2.getRawPath();
+//        String getPath = uri2.toString();//get
 //        URL netUrl = new URL(url);
 //        URI uri = new URI(netUrl.getPath());
 //        String path = uri.toASCIIString();//post
@@ -138,7 +169,9 @@ public class NettyHttpClient {
         DefaultFullHttpRequest request = null;
         if (method.equals(HttpMethod.POST)) {
             // 构建http请求
-            if (this.headers.get(HttpHeaderNames.CONTENT_TYPE.toString()) != null && this.headers.get(HttpHeaderNames.CONTENT_TYPE.toString()).equalsIgnoreCase(HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.toString())) {
+            if (this.headers.get(HttpHeaderNames.CONTENT_TYPE.toString()) != null &&
+                    HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.toString().equalsIgnoreCase(this.headers.get(HttpHeaderNames.CONTENT_TYPE.toString()))) {
+
                 List<BasicNameValuePair> formData = new ArrayList<>();
                 Set<Map.Entry<String, Object>> entrySet = JSONObject.parseObject(JSON.toJSONString(msg)).entrySet();
                 for (Map.Entry<String, Object> e : entrySet) {
@@ -146,18 +179,28 @@ public class NettyHttpClient {
                     Object value = e.getValue();
                     formData.add(new BasicNameValuePair(key, String.valueOf(value)));
                 }
-                HttpEntity httpEntity = new UrlEncodedFormEntity(formData);
+                HttpEntity httpEntity = new UrlEncodedFormEntity(formData, StandardCharsets.UTF_8);
                 ByteBuf byteBuf = Unpooled.wrappedBuffer(EntityUtils.toByteArray(httpEntity));
-                request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, postPath, byteBuf);
+                request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path, byteBuf);
                 request.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED);
             } else {
                 ByteBuf byteBuf = Unpooled.wrappedBuffer(JSON.toJSONBytes(msg));
-                request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, postPath, byteBuf);
+                request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path, byteBuf);
                 request.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
             }
+
         } else if (method.equals(HttpMethod.GET)) {
             // 构建http请求
-            QueryStringEncoder encoder = new QueryStringEncoder(getPath);
+            QueryStringEncoder encoder = new QueryStringEncoder(path);
+            // 添加原始查询参数
+            if (uri2.getRawQuery() != null) {
+                QueryStringDecoder queryStringDecoder = new QueryStringDecoder(uri2.getRawQuery(), false);
+                for (Map.Entry<String, List<String>> entry : queryStringDecoder.parameters().entrySet()) {
+                    for (String value : entry.getValue()) {
+                        encoder.addParam(entry.getKey(), value);
+                    }
+                }
+            }
             if (msg != null) {
                 Set<Map.Entry<String, Object>> entrySet = JSONObject.parseObject(JSON.toJSONString(msg)).entrySet();
                 for (Map.Entry<String, Object> e : entrySet) {
@@ -166,8 +209,11 @@ public class NettyHttpClient {
                     encoder.addParam(key, String.valueOf(value));
                 }
             }
+//            String fullPath = uri2.getScheme() + "://" + uri2.getHost() + encoder.toString();
             request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, encoder.toString());
 
+        } else {
+            throw new IllegalArgumentException("Unsupported HTTP method: " + method);
         }
 
         request.headers().set(HttpHeaderNames.HOST, host);
@@ -202,8 +248,10 @@ public class NettyHttpClient {
                 ByteBuf buf = content.content();
                 log.info(buf.toString(CharsetUtil.UTF_8));
                 response.set(buf.toString(CharsetUtil.UTF_8));
-                buf.release();
+                //buf.release();
             }
+
+            ReferenceCountUtil.safeRelease(msg);
         }
     }
 
@@ -211,24 +259,32 @@ public class NettyHttpClient {
 
         private final Logger log = LoggerFactory.getLogger(OutputResultHandler2.class);
 
+        @Setter
+        private DefaultPromise<String> resp;
+
         @Override
-        protected void channelRead0(ChannelHandlerContext channelHandlerContext, FullHttpResponse fullHttpResponse) throws Exception {
-            if (!fullHttpResponse.headers().isEmpty()) {
-                for (String name : fullHttpResponse.headers().names()) {
-                    for (String value : fullHttpResponse.headers().getAll(name)) {
+        protected void channelRead0(ChannelHandlerContext ctx, FullHttpResponse msg) throws Exception {
+            if (!msg.headers().isEmpty()) {
+                for (String name : msg.headers().names()) {
+                    for (String value : msg.headers().getAll(name)) {
                         log.info("HEADER: " + name + " = " + value);
                     }
                 }
             }
 
-            ByteBuf buf = fullHttpResponse.content();
-            log.info("content:{}", buf.toString(CharsetUtil.UTF_8));
-            response.set(buf.toString(CharsetUtil.UTF_8));
+            if (msg.decoderResult().isFailure()) {
+                resp.setFailure(new BizException(ErrorCode.FAIL.getCode(), "调用外部接口失败", msg.decoderResult().cause()));
+                //throw new BizException(ErrorCode.FAIL.getCode(), "调用外部接口失败");
+            } else {
+                ByteBuf buf = msg.content();
+                log.info("content:{}", buf.toString(CharsetUtil.UTF_8));
+                response.set(buf.toString(CharsetUtil.UTF_8));
+                resp.setSuccess(buf.toString(CharsetUtil.UTF_8));
+            }
+
+            //ReferenceCountUtil.safeRelease(msg);
         }
 
     }
 
-    public static void main(String[] args) {
-
-    }
 }

@@ -47,7 +47,7 @@ public final class Topic<T> {
     }
 
     public Topic<T> append(String topic) {
-        if (topic.equals("/") || topic.equals("")) {
+        if ("/".equals(topic) || "".equals(topic)) {
             return this;
         }
         return getOrDefault(topic, Topic::new);
@@ -55,10 +55,10 @@ public final class Topic<T> {
 
     private Topic(Topic<T> parent, String part) {
 
-        if (StringUtils.isEmpty(part) || part.equals("/")) {
+        if (!StringUtils.hasText(part) || "/".equals(part)) {
             this.part = "";
         } else {
-            if (part.contains("/")) {
+            if ("/".contains(part)) {
                 this.ofTopic(part);
             } else {
                 this.part = part;
@@ -85,7 +85,7 @@ public final class Topic<T> {
             StringBuilder builder = new StringBuilder();
             if (parent != null) {
                 String parentTopic = parent.getTopic();
-                builder.append(parentTopic).append(parentTopic.equals("/") ? "" : "/");
+                builder.append(parentTopic).append("/".equals(parentTopic) ? "" : "/");
             } else {
                 builder.append("/");
             }
@@ -168,10 +168,10 @@ public final class Topic<T> {
             topic = topic.substring(1);
         }
         String[] parts = topic.split("/");
-        Topic<T> part = child.computeIfAbsent(parts[0], _topic -> mapping.apply(this, _topic));
+        Topic<T> part = child.computeIfAbsent(parts[0], t -> mapping.apply(this, t));
         for (int i = 1; i < parts.length && part != null; i++) {
             Topic<T> parent = part;
-            part = part.child.computeIfAbsent(parts[i], _topic -> mapping.apply(parent, _topic));
+            part = part.child.computeIfAbsent(parts[i], t -> mapping.apply(parent, t));
         }
         return part;
     }
@@ -194,8 +194,8 @@ public final class Topic<T> {
                   null,
                   end,
                   sink,
-                  (nil, nil2, _end, _sink, _topic) -> _sink.accept(_topic),
-                  (nil ,nil2, _end, _sink) -> _end.run());
+                  (nil, nil2, e, s, t) -> s.accept(t),
+                  (nil ,nil2, e, s) -> e.run());
     }
 
     public <ARG0, ARG1, ARG2, ARG3> void findTopic(String topic,
@@ -246,7 +246,7 @@ public final class Topic<T> {
                     sink.accept(arg0, arg1, arg2, arg3, part);
                 }
                 //订阅了如 /device/**/event/*
-                if (part.part.equals("**")) {
+                if ("**".equals(part.part)) {
                     Topic<T> tmp = null;
                     for (int i = part.depth; i < topicParts.length; i++) {
                         tmp = part.child.get(topicParts[i]);
@@ -275,7 +275,7 @@ public final class Topic<T> {
                     continue;
                 }
                 nextPart = topicParts[part.depth + 1];
-                if (nextPart.equals("*") || nextPart.equals("**")) {
+                if ("*".equals(nextPart) || "**".equals(nextPart)) {
                     cache.addAll(part.child.values());
                     continue;
                 }

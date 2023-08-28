@@ -4,6 +4,8 @@
  */
 package top.kdla.framework.supplement.cache.lock;
 
+import top.kdla.framework.exception.LockFailException;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
@@ -12,17 +14,60 @@ import java.util.concurrent.locks.Lock;
  * @version $Id: DistributeLock, v 0.1 2021/7/13 9:42 Exp $
  */
 public interface DistributeLock {
-    Lock lock(String var1) throws Exception;
+    /**
+     * try lock on lock key until the lock is available, and won't release the lock until call unlock()
+     * @param lockKey lock name
+     * @return the lock object, use to unlock.
+     */
+    Lock lock(String lockKey) throws LockFailException;
 
-    Lock lock(String var1, long var2) throws Exception;
+    /**
+     * try lock on lock key wait for timeout seconds, and won't release the lock until call unlock()
+     * @param lockKey lock name
+     * @param timeout lock time out, unit is second
+     * @return the lock object, use to unlock.
+     */
+    Lock lock(String lockKey, long timeout) throws LockFailException;
 
-    Lock lock(String var1, TimeUnit var2, long var3) throws Exception;
+    /**
+     * try lock on lock key wait for timeout unit, and won't release the lock until call unlock()
+     * @param lockKey lock name
+     * @param unit    lock time out unit
+     * @param timeout lock time out, -1 means no time out
+     * @return
+     */
+    Lock lock(String lockKey, TimeUnit unit, long timeout) throws LockFailException;
 
-    Lock lock(String var1, TimeUnit var2, long var3, long var5) throws Exception;
+    /**
+     * try lock on lock key wait for timeout unit, and won't release the lock until call unlock()
+     * @param lockKey lock name
+     * @param unit    lock time out unit
+     * @param timeout lock time out, -1 means no time out
+     * @param leaseTime lock lease time, -1 means no lease time out
+     * @return
+     */
+    Lock lock(String lockKey, TimeUnit unit, long timeout, long leaseTime) throws LockFailException;
 
-    boolean tryLock(String var1, TimeUnit var2, long var3, long var5) throws Exception;
+    /**
+     * try lock on lock key wait for timeout unit, if can't lock return false; if lock success return true and will
+     * lease the lock after lease time.
+     * @param lockKey
+     * @param unit
+     * @param waitTime
+     * @param leaseTime
+     * @return
+     */
+    boolean tryLock(String lockKey, TimeUnit unit, long waitTime, long leaseTime) throws LockFailException;
 
-    void unlock(String var1);
+    /**
+     * unlock the lock by the lock name.
+     * @param lockKey lock name
+     */
+    void unlock(String lockKey);
 
-    void unlock(Lock var1);
+    /**
+     * unlock the lock
+     * @param lock lock
+     */
+    void unlock(Lock lock);
 }

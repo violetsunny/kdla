@@ -9,7 +9,7 @@ package top.kdla.framework.domain;
 public class DomainFactory {
 
     public static <T> T create(Class<T> entityClz){
-        return ApplicationContextHelper.getBean(entityClz);
+        return ApplicationContextHelp.getBean(entityClz);
     }
 
 }

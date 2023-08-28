@@ -29,18 +29,18 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RedissonLockFactory implements DistributeLockFactory {
 
-    private final static String lockPath = ":lock:";
+    private final static String LOCK_PATH = ":lock:";
 
-    private RedissonConfigProperties redissonConfig;
+    private final RedissonConfigProperties redissonConfig;
 
-    private List<RedissonClient> redissionClientList;
+    private final List<RedissonClient> redissionClientList;
 
-    private String lockFullPath;
+    private final String lockFullPath;
 
     public RedissonLockFactory(RedissonConfigProperties redissonConfig, String appId) {
         this.redissonConfig = redissonConfig;
         this.redissionClientList = redissons();
-        this.lockFullPath = appId + lockPath;
+        this.lockFullPath = appId + LOCK_PATH;
     }
 
     private List<RedissonClient> redissons() {
@@ -95,7 +95,7 @@ public class RedissonLockFactory implements DistributeLockFactory {
         config.setEventLoopGroup(new NioEventLoopGroup());
         config.setTransportMode(TransportMode.NIO);
         try {
-            log.info("inti the redisson client with config: {}", config.toJSON());
+            log.info("inti the redisson client with config: {}", config.toYAML());
         } catch (IOException ex) {
             log.error("parse json error:", ex);
         }
@@ -128,11 +128,8 @@ public class RedissonLockFactory implements DistributeLockFactory {
     @Override
     public RLock getLock(String lockKey) {
         String realLockKey = lockFullPath + lockKey;
-        List<RLock> rlocks = redissionClientList.stream()
-                .map(client -> client.getLock(realLockKey))
-                .collect(Collectors.toList());
-
-        return new RedissonRedLock(rlocks.toArray(new RLock[rlocks.size()]));
+        List<RLock> rLocks = redissionClientList.stream().map(client -> client.getLock(realLockKey)).collect(Collectors.toList());
+        return new RedissonRedLock(rLocks.toArray(new RLock[rLocks.size()]));
     }
 
 }

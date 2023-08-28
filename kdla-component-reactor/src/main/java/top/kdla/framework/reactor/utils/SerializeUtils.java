@@ -58,7 +58,7 @@ public class SerializeUtils {
 
     @SneakyThrows
     public static Object readObject(ObjectInput input) {
-        Type type = Type.all[input.readByte()];
+        Type type = Type.ALL[input.readByte()];
         return type.read(input);
     }
 
@@ -370,7 +370,7 @@ public class SerializeUtils {
             @Override
             @SneakyThrows
             Object read(ObjectInput input) {
-                Type elementType = Type.all[input.readByte()];
+                Type elementType = Type.ALL[input.readByte()];
                 int len = input.readInt();
                 Object array = Array.newInstance(elementType.javaType, len);
                 for (int i = 0; i < len; i++) {
@@ -593,16 +593,16 @@ public class SerializeUtils {
 
         abstract void write(Object value, ObjectOutput input);
 
-        final static Type[] all;
+        final static Type[] ALL;
 
         static {
-            all = new Type[0xff];
+            ALL = new Type[0xff];
             for (Type value : values()) {
-                all[value.code] = value;
+                ALL[value.code] = value;
             }
         }
 
-        private static final Map<Class<?>, Type> cache = new ConcurrentReferenceHashMap<>();
+        private static final Map<Class<?>, Type> CACHE = new ConcurrentReferenceHashMap<>();
 
         public static Type of(Object javaType) {
             if (javaType instanceof String) {
@@ -663,11 +663,11 @@ public class SerializeUtils {
         }
 
         public static Type of(Class<?> javaType) {
-            return cache.computeIfAbsent(javaType, t -> {
+            return CACHE.computeIfAbsent(javaType, t -> {
                 if (t.isPrimitive()) {
                     t = Primitives.wrap(t);
                 }
-                for (Type type : all) {
+                for (Type type : ALL) {
                     if (type.javaType == t || type.javaType.isAssignableFrom(t)) {
                         return type;
                     }

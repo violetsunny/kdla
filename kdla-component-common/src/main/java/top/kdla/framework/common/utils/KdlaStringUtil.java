@@ -381,7 +381,7 @@ public class KdlaStringUtil extends StringUtils {
         if (name == null || name.isEmpty()) {
             // 没必要转换
             return "";
-        } else if (!name.contains("_")) {
+        } else if (!"_".contains(name)) {
             // 不含下划线，仅将首字母大写
             return name.substring(0, 1).toUpperCase() + name.substring(1);
         }

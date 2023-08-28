@@ -29,6 +29,10 @@
         </dependency>
         <dependency>
             <groupId>top.kdla.framework</groupId>
+            <artifactId>kdla-component-model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>top.kdla.framework</groupId>
             <artifactId>kdla-component-exception</artifactId>
         </dependency>
 

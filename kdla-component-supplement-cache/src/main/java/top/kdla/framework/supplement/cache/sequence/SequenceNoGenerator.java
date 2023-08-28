@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StopWatch;
 import top.kdla.framework.exception.BizException;
 import top.kdla.framework.supplement.cache.lock.RedissonLockFactory;
+import top.kdla.framework.supplement.cache.lock.RedissonRedDisLock;
 import top.kdla.framework.supplement.cache.sequence.mapper.CodeGeneratorCfgMapper;
 import top.kdla.framework.supplement.cache.sequence.model.entity.CodeGeneratorCfg;
 
@@ -28,7 +29,7 @@ public class SequenceNoGenerator {
 
     private CodeGeneratorCfgMapper codeGeneratorCfgMapper;
 
-    private RedissonLockFactory redissonLockFactory;
+    private RedissonRedDisLock redissonRedDisLock;
 
     private String sequenceNoLockKey;
 
@@ -36,8 +37,8 @@ public class SequenceNoGenerator {
         this.codeGeneratorCfgMapper = codeGeneratorCfgMapper;
     }
 
-    public void setRedissonClient(RedissonLockFactory redissonLockFactory) {
-        this.redissonLockFactory = redissonLockFactory;
+    public void setRedissonClient(RedissonRedDisLock redissonRedDisLock) {
+        this.redissonRedDisLock = redissonRedDisLock;
     }
 
     public void setSequenceNoLockKey(String sequenceNoLockKey) {
@@ -99,7 +100,7 @@ public class SequenceNoGenerator {
         synchronized (this) {
             sequenceNo = getSequenceNoFromLocalCache(code, key);
             if (sequenceNo == null) {
-                RLock lock = redissonLockFactory.getLock(sequenceNoLockKey + code);
+                RLock lock = redissonRedDisLock.lock(sequenceNoLockKey + code);
                 boolean isLocked = false;
                 try {
                     isLocked = lock.tryLock(WAITE_TIME, LEASE_TIME, TimeUnit.MILLISECONDS);
@@ -222,12 +223,12 @@ public class SequenceNoGenerator {
 
         String[] split = rule.split("\\" + RULE_GLIDE_SEPARATE);
         String lengthStr = split[2];
-        if (NumberUtils.isNumber(lengthStr)) {
+        if (NumberUtils.isCreatable(lengthStr)) {
             if (cfg.getIsCache() == 1) {
-                ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue();
+                ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<>();
                 this.generate(cfg.getCacheNum(), headStr, dbMaxSequenceNo, dbMaxKey, lengthStr, cfg, queue);
                 returnSequence = queue.poll();
-                ConcurrentHashMap queueMap = new ConcurrentHashMap();
+                ConcurrentHashMap<String,ConcurrentLinkedQueue<String>> queueMap = new ConcurrentHashMap<>();
                 queueMap.put(headStr, queue);
                 noCacheMap.put(cfg.getCode(), queueMap);
             } else {

@@ -1,1 +1,2 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration = top.kdla.framework.domain.DomainAutoConfiguration
+org.springframework.boot.autoconfigure.EnableAutoConfiguration = \
+top.kdla.framework.domain.DomainAutoConfigure

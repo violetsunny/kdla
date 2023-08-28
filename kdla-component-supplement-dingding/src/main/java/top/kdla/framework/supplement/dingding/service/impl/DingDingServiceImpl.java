@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import top.kdla.framework.common.enums.ContentTypeEnum;
 import top.kdla.framework.common.enums.MsgTypeEnum;
 import top.kdla.framework.common.utils.DateUtil;
-import top.kdla.framework.supplement.dingding.config.DingAlertConfig;
+import top.kdla.framework.supplement.dingding.config.DingAlertConfigure;
 import top.kdla.framework.supplement.dingding.enums.MsgSendRespEnum;
 import top.kdla.framework.supplement.dingding.model.req.DingDingMessage;
 import top.kdla.framework.supplement.dingding.model.req.DingMessageAt;
@@ -34,21 +34,22 @@ import java.util.Objects;
 public class DingDingServiceImpl implements DingDingService {
     private static final Logger logger = LoggerFactory.getLogger(DingDingServiceImpl.class);
     @Resource
-    private DingAlertConfig dingAlertConfig;
+    private DingAlertConfigure dingAlertConfigure;
 
     public DingDingServiceImpl() {
     }
 
+    @Override
     public String sendTextMessage(String msg) {
         try {
-            if (!this.dingAlertConfig.isDingAlertEnable()) {
+            if (!this.dingAlertConfigure.isDingAlertEnable()) {
                 logger.info("DingDingServiceImpl.sendMessage#no need send.");
                 return MsgSendRespEnum.NO_NEED.getCode();
             }
 
             StringBuilder sb = this.initDingdingMessage(msg);
             DingDingMessage dingDingMessage = new DingDingMessage(MsgTypeEnum.TEXT.getCode(), new TextMessage(sb.toString()), new DingMessageAt((List)null, true));
-            String rest = DingDingHttpUtil.doPost(this.dingAlertConfig.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
+            String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
             DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
                 logger.info("DingDingServiceImpl.sendMessage failed#msg:{}, rest:{}", msg, rest);
@@ -62,16 +63,17 @@ public class DingDingServiceImpl implements DingDingService {
         return MsgSendRespEnum.OK.getCode();
     }
 
+    @Override
     public String sendTextMessage(String msg, List<String> atMobiles) {
         try {
-            if (!this.dingAlertConfig.isDingAlertEnable()) {
+            if (!this.dingAlertConfigure.isDingAlertEnable()) {
                 logger.info("DingDingServiceImpl.sendMessage#no need send.");
                 return MsgSendRespEnum.NO_NEED.getCode();
             }
 
             StringBuilder sb = this.initDingdingMessage(msg);
             DingDingMessage dingDingMessage = new DingDingMessage(MsgTypeEnum.TEXT.getCode(), new TextMessage(sb.toString()), new DingMessageAt(atMobiles, false));
-            String rest = DingDingHttpUtil.doPost(this.dingAlertConfig.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
+            String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
             DingDingAlertResult result = (DingDingAlertResult)JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
                 logger.info("DingDingServiceImpl.sendMessage failed#msg:{},atMobiles:{}, rest:{}", new Object[]{msg, atMobiles, rest});
@@ -87,24 +89,25 @@ public class DingDingServiceImpl implements DingDingService {
 
     private StringBuilder initDingdingMessage(String msg) {
         StringBuilder sb = new StringBuilder();
-        sb.append(this.dingAlertConfig.getDingAlertProperties().getDingKeywords());
-        sb.append("【" + this.dingAlertConfig.getDingAlertProperties().getAppName() + "】");
+        sb.append(this.dingAlertConfigure.getDingAlertProperties().getDingKeywords());
+        sb.append("【" + this.dingAlertConfigure.getDingAlertProperties().getAppName() + "】");
         sb.append("【" + DateUtil.format(new Date()) + "】");
-        sb.append("【" + this.dingAlertConfig.getEnv() + "】");
+        sb.append("【" + this.dingAlertConfigure.getEnv() + "】");
         sb.append(msg);
         return sb;
     }
 
+    @Override
     public String sendMessage(String title, String msg) {
         try {
-            if (!this.dingAlertConfig.isDingAlertEnable()) {
+            if (!this.dingAlertConfigure.isDingAlertEnable()) {
                 logger.info("DingDingServiceImpl.sendMessage#no need send.");
                 return MsgSendRespEnum.NO_NEED.getCode();
             }
 
             StringBuilder content = this.initDingdingMessage(msg);
             DingDingMessage dingDingMessage = new DingDingMessage(MsgTypeEnum.MARKDOWN.getCode(), new MarkdownMessage(title, content.toString()), new DingMessageAt((List)null, true));
-            String rest = DingDingHttpUtil.doPost(this.dingAlertConfig.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
+            String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
             DingDingAlertResult result = (DingDingAlertResult)JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
                 logger.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{}, rest:{}", new Object[]{title, msg, rest});
@@ -118,16 +121,17 @@ public class DingDingServiceImpl implements DingDingService {
         return MsgSendRespEnum.OK.getCode();
     }
 
+    @Override
     public String sendMessage(String title, String msg, List<String> atMobiles) {
         try {
-            if (!this.dingAlertConfig.isDingAlertEnable()) {
+            if (!this.dingAlertConfigure.isDingAlertEnable()) {
                 logger.info("DingDingServiceImpl.sendMessage#no need send.");
                 return MsgSendRespEnum.NO_NEED.getCode();
             }
 
             StringBuilder content = this.initDingdingMessage(msg);
             DingDingMessage dingDingMessage = new DingDingMessage(MsgTypeEnum.MARKDOWN.getCode(), new MarkdownMessage(title, content.toString()), new DingMessageAt(atMobiles, false));
-            String rest = DingDingHttpUtil.doPost(this.dingAlertConfig.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
+            String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
             DingDingAlertResult result = (DingDingAlertResult)JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
                 logger.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{},atMobiles:{}, rest:{}", new Object[]{title, msg, atMobiles, rest});

@@ -31,6 +31,14 @@
             <groupId>top.kdla.framework</groupId>
             <artifactId>kdla-component-domain</artifactId>
         </dependency>
+        <dependency>
+            <groupId>top.kdla.framework</groupId>
+            <artifactId>kdla-component-model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>top.kdla.framework</groupId>
+            <artifactId>kdla-component-common</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.projectlombok</groupId>

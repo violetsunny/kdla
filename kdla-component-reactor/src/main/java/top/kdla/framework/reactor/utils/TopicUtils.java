@@ -10,12 +10,12 @@ import java.util.concurrent.ConcurrentMap;
 public class TopicUtils {
     public static final char PATH_SPLITTER = '/';
 
-    private final static PathMatcher pathMatcher = new AntPathMatcher();
+    private final static PathMatcher PATH_MATCHER = new AntPathMatcher();
 
-    private final static ConcurrentMap<String, String[]> splitCache;
+    private final static ConcurrentMap<String, String[]> SPLIT_CACHE;
 
     static {
-        splitCache = new ConcurrentReferenceHashMap<>(65535, ConcurrentReferenceHashMap.ReferenceType.SOFT);
+        SPLIT_CACHE = new ConcurrentReferenceHashMap<>(65535, ConcurrentReferenceHashMap.ReferenceType.SOFT);
     }
 
     /**
@@ -39,9 +39,9 @@ public class TopicUtils {
                 } else {
                     arr[i] = "+";
                 }
-            } else if (str.equals("**")) {
+            } else if ("**".equals(str)) {
                 arr[i] = "#";
-            } else if (str.equals("*")) {
+            } else if ("*".equals(str)) {
                 arr[i] = "+";
             }
         }
@@ -73,7 +73,7 @@ public class TopicUtils {
             return false;
         }
 
-        return pathMatcher.match(pattern.replace("#", "**").replace("+", "*"), topic);
+        return PATH_MATCHER.match(pattern.replace("#", "**").replace("+", "*"), topic);
 
     }
 
@@ -91,7 +91,7 @@ public class TopicUtils {
      */
     public static Map<String, String> getPathVariables(String template, String topic) {
         try {
-            return pathMatcher.extractUriTemplateVariables(template, topic);
+            return PATH_MATCHER.extractUriTemplateVariables(template, topic);
         } catch (Exception e) {
             return Collections.emptyMap();
         }
@@ -108,7 +108,7 @@ public class TopicUtils {
     }
 
     public static String[] split(String topic, boolean cache) {
-        return cache ? splitCache.computeIfAbsent(topic, t -> t.split("/")) : topic.split("/");
+        return cache ? SPLIT_CACHE.computeIfAbsent(topic, t -> t.split("/")) : topic.split("/");
     }
 
     private static boolean matchStrings(String str, String pattern) {
@@ -139,14 +139,14 @@ public class TopicUtils {
         }
         if (pathIdxStart > pathIdxEnd) {
             if (pattIdxStart > pattIdxEnd) {
-                return (pattern[pattern.length - 1].equals("/") == topicParts[topicParts.length - 1].equals("/"));
+                return ("/".equals(pattern[pattern.length - 1]) == "/".equals(topicParts[topicParts.length - 1]));
             }
 
-            if (pattIdxStart == pattIdxEnd && pattern[pattIdxStart].equals("*") && topicParts[topicParts.length - 1].equals("/")) {
+            if (pattIdxStart == pattIdxEnd && "*".equals(pattern[pattIdxStart]) && "/".equals(topicParts[topicParts.length - 1])) {
                 return true;
             }
             for (int i = pattIdxStart; i <= pattIdxEnd; i++) {
-                if (!pattern[i].equals("**")) {
+                if (!"**".equals(pattern[i])) {
                     return false;
                 }
             }
@@ -161,7 +161,7 @@ public class TopicUtils {
         // up to last '**'
         while (pattIdxStart <= pattIdxEnd && pathIdxStart <= pathIdxEnd) {
             String pattDir = pattern[pattIdxEnd];
-            if (pattDir.equals("**")) {
+            if ("**".equals(pattDir)) {
                 break;
             }
             if (!matchStrings(pattDir, topicParts[pathIdxEnd])) {
@@ -173,7 +173,7 @@ public class TopicUtils {
         if (pathIdxStart > pathIdxEnd) {
             // String is exhausted
             for (int i = pattIdxStart; i <= pattIdxEnd; i++) {
-                if (!pattern[i].equals("**")) {
+                if (!"**".equals(pattern[i])) {
                     return false;
                 }
             }
@@ -183,7 +183,7 @@ public class TopicUtils {
         while (pattIdxStart != pattIdxEnd && pathIdxStart <= pathIdxEnd) {
             int patIdxTmp = -1;
             for (int i = pattIdxStart + 1; i <= pattIdxEnd; i++) {
-                if (pattern[i].equals("**")) {
+                if ("**".equals(pattern[i])) {
                     patIdxTmp = i;
                     break;
                 }
@@ -221,7 +221,7 @@ public class TopicUtils {
         }
 
         for (int i = pattIdxStart; i <= pattIdxEnd; i++) {
-            if (!pattern[i].equals("**")) {
+            if (!"**".equals(pattern[i])) {
                 return false;
             }
         }

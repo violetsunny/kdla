@@ -37,7 +37,7 @@ public class DingDingHttpUtil {
         StringBuffer resultBuffer = new StringBuffer();
 
         try {
-            if (StringUtils.isEmpty(parameterData)) {
+            if (!StringUtils.hasText(parameterData)) {
                 parameterData = "";
             }
 
@@ -46,7 +46,7 @@ public class DingDingHttpUtil {
             connection.setDoOutput(true);
             connection.setRequestMethod(requestMethod.toString());
             connection.setRequestProperty("Content-Type", contentType.getValue() + ";" + charset.getName());
-            if (!"get".equals(requestMethod.toString().toLowerCase())) {
+            if (!"get".equalsIgnoreCase(requestMethod.toString())) {
                 connection.setRequestProperty("Content-Length", String.valueOf(parameterData.length()));
             }
 
@@ -54,7 +54,7 @@ public class DingDingHttpUtil {
             connection.setReadTimeout(timeOut);
             outputStream = connection.getOutputStream();
             outputStreamWriter = new OutputStreamWriter(outputStream, charset.getName());
-            if (!"get".equals(requestMethod.toString().toLowerCase())) {
+            if (!"get".equalsIgnoreCase(requestMethod.toString())) {
                 outputStreamWriter.write(parameterData);
             }
 
@@ -71,8 +71,8 @@ public class DingDingHttpUtil {
             while((tempLine = reader.readLine()) != null) {
                 resultBuffer.append(tempLine);
             }
-        } catch (Exception var18) {
-            throw var18;
+        } catch (Exception e) {
+            throw e;
         } finally {
             if (connection != null) {
                 connection.disconnect();
@@ -145,9 +145,8 @@ public class DingDingHttpUtil {
                 if (response != null && response.getStatusLine().getStatusCode() == 200 && response.getEntity() != null) {
                     rstString = inputStreamToStr(response.getEntity().getContent(), StandardCharsets.UTF_8.name());
                 }
-            } catch (Exception var24) {
-                Exception e = var24;
-                throw var24;
+            } catch (Exception e) {
+                throw e;
             } finally {
                 if (response != null) {
                     response.close();
@@ -190,8 +189,8 @@ public class DingDingHttpUtil {
                 }
 
                 return result.toString(charsetName);
-            } catch (Exception var5) {
-                throw var5;
+            } catch (Exception e) {
+                throw e;
             }
         } else {
             return null;

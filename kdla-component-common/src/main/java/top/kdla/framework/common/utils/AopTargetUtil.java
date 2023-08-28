@@ -44,8 +44,7 @@ public class AopTargetUtil {
             Object dynamicAdvisedInterceptor = h.get(proxy);
             Field advised = dynamicAdvisedInterceptor.getClass().getDeclaredField("advised");
             advised.setAccessible(true);
-            Object target = ((AdvisedSupport) advised.get(dynamicAdvisedInterceptor)).getTargetSource().getTarget();
-            return target;
+            return ((AdvisedSupport) advised.get(dynamicAdvisedInterceptor)).getTargetSource().getTarget();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -58,8 +57,7 @@ public class AopTargetUtil {
             AopProxy aopProxy = (AopProxy) h.get(proxy);
             Field advised = aopProxy.getClass().getDeclaredField("advised");
             advised.setAccessible(true);
-            Object target = ((AdvisedSupport) advised.get(aopProxy)).getTargetSource().getTarget();
-            return target;
+            return ((AdvisedSupport) advised.get(aopProxy)).getTargetSource().getTarget();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

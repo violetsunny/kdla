@@ -62,7 +62,7 @@ public class PushGatewayManager {
         try {
             pushGateway.pushAdd(registry,appId,groupingKey);
         } catch (Exception e){
-            log.warn("pushgateway 推送失败: {}",e);
+            log.warn("pushgateway 推送失败",e);
         }
 
     }

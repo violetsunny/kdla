@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration = \
+top.kdla.framework.common.aspect.mdc.MdcAutoConfigure,top.kdla.framework.common.aspect.watch.StopWatchAutoConfigure

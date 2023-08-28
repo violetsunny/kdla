@@ -2,7 +2,7 @@ package top.kdla.framework.supplement.fieldvaluefinder.annotation;
 
 
 
-import top.kdla.framework.supplement.fieldvaluefinder.FieldValueFindHelper;
+import top.kdla.framework.supplement.fieldvaluefinder.FieldValueFindHelp;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -40,11 +40,11 @@ public @interface FieldValueFind {
      * 当本字段已经有值时，应当采取何种策略来处置。
      * @return
      */
-    FieldValueFindHelper.ExistPolicy existPolicy() default FieldValueFindHelper.ExistPolicy.KEEP_SELF;
+    FieldValueFindHelp.ExistPolicy existPolicy() default FieldValueFindHelp.ExistPolicy.KEEP_SELF;
 
     /**
      * 查询策略
      * @return
      */
-    FieldValueFindHelper.QueryPolicy queryPolicy() default FieldValueFindHelper.QueryPolicy.DIRECT;
+    FieldValueFindHelp.QueryPolicy queryPolicy() default FieldValueFindHelp.QueryPolicy.DIRECT;
 }

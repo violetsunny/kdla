@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -36,7 +37,7 @@ public class JacksonUtil {
 
         OBJECT_MAPPER_LOWER_CASE_WITH_UNDER_SCORES.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         //序列化时添加下划线
-        OBJECT_MAPPER_LOWER_CASE_WITH_UNDER_SCORES.setPropertyNamingStrategy(new PropertyNamingStrategy.SnakeCaseStrategy());
+        OBJECT_MAPPER_LOWER_CASE_WITH_UNDER_SCORES.setPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy());
     }
 
     /**

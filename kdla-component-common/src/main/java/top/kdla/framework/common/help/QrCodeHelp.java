@@ -150,7 +150,7 @@ public class QrCodeHelp {
      * @return
      */
     private static Map<EncodeHintType, Object> createHintMap(int correctionLevel) {
-        Map<EncodeHintType, Object> hintMap = new HashMap<EncodeHintType, Object>();
+        Map<EncodeHintType, Object> hintMap = new HashMap<>();
         //空白填充
         hintMap.put(EncodeHintType.MARGIN, 1);
         if (correctionLevel == 2) {

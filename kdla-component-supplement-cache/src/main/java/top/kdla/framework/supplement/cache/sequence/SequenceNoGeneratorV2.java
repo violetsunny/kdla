@@ -7,6 +7,7 @@ import org.redisson.api.RLock;
 import top.kdla.framework.common.utils.JacksonUtil;
 import top.kdla.framework.exception.BizException;
 import top.kdla.framework.supplement.cache.lock.RedissonLockFactory;
+import top.kdla.framework.supplement.cache.lock.RedissonRedDisLock;
 import top.kdla.framework.supplement.cache.sequence.mapper.CodeGeneratorCfgV2Mapper;
 import top.kdla.framework.supplement.cache.sequence.model.entity.CodeGeneratorCfgV2;
 import top.kdla.framework.supplement.cache.sequence.model.rules.*;
@@ -32,7 +33,7 @@ public class SequenceNoGeneratorV2 {
 
     private CodeGeneratorCfgV2Mapper codeGeneratorCfgMapper;
 
-    private RedissonLockFactory redissonLockFactory;
+    private RedissonRedDisLock redissonRedDisLock;
 
     private String sequenceNoLockKey;
 
@@ -40,8 +41,8 @@ public class SequenceNoGeneratorV2 {
         this.codeGeneratorCfgMapper = codeGeneratorCfgMapper;
     }
 
-    public void setRedissonClient(RedissonLockFactory redissonLockFactory) {
-        this.redissonLockFactory = redissonLockFactory;
+    public void setRedissonClient(RedissonRedDisLock redissonRedDisLock) {
+        this.redissonRedDisLock = redissonRedDisLock;
     }
 
     public void setSequenceNoLockKey(String sequenceNoLockKey) {
@@ -155,7 +156,7 @@ public class SequenceNoGeneratorV2 {
                 return sequenceNo;
             }
 
-            RLock lock = redissonLockFactory.getLock(sequenceNoLockKey + code);
+            RLock lock = redissonRedDisLock.lock(sequenceNoLockKey + code);
             boolean isLocked = false;
             try {
                 isLocked = lock.tryLock(WAITE_TIME, LEASE_TIME, TimeUnit.MILLISECONDS);
@@ -207,8 +208,8 @@ public class SequenceNoGeneratorV2 {
             return generateOneSequenceNo(generateNoInfoContext);
         }
         //缓存的话，生成一堆编号缓存后，从缓存中拿走一个编号返回
-        ConcurrentLinkedQueue<String> cacheQueue = new ConcurrentLinkedQueue();
-        ConcurrentHashMap<String, ConcurrentLinkedQueue<String>> queueMap = new ConcurrentHashMap();
+        ConcurrentLinkedQueue<String> cacheQueue = new ConcurrentLinkedQueue<>();
+        ConcurrentHashMap<String, ConcurrentLinkedQueue<String>> queueMap = new ConcurrentHashMap<>();
         queueMap.put(currentEpoch.toString(), cacheQueue);
         noCacheMap.put(cfg.getCode(), queueMap);
 

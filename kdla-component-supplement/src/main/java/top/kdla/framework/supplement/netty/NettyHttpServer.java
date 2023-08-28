@@ -19,20 +19,22 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.util.CharsetUtil;
+import io.netty.util.ReferenceCountUtil;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import top.kdla.framework.common.help.ThreadPoolHelp;
 
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 
-import static io.netty.handler.codec.http.HttpHeaderNames.*;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
@@ -41,6 +43,8 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  */
 @Slf4j
 public class NettyHttpServer {
+
+    private final ThreadPoolHelp threadPoolHelp = new ThreadPoolHelp();
 
     @Setter
     private boolean keepAlive = true;
@@ -63,33 +67,18 @@ public class NettyHttpServer {
     }
 
     public void start() throws Exception {
-        EventLoopGroup bossGroup = new NioEventLoopGroup();
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        EventLoopGroup bossGroup = new NioEventLoopGroup(1, threadPoolHelp.getDefaultExecutorService());
+        EventLoopGroup workerGroup = new NioEventLoopGroup(1, threadPoolHelp.getDefaultExecutorService());
+        AtomicBoolean close = new AtomicBoolean(false);
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .option(ChannelOption.SO_BACKLOG, 1024)
                     .childOption(ChannelOption.SO_KEEPALIVE, this.keepAlive)
-                    .childHandler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        public void initChannel(SocketChannel ch) throws Exception {
-                            if (ssl) {
-                                //配置Https通信
-                                SslContext context = SslContextBuilder.forServer(keyCertChainFile, keyFile).trustManager(InsecureTrustManagerFactory.INSTANCE).build();
-                                ch.pipeline().addLast(context.newHandler(ch.alloc()));
-                            }
-                            //ch.pipeline().addLast(new HttpServerCodec());//是HttpRequestDecoder和HttpResponseEncoder的封装
-                            ch.pipeline().addLast(new HttpResponseEncoder());
-                            ch.pipeline().addLast(new HttpRequestDecoder());
-                            //Http请求经过HttpServerCodec解码之后是HttpRequest和HttpContents对象，
-                            //HttpObjectAggregator会将多个HttpRequest和HttpContents对象再拼装成一个FullHttpRequest，再将其传递到下个Handler
-                            ch.pipeline().addLast("aggregator", new HttpObjectAggregator(1024 * 1024));
-                            ch.pipeline().addLast(new HttpServerInboundHandlerJson(function));
-                        }
-                    });
+                    .childHandler(new HttpServerInitializer(this.ssl, this.keyCertChainFile, this.keyFile, this.function));
 
-            ChannelFuture f = b.bind(port).sync();
+            ChannelFuture f = b.bind(port);
             f.addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
@@ -98,15 +87,55 @@ public class NettyHttpServer {
                     }
                 }
             });
-            //f.channel().closeFuture().sync();
-            f.channel().closeFuture();
+            //f.channel().closeFuture().sync();//不建议使用阻塞方式
+            f.channel().closeFuture().addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    workerGroup.shutdownGracefully();
+                    bossGroup.shutdownGracefully();
+                    close.set(true);
+                    log.info(future.channel().toString() + "链路关闭");
+                }
+            });
         } finally {
-            workerGroup.shutdownGracefully();
-            bossGroup.shutdownGracefully();
+            if (!close.get()) {
+                workerGroup.shutdownGracefully();
+                bossGroup.shutdownGracefully();
+            }
         }
     }
 
-    public class HttpServerInboundHandlerJson extends ChannelInboundHandlerAdapter {
+    private class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
+        private final boolean ssl;
+        private final File keyCertChainFile;
+        private final File keyFile;
+        private final BiFunction function;
+
+        public HttpServerInitializer(boolean ssl, File keyCertChainFile, File keyFile, BiFunction function) {
+            this.ssl = ssl;
+            this.keyCertChainFile = keyCertChainFile;
+            this.keyFile = keyFile;
+            this.function = function;
+        }
+
+        @Override
+        protected void initChannel(SocketChannel ch) throws Exception {
+            if (this.ssl) {
+                //配置Https通信
+                SslContext context = SslContextBuilder.forServer(keyCertChainFile, keyFile).trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+                ch.pipeline().addLast(context.newHandler(ch.alloc()));
+            }
+            ch.pipeline().addLast(new HttpServerCodec());//是HttpRequestDecoder和HttpResponseEncoder的封装
+//            ch.pipeline().addLast(new HttpResponseEncoder());
+//            ch.pipeline().addLast(new HttpRequestDecoder());
+            //Http请求经过HttpServerCodec解码之后是HttpRequest和HttpContents对象，
+            //HttpObjectAggregator会将多个HttpRequest和HttpContents对象再拼装成一个FullHttpRequest，再将其传递到下个Handler
+            ch.pipeline().addLast("aggregator", new HttpObjectAggregator(10 * 1024 * 1024));
+            ch.pipeline().addLast(new HttpServerInboundHandlerJson(this.function));
+        }
+    }
+
+    private static class HttpServerInboundHandlerJson extends SimpleChannelInboundHandler<FullHttpRequest> {
 
         private final Logger log = LoggerFactory.getLogger(HttpServerInboundHandlerJson.class);
 
@@ -117,108 +146,139 @@ public class NettyHttpServer {
         }
 
         @Override
-        public void channelRead(ChannelHandlerContext ctx, Object msg) {
-            log.info("客服端地址" + ctx.channel().remoteAddress());
-            FullHttpRequest request = (FullHttpRequest) msg;
-            HttpHeaders headers = request.headers();
+        public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) throws Exception {
+            log.info("客服端地址:{}", ctx.channel().remoteAddress());
+            log.info("请求数据:{}", JSONObject.toJSONString(msg));
+            HttpHeaders headers = msg.headers();
             String headValue = headers.get(HttpHeaderNames.CONTENT_TYPE.toString());
-            String uri = request.uri();
-            HttpMethod method = request.method();
+            String uri = msg.uri();
+            HttpMethod method = msg.method();
             log.info("Uri:{} method:{} headValue:{}", uri, method, headers.toString());
             if (method.equals(HttpMethod.GET)) {
-                QueryStringDecoder decoderQuery = new QueryStringDecoder(request.uri());
+                QueryStringDecoder decoderQuery = new QueryStringDecoder(msg.uri());
                 Map<String, List<String>> uriAttributes = decoderQuery.parameters();
                 try {
                     Object res = function.apply(uri, uriAttributes);
-                    writeHttpResponse(headValue, res, ctx);
+                    writeHttpResponse(msg, headValue, res, ctx, HttpResponseStatus.OK);
                 } catch (Exception e) {
-                    writeHttpResponseJson(ExceptionUtils.getStackTrace(e), ctx, HttpResponseStatus.SERVICE_UNAVAILABLE);
+                    writeHttpResponse(msg, headValue, ExceptionUtils.getStackTrace(e), ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                } finally {
+                    // 释放资源
+                    //ReferenceCountUtil.safeRelease(msg);
                 }
 
-            }
-            if (method.equals(HttpMethod.POST)) {
-                ByteBuf buf = request.content();
+            } else if (method.equals(HttpMethod.POST)) {
+                ByteBuf buf = msg.content();
                 String bodyString = buf.toString(Charsets.UTF_8);
                 try {
                     Object res = function.apply(uri, bodyString);
-                    writeHttpResponse(headValue, res, ctx);
+                    writeHttpResponse(msg, headValue, res, ctx, HttpResponseStatus.OK);
                 } catch (Exception e) {
-                    writeHttpResponseJson(ExceptionUtils.getStackTrace(e), ctx, HttpResponseStatus.SERVICE_UNAVAILABLE);
+                    writeHttpResponse(msg, headValue, ExceptionUtils.getStackTrace(e), ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                } finally {
+                    // 释放资源
+                    //ReferenceCountUtil.safeRelease(msg);
                 }
 
+            } else {
+                throw new IllegalArgumentException("Unsupported HTTP method: " + method);
             }
 
         }
 
-        private void writeHttpResponse(String headValue, Object res, ChannelHandlerContext ctx) throws Exception {
+        private void writeHttpResponse(FullHttpRequest request, String headValue, Object res, ChannelHandlerContext ctx, HttpResponseStatus status) throws Exception {
             if (StringUtils.isNotBlank(headValue) && headValue.equalsIgnoreCase(HttpHeaderValues.TEXT_HTML.toString())) {
                 if (res instanceof File) {
-                    writeHttpResponseHtml((File) res, ctx, HttpResponseStatus.OK);
+                    writeHttpResponseHtml(request, (File) res, ctx, status);
                 } else {
-                    writeHttpResponseHtml2(JSONObject.toJSONString(res), ctx, HttpResponseStatus.OK);
+                    writeHttpResponseHtml2(request, JSONObject.toJSONString(res), ctx, status);
                 }
             } else if (StringUtils.isNotBlank(headValue) && headValue.equalsIgnoreCase(HttpHeaderValues.TEXT_PLAIN.toString())) {
-                writeHttpResponsePlain(JSONObject.toJSONString(res), ctx, HttpResponseStatus.OK);
-            } else if (StringUtils.isNotBlank(headValue) && headValue.equalsIgnoreCase("image/png")) {
-                writeHttpResponseImage((File) res, ctx, HttpResponseStatus.OK);
+                writeHttpResponsePlain(request, JSONObject.toJSONString(res), ctx, status);
+            } else if (StringUtils.isNotBlank(headValue) && "image/png".equalsIgnoreCase(headValue)) {
+                writeHttpResponseImage(request, (File) res, ctx, status);
             } else {
-                writeHttpResponseJson(JSONObject.toJSONString(res), ctx, HttpResponseStatus.OK);
+                writeHttpResponseJson(request, JSONObject.toJSONString(res), ctx, status);
             }
         }
 
-        private void writeHttpResponseJson(String res, ChannelHandlerContext ctx, HttpResponseStatus status) {
-            log.info("开始写入返回数据...");
+        private void writeHttpResponseJson(FullHttpRequest request, String res, ChannelHandlerContext ctx, HttpResponseStatus status) {
+            log.info("writeHttpResponseJson 开始写入返回数据...");
             FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, status, Unpooled.wrappedBuffer(res.getBytes(Charsets.UTF_8)));
-            response.headers().set(CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON + ";charset=utf-8");
-            response.headers().setInt(CONTENT_LENGTH, response.content().readableBytes());
-            response.headers().setInt(EXPIRES, 0);
-//          if (HttpHeaders.iskeepAlive(request)) {
-//                response.headers().set(CONNECTION, Values.KEEP_ALIVE);
-//          }
-            Channel ch = ctx.channel();
-            ch.write(response);
-//          ch.disconnect();
-            ch.close();
+            response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON + ";charset=utf-8");
+            response.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+            response.headers().setInt(HttpHeaderNames.EXPIRES, 0);
+            // 检查请求是否为 keep-alive
+            boolean keepAlive = HttpUtil.isKeepAlive(request);
+            // 在响应头中设置 keep-alive
+            if (keepAlive) {
+                response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+                ctx.writeAndFlush(response);
+            } else {
+                ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+            }
         }
 
-        private void writeHttpResponseImage(File file, ChannelHandlerContext ctx, HttpResponseStatus status) {
+        private void writeHttpResponseImage(FullHttpRequest request, File file, ChannelHandlerContext ctx, HttpResponseStatus status) {
+            log.info("writeHttpResponseImage 开始写入返回数据...");
             FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, status);
             //byte[] fileToByte = this.fileToByte("f://test.jpg");
             response.content().writeBytes(FileUtil.readBytes(file));
-            response.headers().set(CONTENT_TYPE, "image/png;charset=utf-8");
-            response.headers().setInt(CONTENT_LENGTH, response.content().writerIndex());
-//          Channel ch = ctx.channel();
-//          ch.write(response);
-            ctx.write(response);
-            ctx.flush();
-            ctx.close();
+            response.headers().set(HttpHeaderNames.CONTENT_TYPE, "image/png;charset=utf-8");
+            response.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, response.content().writerIndex());
+            // 检查请求是否为 keep-alive
+            boolean keepAlive = HttpUtil.isKeepAlive(request);
+            // 在响应头中设置 keep-alive
+            if (keepAlive) {
+                response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+                ctx.writeAndFlush(response);
+            } else {
+                ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+            }
         }
 
-        private void writeHttpResponseHtml(File file, ChannelHandlerContext ctx, HttpResponseStatus status) throws Exception {
+        private void writeHttpResponseHtml(FullHttpRequest request, File file, ChannelHandlerContext ctx, HttpResponseStatus status) throws Exception {
+            log.info("writeHttpResponseHtml 开始写入返回数据...");
 //            String url = this.getClass().getResource("/").getPath() + "index.html";
 //            File file = new File(url);
             RandomAccessFile raf = new RandomAccessFile(file, "r");
             FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, status);
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html;charset=utf-8");
+            response.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, response.content().writerIndex());
             ctx.write(response);
             ctx.write(new DefaultFileRegion(raf.getChannel(), 0, raf.length()));
-            ChannelFuture future = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
-            future.addListener(ChannelFutureListener.CLOSE);
+            // 检查请求是否为 keep-alive
+            boolean keepAlive = HttpUtil.isKeepAlive(request);
+            // 在响应头中设置 keep-alive
+            if (keepAlive) {
+                response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+                ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+            } else {
+                ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).addListener(ChannelFutureListener.CLOSE);
+            }
         }
 
-        private void writeHttpResponseHtml2(String msg, ChannelHandlerContext ctx, HttpResponseStatus status) throws Exception {
-            log.info("客服端地址" + ctx.channel().remoteAddress());
+        private void writeHttpResponseHtml2(FullHttpRequest request, String msg, ChannelHandlerContext ctx, HttpResponseStatus status) throws Exception {
+            log.info("writeHttpResponseHtml2 开始写入返回数据...");
             //2.给浏览器进行响应
             ByteBuf byteBuf = Unpooled.copiedBuffer(msg, CharsetUtil.UTF_8);
             DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, byteBuf);
             //2.1 设置响应头
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html;charset=utf-8");
             response.headers().set(HttpHeaderNames.CONTENT_LENGTH, byteBuf.readableBytes());
-            ctx.writeAndFlush(response);
+            // 检查请求是否为 keep-alive
+            boolean keepAlive = HttpUtil.isKeepAlive(request);
+            // 在响应头中设置 keep-alive
+            if (keepAlive) {
+                response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+                ctx.writeAndFlush(response);
+            } else {
+                ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+            }
         }
 
-        private void writeHttpResponsePlain(String msg, ChannelHandlerContext ctx, HttpResponseStatus status) throws Exception {
-            log.info("客服端地址" + ctx.channel().remoteAddress());
+        private void writeHttpResponsePlain(FullHttpRequest request, String msg, ChannelHandlerContext ctx, HttpResponseStatus status) throws Exception {
+            log.info("writeHttpResponsePlain 开始写入返回数据...");
             // 回复信息给浏览器
             ByteBuf byteBuf = Unpooled.copiedBuffer(msg, CharsetUtil.UTF_8);
             // 构造一个http响应体，即HttpResponse
@@ -227,7 +287,15 @@ public class NettyHttpServer {
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain;charset=utf-8");
             response.headers().set(HttpHeaderNames.CONTENT_LENGTH, byteBuf.readableBytes());
             // 将响应体写入到通道中
-            ctx.writeAndFlush(response);
+            // 检查请求是否为 keep-alive
+            boolean keepAlive = HttpUtil.isKeepAlive(request);
+            // 在响应头中设置 keep-alive
+            if (keepAlive) {
+                response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+                ctx.writeAndFlush(response);
+            } else {
+                ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+            }
         }
 
         @Override

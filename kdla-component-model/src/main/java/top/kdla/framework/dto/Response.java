@@ -32,7 +32,7 @@ public class Response extends BaseModel {
     }
 
     public static <T> SingleResponse<T> buildSuccess(T data) {
-        SingleResponse response = new SingleResponse();
+        SingleResponse<T> response = new SingleResponse<>();
         response.setSuccess();
         response.setData(data);
         return response;

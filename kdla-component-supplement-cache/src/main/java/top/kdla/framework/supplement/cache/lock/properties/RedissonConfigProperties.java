@@ -135,7 +135,7 @@ public class RedissonConfigProperties {
         config.setEventLoopGroup(new NioEventLoopGroup());
         config.setTransportMode(TransportMode.NIO);
         try {
-            log.info("inti the redisson client with config: {}", config.toJSON());
+            log.info("inti the redisson client with config: {}", config.toYAML());
         } catch (IOException ex) {
             log.error("parse json error:", ex);
         }

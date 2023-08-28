@@ -2,7 +2,6 @@ package top.kdla.framework.domain.shared;
 
 
 import lombok.Getter;
-import org.springframework.util.StringUtils;
 
 /**
  * 用户状态枚举
@@ -41,7 +40,7 @@ public enum StateEnum implements ValueObject<StateEnum> {
      * @return
      */
     public static String getDescByCode(Integer code){
-        if(StringUtils.isEmpty(code)) {
+        if(code == null) {
             return "";
         }
         for (StateEnum s : StateEnum.values()) {
@@ -59,7 +58,7 @@ public enum StateEnum implements ValueObject<StateEnum> {
      * @return
      */
     public static StateEnum getStateEnum(Integer code){
-        if(StringUtils.isEmpty(code)) {
+        if(code == null) {
             return null;
         }
         for (StateEnum s : StateEnum.values()) {

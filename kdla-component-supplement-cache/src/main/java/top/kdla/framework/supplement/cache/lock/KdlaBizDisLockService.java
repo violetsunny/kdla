@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import top.kdla.framework.dto.ErrorCodeI;
 import top.kdla.framework.exception.BizException;
+import top.kdla.framework.exception.LockFailException;
 
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -12,10 +13,10 @@ import java.util.function.Supplier;
 @Slf4j
 public class KdlaBizDisLockService {
 
-    private final DistributeLockFactory distributeLockFactory;
+    private final RedissonRedDisLock redDisLock;
 
-    public KdlaBizDisLockService(DistributeLockFactory distributeLockFactory) {
-        this.distributeLockFactory = distributeLockFactory;
+    public KdlaBizDisLockService(RedissonRedDisLock redDisLock) {
+        this.redDisLock = redDisLock;
     }
 
     /**
@@ -71,7 +72,7 @@ public class KdlaBizDisLockService {
         boolean lockRst = false;
         // must use try catch finnaly to lock and unlock!
         try {
-            lock = distributeLockFactory.getLock(lockKey);
+            lock = redDisLock.lock(lockKey);
             // lock.lock()
             lockRst = lock.tryLock();
             //数据库锁
@@ -82,9 +83,9 @@ public class KdlaBizDisLockService {
             } else {
                 log.info("lock {} failed!", lockKey);
                 if (Objects.nonNull(errCode)) {
-                    throw new BizException(errCode);
+                    throw new LockFailException(errCode);
                 } else {
-                    throw new BizException("重复请求");
+                    throw new LockFailException("重复请求");
                 }
             }
         } finally {

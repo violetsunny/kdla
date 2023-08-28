@@ -33,9 +33,9 @@ public class TraceHolder {
     private static boolean traceEnabled = Boolean.parseBoolean(System.getProperty("trace.enabled", "true"));
 
     //禁用的spanName
-    private static final Topic<String> disabledSpanName = Topic.createRoot();
+    private static final Topic<String> DISABLED_SPAN_NAME = Topic.createRoot();
     //启用的spanName
-    private static final Topic<String> enabledSpanName = Topic.createRoot();
+    private static final Topic<String> ENABLED_SPAN_NAME = Topic.createRoot();
 
     private static OpenTelemetry telemetry;
 
@@ -85,14 +85,14 @@ public class TraceHolder {
         }
         AtomicReference<Boolean> enabled = new AtomicReference<>();
         //获取启用的span
-        enabledSpanName
+        ENABLED_SPAN_NAME
                 .findTopic(name,
                            topic -> enabled.set(true),
                            () -> {
                            });
         if (enabled.get() == null) {
             //获取禁用的span
-            disabledSpanName
+            DISABLED_SPAN_NAME
                     .findTopic(name,
                                topic -> enabled.set(false),
                                () -> {
@@ -142,19 +142,19 @@ public class TraceHolder {
      */
     public static Disposable enable(String spanName, String handler) {
        removeDisabled(spanName,handler);
-        Topic<String> subTable = enabledSpanName.append(spanName);
+        Topic<String> subTable = ENABLED_SPAN_NAME.append(spanName);
         subTable.subscribe(handler);
         return () -> subTable.unsubscribe(handler);
     }
 
     public static void removeEnabled(String spanName, String handler) {
-        enabledSpanName
+        ENABLED_SPAN_NAME
                 .getTopic(spanName)
                 .ifPresent(topic -> topic.unsubscribe(handler));
     }
 
     public static void removeDisabled(String spanName, String handler) {
-        disabledSpanName
+        DISABLED_SPAN_NAME
                 .getTopic(spanName)
                 .ifPresent(topic -> topic.unsubscribe(handler));
     }
@@ -171,7 +171,7 @@ public class TraceHolder {
      * @param handler  handler
      */
     public static void disable(String spanName, String handler) {
-        disabledSpanName
+        DISABLED_SPAN_NAME
                 .append(spanName)
                 .subscribe(handler);
         removeEnabled(spanName,handler);

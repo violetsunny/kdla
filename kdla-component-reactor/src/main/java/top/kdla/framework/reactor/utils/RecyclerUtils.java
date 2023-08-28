@@ -27,13 +27,17 @@ public class RecyclerUtils {
                 .map(Integer::parseInt)
                 .orElse(defaultRatio);
 
+        int chunkSize = getPoolConfig(type, "chunkSize")
+                .map(Integer::parseInt)
+                .orElse(defaultRatio);
+
         if (log.isDebugEnabled()) {
             log.debug("-D{}: {}", getConfigName(type, "maxCapacityPerThread"), maxCapacityPerThread);
             log.debug("-D{}: {}", getConfigName(type, "maxSharedCapacityFactor"), maxSharedCapacityFactor);
             log.debug("-D{}: {}", getConfigName(type, "maxDelayedQueuesPerThread"), maxDelayedQueuesPerThread);
             log.debug("-D{}: {}", getConfigName(type, "ratio"), ratio);
         }
-        return new Recycler<T>(maxCapacityPerThread, maxSharedCapacityFactor, ratio, maxDelayedQueuesPerThread) {
+        return new Recycler<T>(maxCapacityPerThread, ratio, chunkSize) {
             @Override
             protected T newObject(Handle<T> handle) {
                 return objectSupplier.apply(handle);

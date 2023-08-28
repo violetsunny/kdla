@@ -12,6 +12,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import top.kdla.framework.common.help.SelfSnowflakeGeneratorHelp;
 import top.kdla.framework.supplement.cache.lock.KdlaBizDisLockService;
 import top.kdla.framework.supplement.cache.lock.DistributeLockFactory;
 import top.kdla.framework.supplement.cache.lock.RedissonLockFactory;
@@ -35,19 +36,19 @@ public class RedissonAutoConfigure {
     private String appId;
 
     @Bean("disLockService")
-    public KdlaBizDisLockService disLockService(DistributeLockFactory distributeLockFactory){
-        return new KdlaBizDisLockService(distributeLockFactory);
+    public KdlaBizDisLockService disLockService(RedissonRedDisLock redissonRedDisLock){
+        return new KdlaBizDisLockService(redissonRedDisLock);
     }
 
     @Bean("redissonRedDisLock")
     @ConditionalOnMissingBean
-    public RedissonRedDisLock redissonRedDisLock() {
-        return new RedissonRedDisLock(this.config);
+    public RedissonRedDisLock redissonRedDisLock(DistributeLockFactory distributeLockFactory) {
+        return new RedissonRedDisLock(distributeLockFactory);
     }
 
     @Bean("distributeLockFactory")
     public DistributeLockFactory distributeLockFactory() {
-        String prefix = this.appId == null || "".equals(this.appId) ? UUID.randomUUID().toString() : this.appId;
+        String prefix = this.appId == null || "".equals(this.appId) ? SelfSnowflakeGeneratorHelp.generate() : this.appId;
         return new RedissonLockFactory(this.config, prefix);
     }
 

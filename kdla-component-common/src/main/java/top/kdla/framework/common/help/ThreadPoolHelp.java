@@ -10,7 +10,8 @@ package top.kdla.framework.common.help;
  */
 
 import com.alibaba.ttl.threadpool.TtlExecutors;
-import lombok.*;
+import lombok.Builder;
+import lombok.Setter;
 
 import java.util.concurrent.*;
 
@@ -64,9 +65,9 @@ public class ThreadPoolHelp {
     //服务器的cpu核数
     private static final Integer CPUS = Runtime.getRuntime().availableProcessors();
     //默认阻塞队列
-    private static final BlockingQueue<Runnable> defaultWorkQueue = new LinkedBlockingQueue<Runnable>();
+    private static final BlockingQueue<Runnable> DEFAULT_WORK_QUEUE = new LinkedBlockingQueue<Runnable>();
     //默认直接抛异常
-    private static final RejectedExecutionHandler defaultHandler = new ThreadPoolExecutor.AbortPolicy();
+    private static final RejectedExecutionHandler DEFAULT_HANDLER = new ThreadPoolExecutor.AbortPolicy();
 
     public ThreadPoolHelp() {
     }
@@ -99,7 +100,7 @@ public class ThreadPoolHelp {
                 TimeUnit.SECONDS,
                 new SynchronousQueue<Runnable>(),
                 Executors.defaultThreadFactory(),
-                defaultHandler);
+                DEFAULT_HANDLER);
         return TtlExecutors.getTtlExecutorService(threadPool);
     }
 
@@ -128,9 +129,9 @@ public class ThreadPoolHelp {
                 initMirrorIOMaxPoolSize(),
                 0L,
                 TimeUnit.SECONDS,
-                defaultWorkQueue,
+                DEFAULT_WORK_QUEUE,
                 Executors.defaultThreadFactory(),
-                defaultHandler);
+                DEFAULT_HANDLER);
         return TtlExecutors.getTtlExecutorService(threadPool);
     }
 

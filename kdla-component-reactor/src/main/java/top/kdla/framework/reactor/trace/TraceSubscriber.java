@@ -19,7 +19,7 @@ import java.util.function.BiConsumer;
 
 class TraceSubscriber<T> extends BaseSubscriber<T> implements Span {
 
-    final static AttributeKey<Long> count = AttributeKey.longKey("count");
+    final static AttributeKey<Long> COUNT = AttributeKey.longKey("count");
 
     @SuppressWarnings("all")
     final static AtomicLongFieldUpdater<TraceSubscriber> NEXT_COUNT = AtomicLongFieldUpdater
@@ -98,7 +98,7 @@ class TraceSubscriber<T> extends BaseSubscriber<T> implements Span {
         if (onComplete != null) {
             onComplete.accept(this, nextCount);
         }
-        span.setAttribute(count, nextCount);
+        span.setAttribute(COUNT, nextCount);
         if (!stateSet) {
             span.setStatus(StatusCode.OK);
         }

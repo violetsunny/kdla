@@ -1,7 +1,5 @@
 package top.kdla.framework.common.utils;
 
-import java.util.regex.Pattern;
-
 public class CharUtil {
 	// 根据Unicode编码完美的判断中文汉字和符号
 	private static boolean isChinese(char c) {
@@ -35,8 +33,7 @@ public class CharUtil {
 		if (str == null) {
 			return false;
 		}
-		Pattern pattern = Pattern.compile("[\\u4E00-\\u9FBF]+");
-		return pattern.matcher(str.trim()).find();
+		return RegexUtil.CHINESE_REG.matcher(str.trim()).find();
 	}
  
 	// 只能判断部分CJK字符（CJK统一汉字）
@@ -46,8 +43,6 @@ public class CharUtil {
 		}
 		// 大小写不同：\\p 表示包含，\\P 表示不包含 
 		// \\p{Cn} 的意思为 Unicode 中未被定义字符的编码，\\P{Cn} 就表示 Unicode中已经被定义字符的编码
-		String reg = "\\p{InCJK Unified Ideographs}&amp;&amp;\\P{Cn}";
-		Pattern pattern = Pattern.compile(reg);
-		return pattern.matcher(str.trim()).find();
+		return RegexUtil.CHINESE_NAME.matcher(str.trim()).find();
 	}
 }
