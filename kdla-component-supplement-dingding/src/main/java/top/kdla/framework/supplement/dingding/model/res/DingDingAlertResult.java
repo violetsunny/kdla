@@ -4,10 +4,8 @@
  */
 package top.kdla.framework.supplement.dingding.model.res;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import top.kdla.framework.dto.BaseModel;
 
 import java.io.Serializable;
 
@@ -19,7 +17,7 @@ import java.io.Serializable;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DingDingAlertResult implements Serializable {
+public class DingDingAlertResult extends BaseModel {
     private static final String SUCCEED = "0";
     private String errcode;
     private String errmsg;

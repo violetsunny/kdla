@@ -125,7 +125,7 @@ public class PageResponse<T> extends Response {
     }
 
     public static <T> PageResponse<T> of(Collection<T> data, long totalCount, long pageSize, long pageNum) {
-        PageResponse<T> response =  buildSuccess(data);
+        PageResponse<T> response = buildSuccess(data);
         response.setTotalCount(totalCount);
         response.setPageSize(pageSize);
         response.setPageNum(pageNum);

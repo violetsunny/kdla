@@ -32,12 +32,11 @@ import java.util.Objects;
  */
 @Service
 public class DingDingServiceImpl implements DingDingService {
+
     private static final Logger logger = LoggerFactory.getLogger(DingDingServiceImpl.class);
+
     @Resource
     private DingAlertConfigure dingAlertConfigure;
-
-    public DingDingServiceImpl() {
-    }
 
     @Override
     public String sendTextMessage(String msg) {
@@ -74,9 +73,9 @@ public class DingDingServiceImpl implements DingDingService {
             StringBuilder sb = this.initDingdingMessage(msg);
             DingDingMessage dingDingMessage = new DingDingMessage(MsgTypeEnum.TEXT.getCode(), new TextMessage(sb.toString()), new DingMessageAt(atMobiles, false));
             String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
-            DingDingAlertResult result = (DingDingAlertResult)JSON.parseObject(rest, DingDingAlertResult.class);
+            DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
-                logger.info("DingDingServiceImpl.sendMessage failed#msg:{},atMobiles:{}, rest:{}", new Object[]{msg, atMobiles, rest});
+                logger.info("DingDingServiceImpl.sendMessage failed#msg:{},atMobiles:{}, rest:{}", msg, atMobiles, rest);
                 return MsgSendRespEnum.FAIL.getCode();
             }
         } catch (Exception var7) {
@@ -108,9 +107,9 @@ public class DingDingServiceImpl implements DingDingService {
             StringBuilder content = this.initDingdingMessage(msg);
             DingDingMessage dingDingMessage = new DingDingMessage(MsgTypeEnum.MARKDOWN.getCode(), new MarkdownMessage(title, content.toString()), new DingMessageAt((List)null, true));
             String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
-            DingDingAlertResult result = (DingDingAlertResult)JSON.parseObject(rest, DingDingAlertResult.class);
+            DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
-                logger.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{}, rest:{}", new Object[]{title, msg, rest});
+                logger.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{}, rest:{}", title, msg, rest);
                 return MsgSendRespEnum.FAIL.getCode();
             }
         } catch (Exception var7) {
@@ -134,7 +133,7 @@ public class DingDingServiceImpl implements DingDingService {
             String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
             DingDingAlertResult result = (DingDingAlertResult)JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
-                logger.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{},atMobiles:{}, rest:{}", new Object[]{title, msg, atMobiles, rest});
+                logger.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{},atMobiles:{}, rest:{}", title, msg, atMobiles, rest);
                 return MsgSendRespEnum.FAIL.getCode();
             }
         } catch (Exception var8) {

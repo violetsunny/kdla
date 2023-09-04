@@ -14,10 +14,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.yaml.snakeyaml.constructor.DuplicateKeyException;
-import top.kdla.framework.dto.ErrorCode;
+import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.dto.Response;
-import top.kdla.framework.exception.BizException;
-import top.kdla.framework.exception.SysException;
 
 import javax.security.sasl.AuthenticationException;
 import javax.servlet.http.HttpServletRequest;

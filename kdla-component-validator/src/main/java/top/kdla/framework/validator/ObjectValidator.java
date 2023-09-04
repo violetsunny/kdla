@@ -9,7 +9,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
 import sun.misc.Unsafe;
-import top.kdla.framework.dto.ErrorCode;
+import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.dto.IEnum;
 import top.kdla.framework.exception.BizException;
 

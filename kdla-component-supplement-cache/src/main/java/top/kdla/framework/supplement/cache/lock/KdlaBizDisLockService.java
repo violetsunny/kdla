@@ -2,8 +2,7 @@ package top.kdla.framework.supplement.cache.lock;
 
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
-import top.kdla.framework.dto.ErrorCodeI;
-import top.kdla.framework.exception.BizException;
+import top.kdla.framework.dto.exception.ErrorCodeI;
 import top.kdla.framework.exception.LockFailException;
 
 import java.util.Objects;

@@ -9,7 +9,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheStats;
 import com.google.common.cache.RemovalListener;
 import lombok.Data;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.TimeUnit;
@@ -45,15 +44,19 @@ public class KdlaGcache<T, E> {
      * @param duration    超时时间，秒
      * @param maximumSize 最大容量，超过则移除
      */
-    public void initKdlaGcache(Long duration, Integer initialCapacity, Integer maximumSize, Integer concurrencyLevel) {
+    public KdlaGcache(Long duration, Integer initialCapacity, Integer maximumSize, Integer concurrencyLevel) {
         this.setGCache(duration, initialCapacity, maximumSize, concurrencyLevel);
         this.init();
     }
 
     private Cache<T, CacheValue<E>> loadingCache;
 
-    @Setter
     private Function<T, E> loaderFunction;
+
+    public KdlaGcache<T, E> loaderFunction(Function<T, E> loaderFunction){
+        this.loaderFunction = loaderFunction;
+        return this;
+    }
 
     /**
      * 设置超时时间和最大容量，并初始化GCache

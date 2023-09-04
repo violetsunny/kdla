@@ -4,12 +4,8 @@
  */
 package top.kdla.framework.supplement.dingding.model.req;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.io.Serializable;
+import lombok.*;
+import top.kdla.framework.dto.BaseModel;
 
 /**
  * @author kanglele
@@ -19,6 +15,6 @@ import java.io.Serializable;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TextMessage implements Serializable {
+public class TextMessage extends BaseModel {
     private String content;
 }

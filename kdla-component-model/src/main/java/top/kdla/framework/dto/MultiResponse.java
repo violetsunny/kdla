@@ -1,5 +1,7 @@
 package top.kdla.framework.dto;
 
+import top.kdla.framework.dto.exception.ErrorCodeI;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;

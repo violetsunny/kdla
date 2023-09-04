@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="top.kdla.framework.supplement.cache.sequence.mapper.CodeGeneratorCfgMapper" >
+    <resultMap id="BaseResultMap" type="top.kdla.framework.supplement.cache.sequence.model.entity.CodeGeneratorCfg" >
+        <id column="id" property="id" jdbcType="INTEGER" />
+        <result column="code" property="code" jdbcType="VARCHAR" />
+        <result column="name" property="name" jdbcType="VARCHAR" />
+        <result column="max_value" property="maxValue" jdbcType="VARCHAR" />
+        <result column="rule" property="rule" jdbcType="VARCHAR" />
+        <result column="is_cache" property="isCache" jdbcType="INTEGER" />
+        <result column="cache_num" property="cacheNum" jdbcType="INTEGER" />
+        <result column="is_deleted" property="isDeleted" jdbcType="TINYINT" />
+        <result column="remark" property="remark" jdbcType="VARCHAR" />
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    </resultMap>
+
+    <sql id="Base_Column_List" >
+        ID, CODE, NAME, MAX_VALUE, RULE, IS_CACHE, CACHE_NUM,
+        IS_DELETED, REMARK, UPDATE_TIME, CREATE_TIME
+    </sql>
+
+    <select id="selectOne" parameterType="top.kdla.framework.supplement.cache.sequence.model.entity.CodeGeneratorCfg" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List" /> from code_generator_cfg where code=#{code}
+        /*CodeGeneratorCfgMapper.selectOne*/
+    </select>
+
+    <update id="updateByIdAndRemark" parameterType="top.kdla.framework.supplement.cache.sequence.model.entity.CodeGeneratorCfg">
+        update code_generator_cfg
+        <set >
+            <if test="code != null" >
+                CODE = #{code,jdbcType=VARCHAR},
+            </if>
+            <if test="name != null" >
+                NAME = #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="maxValue != null" >
+                MAX_VALUE = #{maxValue,jdbcType=VARCHAR},
+            </if>
+            <if test="rule != null" >
+                RULE = #{rule,jdbcType=VARCHAR},
+            </if>
+            <if test="isCache != null" >
+                IS_CACHE = #{isCache,jdbcType=INTEGER},
+            </if>
+            <if test="cacheNum != null" >
+                CACHE_NUM = #{cacheNum,jdbcType=INTEGER},
+            </if>
+            <if test="isDeleted != null" >
+                IS_DELETED = #{isDeleted,jdbcType=TINYINT},
+            </if>
+            <if test="updateTime != null" >
+                UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="createTime != null" >
+                CREATE_TIME = #{createTime,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+
+        where
+            id = #{id}
+        and
+            remark = #{remark}
+    </update>
+
+    <update id="update">
+        update
+            code_generator_cfg
+        set
+            remark = #{remark}
+        where
+            code= #{code}
+    </update>
+
+</mapper>

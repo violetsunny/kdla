@@ -2,11 +2,14 @@ package top.kdla.framework.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import top.kdla.framework.dto.exception.ErrorCode;
+import top.kdla.framework.dto.exception.ErrorCodeI;
 
 /**
  * Response to caller
- *  @author kll
- *  @since 2021/7/9 14:15
+ *
+ * @author kll
+ * @since 2021/7/9 14:15
  */
 @Getter
 @Setter
@@ -28,13 +31,6 @@ public class Response extends BaseModel {
     public static Response buildSuccess() {
         Response response = new Response();
         response.setSuccess();
-        return response;
-    }
-
-    public static <T> SingleResponse<T> buildSuccess(T data) {
-        SingleResponse<T> response = new SingleResponse<>();
-        response.setSuccess();
-        response.setData(data);
         return response;
     }
 

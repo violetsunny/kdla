@@ -1,6 +1,6 @@
 package top.kdla.framework.exception;
 
-import top.kdla.framework.dto.ErrorCodeI;
+import top.kdla.framework.dto.exception.ErrorCodeI;
 
 /**
  * System Exception is unexpected Exception, retry might work again

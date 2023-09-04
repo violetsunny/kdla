@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import top.kdla.framework.dto.BaseModel;
 
 import java.io.Serializable;
 import java.util.List;
@@ -20,7 +21,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DingMessageAt implements Serializable {
+public class DingMessageAt extends BaseModel {
     private List<String> atMobiles;
     private boolean isAtAll;
 }

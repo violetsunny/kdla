@@ -1,7 +1,7 @@
 package top.kdla.framework.exception;
 
 import top.kdla.framework.common.utils.KdlaStringUtil;
-import top.kdla.framework.dto.ErrorCodeI;
+import top.kdla.framework.dto.exception.ErrorCodeI;
 
 /**
  * BizException is known Exception, no need retry

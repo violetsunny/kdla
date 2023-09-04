@@ -1,6 +1,6 @@
 package top.kdla.framework.exception;
 
-import top.kdla.framework.dto.ErrorCodeI;
+import top.kdla.framework.dto.exception.ErrorCodeI;
 
 /**
  * 异常工厂实现

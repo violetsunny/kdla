@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import top.kdla.framework.dto.BaseModel;
 
 import java.io.Serializable;
 
@@ -20,7 +21,7 @@ import java.io.Serializable;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class MarkdownMessage implements Serializable {
+public class MarkdownMessage extends BaseModel {
     private String title;
     @JsonIgnore
     private String content;

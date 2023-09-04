@@ -18,7 +18,7 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.multipart.MultipartForm;
 import lombok.extern.slf4j.Slf4j;
 import top.kdla.framework.common.utils.ObjectUtil;
-import top.kdla.framework.dto.ErrorCode;
+import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.BizException;
 
 import java.util.HashMap;

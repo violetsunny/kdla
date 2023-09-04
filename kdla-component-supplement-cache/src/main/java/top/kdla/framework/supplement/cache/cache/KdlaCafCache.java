@@ -8,7 +8,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalListener;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
-import lombok.Setter;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.TimeUnit;
@@ -36,19 +36,28 @@ public class KdlaCafCache<T, E> {
      */
     private Integer maximumSize;
 
+    @Getter
+    private final String cacheName;
+
     /**
      * @param duration    超时时间，秒
      * @param maximumSize 最大容量，超过则移除
+     * @param cacheName cache名称
      */
-    public void initKdlaCafCache(Long duration, Integer initialCapacity, Integer maximumSize) {
+    public KdlaCafCache(String cacheName,Long duration, Integer initialCapacity, Integer maximumSize) {
+        this.cacheName = cacheName;
         this.setCafCache(duration, initialCapacity, maximumSize);
         this.init();
     }
 
     private Cache<T, E> loadingCache;
 
-    @Setter
     private Function<T, E> loaderFunction;
+
+    public KdlaCafCache<T, E> loaderFunction(Function<T, E> loaderFunction){
+        this.loaderFunction = loaderFunction;
+        return this;
+    }
 
     /**
      * 设置超时时间和最大容量，并初始化GCache

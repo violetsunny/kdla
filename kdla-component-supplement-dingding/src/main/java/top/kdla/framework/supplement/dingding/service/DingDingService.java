@@ -11,6 +11,7 @@ import java.util.List;
  * @version $Id: DingDingService, v 0.1 2023/2/2 14:25 kanglele Exp $
  */
 public interface DingDingService {
+
     String sendTextMessage(String var1);
 
     String sendTextMessage(String var1, List<String> var2);

@@ -19,6 +19,6 @@ public enum MsgSendRespEnum implements IEnum<String> {
     NO_NEED("no_need", "无需发送"),
     FAIL("fail", "失败");
 
-    private String code;
-    private String desc;
+    private final String code;
+    private final String desc;
 }

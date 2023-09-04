@@ -1,5 +1,7 @@
 package top.kdla.framework.dto;
 
+import top.kdla.framework.dto.exception.ErrorCodeI;
+
 /**
  * Response with single record to return
  *

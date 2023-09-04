@@ -1,8 +1,8 @@
 package top.kdla.framework.validator;
 
 
-import top.kdla.framework.dto.ErrorCode;
-import top.kdla.framework.dto.ErrorCodeI;
+import top.kdla.framework.dto.exception.ErrorCode;
+import top.kdla.framework.dto.exception.ErrorCodeI;
 import top.kdla.framework.exception.BizException;
 
 import java.util.Collection;
