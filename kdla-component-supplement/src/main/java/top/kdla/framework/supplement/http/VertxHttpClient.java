@@ -119,14 +119,15 @@ public class VertxHttpClient {
      *
      * @param method
      * @param url
-     * @param headers
+     * @param header
      * @param req
      * @return
      */
-    private Future<HttpResponse<Buffer>> createRequest(HttpMethod method, String url, Map<String, String> headers, Object req) {
-        if (headers != null) {
+    private Future<HttpResponse<Buffer>> createRequest(HttpMethod method, String url, Map<String, String> header, Object req) {
+        Map<String, String> headers;
+        if (header != null) {
             //指定为小写
-            headers = headers.entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
+            headers = header.entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
         } else {
             headers = new HashMap<>();
         }

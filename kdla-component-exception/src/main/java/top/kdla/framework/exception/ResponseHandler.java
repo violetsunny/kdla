@@ -1,6 +1,5 @@
 package top.kdla.framework.exception;
 
-import lombok.extern.slf4j.Slf4j;
 import top.kdla.framework.dto.Response;
 
 /**
@@ -9,7 +8,6 @@ import top.kdla.framework.dto.Response;
  * @author kll
  * @since 2021/7/9 14:15
  */
-@Slf4j
 public class ResponseHandler {
 
     public static Object handle(Class returnType, String code, String message) {
@@ -32,7 +30,6 @@ public class ResponseHandler {
             response.setMsg(message);
             return response;
         } catch (Exception ex) {
-            log.error(ex.getMessage(), ex);
             return Response.buildFailure(code, message);
         }
     }

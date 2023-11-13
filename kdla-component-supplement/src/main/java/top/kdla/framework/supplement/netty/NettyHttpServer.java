@@ -52,6 +52,7 @@ public class NettyHttpServer {
     private final EventLoopGroup workerGroup;
     private final ServerBootstrap serverBootstrap;
 
+
     public NettyHttpServer(DispatcherServer dispatcherServer, boolean keepAlive) {
         this.dispatcherServer = dispatcherServer;
         this.keepAlive = keepAlive;
@@ -107,6 +108,9 @@ public class NettyHttpServer {
     }
 
     private static class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
+
+        private final static int M10 = 10 * 1024 * 1024;
+
         private final boolean ssl;
         private final File server;
         private final File servertruststore;
@@ -137,7 +141,7 @@ public class NettyHttpServer {
             ch.pipeline().addLast(new HttpServerCodec());//是HttpRequestDecoder和HttpResponseEncoder的封装
             //Http请求经过HttpServerCodec解码之后是HttpRequest和HttpContents对象，
             //HttpObjectAggregator会将多个HttpRequest和HttpContents对象再拼装成一个FullHttpRequest，再将其传递到下个Handler
-            ch.pipeline().addLast("aggregator", new HttpObjectAggregator(10 * 1024 * 1024));
+            ch.pipeline().addLast("aggregator", new HttpObjectAggregator(M10));
             ch.pipeline().addLast(new HttpServerInboundHandlerJson(this.dispatcherServer));
         }
     }
@@ -145,6 +149,8 @@ public class NettyHttpServer {
     private static class HttpServerInboundHandlerJson extends SimpleChannelInboundHandler<FullHttpRequest> {
 
         private final Logger log = LoggerFactory.getLogger(HttpServerInboundHandlerJson.class);
+
+        private final static int M10 = 10 * 1024 * 1024;
 
         private final DispatcherServer dispatcherServer;
 
@@ -188,6 +194,9 @@ public class NettyHttpServer {
         }
 
         private void writeHttpResponse(FullHttpRequest request, String headValue, Object res, ChannelHandlerContext ctx, HttpResponseStatus status) throws Exception {
+            //设置高水位值
+            ctx.channel().config().setWriteBufferHighWaterMark(M10);
+
             if (StringUtils.isNotBlank(headValue) && headValue.equalsIgnoreCase(HttpHeaderValues.TEXT_HTML.toString())) {
                 if (res instanceof File) {
                     writeHttpResponseHtml(request, (File) res, ctx, status);

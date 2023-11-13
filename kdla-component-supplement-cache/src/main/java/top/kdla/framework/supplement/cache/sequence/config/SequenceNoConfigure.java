@@ -34,8 +34,6 @@ public class SequenceNoConfigure {
         sequenceNoGenerator.setCodeGeneratorCfgMapper(codeGeneratorCfgMapper);
         sequenceNoGenerator.setRedissonClient(redissonRedDisLock);
         sequenceNoGenerator.setSequenceNoLockKey(sequenceNoLockKey);
-
-        log.info("sequenceNoGenerator injeted...");
         return sequenceNoGenerator;
     }
 
@@ -45,8 +43,6 @@ public class SequenceNoConfigure {
         generatorV2.setCodeGeneratorCfgMapper(codeGeneratorCfgMapper);
         generatorV2.setRedissonClient(redissonRedDisLock);
         generatorV2.setSequenceNoLockKey(sequenceNoLockKey);
-
-        log.info("generatorV2 injeted...");
         return generatorV2;
     }
 

@@ -29,6 +29,8 @@ public class DateUtil {
     public final static String DATE_TIME_PATTERN_1 = "yyyy/MM/dd HH:mm:ss";
     /** 时间格式(yyyy-MM-dd HH:mm:ss.SSS) */
     public final static String DATE_TIME_PATTERN_2 = "yyyy-MM-dd HH:mm:ss.SSS";
+    /** 时间格式(yyyy-MM-dd HH:mm:ss.SSS) */
+    public final static String DATE_TIME_PATTERN_3 = "yyyy-MM-ddTHH:mm:ss.SSS";
 
     /**
      * 日期格式化 日期格式为：yyyy-MM-dd

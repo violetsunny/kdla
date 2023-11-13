@@ -4,6 +4,7 @@
  */
 package top.kdla.framework.exception;
 
+import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.dto.exception.ErrorCodeI;
 
 /**
@@ -13,10 +14,8 @@ import top.kdla.framework.dto.exception.ErrorCodeI;
 public class LockFailException extends BaseException {
     private static final long serialVersionUID = -3816322588329303318L;
 
-    private static final String DEFAULT_ERR_CODE = "LOCK_ERROR";
-
     public LockFailException(String message) {
-        super(DEFAULT_ERR_CODE, message);
+        super(ErrorCode.LOCK_ERROR.getCode(), message);
     }
 
     public LockFailException(String code, String message) {

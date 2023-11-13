@@ -39,14 +39,14 @@ public class VertxHttpConfigure {
 
     @Bean
     @ConditionalOnMissingBean(VertxHttpClient.class)
-    public VertxHttpClient vertxHttpClient() {
-        return new VertxHttpClient(webClient());
+    public VertxHttpClient vertxHttpClient(WebClient webClient) {
+        return new VertxHttpClient(webClient);
     }
 
     @Bean
     @ConditionalOnMissingBean(WebClient.class)
-    public WebClient webClient() {
-        return WebClient.create(vertx(), new WebClientOptions()
+    public WebClient webClient(Vertx vertx) {
+        return WebClient.create(vertx, new WebClientOptions()
 //                .setSsl(true)
 //                .setTrustAll(true)
                 .setProtocolVersion(HttpVersion.HTTP_1_1)
@@ -59,13 +59,15 @@ public class VertxHttpConfigure {
     }
 
     @Bean
+    @ConditionalOnMissingBean(Vertx.class)
     public Vertx vertx() {
         return Vertx.vertx();
     }
 
     @PreDestroy
+    //@ConditionalOnClass({Vertx.class, WebClient.class})
     public void close() {
-        webClient().close();
+        webClient(vertx()).close();
         vertx().close();
     }
 

@@ -381,6 +381,7 @@ public class NettyHttpClient {
                 response.setSuccess(buf.toString(CharsetUtil.UTF_8));
             }
 
+            //安全回收ByteBuf，此处SimpleChannelInboundHandler会做这个操作没有必要重复。
             //ReferenceCountUtil.safeRelease(msg);
         }
 

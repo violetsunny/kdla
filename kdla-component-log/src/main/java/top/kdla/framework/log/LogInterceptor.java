@@ -32,7 +32,7 @@ public class LogInterceptor implements AsyncHandlerInterceptor {
             // 打印请求信息
             log.info("### uri：{}, requestParam: {}, requestBody:{} ", requestWrapper.getRequestURI(), JacksonUtil.toJson(requestWrapper.getParameterMap()), requestWrapper.getBody());
         } catch (Exception e) {
-            log.info("打印请求头信息异常:{}", e.getMessage());
+            log.warn("打印请求头信息异常:{}", e.getMessage());
         }
     }
 
@@ -60,7 +60,7 @@ public class LogInterceptor implements AsyncHandlerInterceptor {
     public void afterCompletion(final HttpServletRequest request, final HttpServletResponse response,
                                 final Object handler, final Exception ex) throws Exception {
         Long executionTime = TimeUtil.now() - BEGIN_TIMESTAMP.get();
-        log.info(String.format("### uri: %s, remote-addr: %s, execution: %d", request.getRequestURI(), request.getRemoteAddr(), executionTime));
+        log.info("### uri: {}, remote-addr: {}, execution: {}", request.getRequestURI(), request.getRemoteAddr(), executionTime);
         if (LogTraceHolder.get()) {
             MDC.remove(CommonConstants.LOG_TRACE_ID);
         }

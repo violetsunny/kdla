@@ -1,5 +1,6 @@
 package top.kdla.framework.exception;
 
+import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.dto.exception.ErrorCodeI;
 
 /**
@@ -12,10 +13,8 @@ public class SysException extends BaseException {
 
     private static final long serialVersionUID = 1L;
 
-    private static final String DEFAULT_ERR_CODE = "SYS_ERROR";
-
     public SysException(String message) {
-        super(DEFAULT_ERR_CODE, message);
+        super(ErrorCode.SYS_ERROR.getCode(), message);
     }
 
     public SysException(String code, String message) {
@@ -27,7 +26,7 @@ public class SysException extends BaseException {
     }
 
     public SysException(String message, Throwable e) {
-        super(DEFAULT_ERR_CODE, message, e);
+        super(ErrorCode.SYS_ERROR.getCode(), message, e);
     }
 
     public SysException(String code, String message, Throwable e) {

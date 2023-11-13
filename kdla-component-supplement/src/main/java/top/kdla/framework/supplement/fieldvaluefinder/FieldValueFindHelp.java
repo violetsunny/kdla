@@ -28,6 +28,13 @@ public class FieldValueFindHelp {
     /**
      * 对列表中的对象进行遍历处理。
      * 如果对象的字段上挂载了注解 @FieldValueFind，那么就会做对该字段做查询、注入新值的逻辑
+     *
+     * fieldValueFindHelper.process(list);
+     *
+     * @FieldValueFind(fromField = "whPhysicalId", queryClass = WarehouseService.class, queryMethod = "listMapByIds", queryPolicy = FieldValueFindHelper.QueryPolicy.BATCH)
+     * private WhPhysicalBo whPhysicalBo;
+     *
+     *
      * @param list
      */
     public void process(List<?> list) {
@@ -52,6 +59,7 @@ public class FieldValueFindHelp {
         }
         processDtoList(dtoList);
     }
+
     private void processDtoList(List<ProcessFieldDto> list) {
         //直接查询设置
         List<ProcessFieldDto> directQueryList = list.stream().filter(e -> e.getFieldValueFind().queryPolicy().equals(QueryPolicy.DIRECT))
@@ -73,7 +81,6 @@ public class FieldValueFindHelp {
         }
 
     }
-
 
 
     private void directQuery(ProcessFieldDto dto) {
@@ -180,6 +187,7 @@ public class FieldValueFindHelp {
         //使用查询过来的值
         USE_FROM
     }
+
     public enum QueryPolicy {
         //直接拿fromField查询，然后把查询结果设置回来
         DIRECT,

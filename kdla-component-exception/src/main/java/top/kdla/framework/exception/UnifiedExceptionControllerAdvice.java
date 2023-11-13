@@ -56,7 +56,7 @@ public class UnifiedExceptionControllerAdvice {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseBody
     public Response validExceptionHandler(MethodArgumentNotValidException e, HttpServletRequest request) {
-        log.info("The request [{}] MethodArgumentNotValidException: {}", request.getRequestURI(), ExceptionUtils.getStackTrace(e));
+        log.warn("The request [{}] MethodArgumentNotValidException: {}", request.getRequestURI(), ExceptionUtils.getStackTrace(e));
         List<ObjectError> allErrors = e.getBindingResult().getAllErrors();
         List<String> errors = allErrors.stream().map(DefaultMessageSourceResolvable::getDefaultMessage).collect(Collectors.toList());
         return Response.buildFailure(ErrorCode.PARAMETER_ERROR.getCode(), errors.toString());
@@ -68,7 +68,7 @@ public class UnifiedExceptionControllerAdvice {
     @ExceptionHandler(BizException.class)
     @ResponseBody
     public Response handleBizException(HttpServletRequest req, Throwable exception) {
-        log.info("handleBizException, req: {},BizException:{}", req.getRequestURI(), ExceptionUtils.getStackTrace(exception));
+        log.warn("handleBizException, req: {},BizException:{}", req.getRequestURI(), ExceptionUtils.getStackTrace(exception));
         BizException bizException = (BizException) exception;
         String errorCode = bizException.getCode();
         errorCode = ErrorCode.BIZ_ERROR.getCode().equalsIgnoreCase(errorCode) ? ErrorCode.BAD_REQUEST.getCode(): errorCode;
@@ -82,7 +82,7 @@ public class UnifiedExceptionControllerAdvice {
     @ExceptionHandler(SysException.class)
     @ResponseBody
     public Response handleSysException(HttpServletRequest req, Throwable exception) {
-        log.info("handleSysException, req: {},SysException:{}", req.getRequestURI(), ExceptionUtils.getStackTrace(exception));
+        log.warn("handleSysException, req: {},SysException:{}", req.getRequestURI(), ExceptionUtils.getStackTrace(exception));
         SysException sysException = (SysException) exception;
         String errorCode = sysException.getCode();
         errorCode = ErrorCode.SYS_ERROR.getCode().equalsIgnoreCase(errorCode) ? ErrorCode.FAIL.getCode(): errorCode;
@@ -100,7 +100,7 @@ public class UnifiedExceptionControllerAdvice {
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseBody
     public Response constraintViolationHandler(ConstraintViolationException ex, HttpServletRequest request) {
-        log.info("handleConstraintViolationException, req: {},ConstraintViolationException:{}", request.getRequestURI(), ExceptionUtils.getStackTrace(ex));
+        log.warn("handleConstraintViolationException, req: {},ConstraintViolationException:{}", request.getRequestURI(), ExceptionUtils.getStackTrace(ex));
         List<String> errors = new ArrayList<>();
         for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
             errors.add(violation.getPropertyPath() + ": " + violation.getMessage());
@@ -108,11 +108,12 @@ public class UnifiedExceptionControllerAdvice {
         return Response.buildFailure(ErrorCode.PARAMETER_ERROR.getCode(), errors.toString());
 
     }
+
     @ResponseBody
     @ResponseStatus(HttpStatus.OK)
     @ExceptionHandler(InvalidParameterException.class)
     public Response handleInvalidParameterException(InvalidParameterException ex, HttpServletRequest request) {
-        log.info("handleInvalidParameterException, req: {},ConstraintViolationException:{}", request.getRequestURI(), ExceptionUtils.getStackTrace(ex));
+        log.warn("handleInvalidParameterException, req: {},ConstraintViolationException:{}", request.getRequestURI(), ExceptionUtils.getStackTrace(ex));
         return Response.buildFailure(ErrorCode.PARAMETER_ERROR.getCode(), ex.getMessage());
     }
 
@@ -120,18 +121,19 @@ public class UnifiedExceptionControllerAdvice {
     @ResponseStatus(HttpStatus.OK)
     @ExceptionHandler(IllegalArgumentException.class)
     public Response handleIllegalArgumentException(IllegalArgumentException ex, HttpServletRequest request) {
-        log.info("handleIllegalArgumentException, req: {},ConstraintViolationException:{}", request.getRequestURI(), ExceptionUtils.getStackTrace(ex));
+        log.warn("handleIllegalArgumentException, req: {},ConstraintViolationException:{}", request.getRequestURI(), ExceptionUtils.getStackTrace(ex));
         return Response.buildFailure(ErrorCode.PARAMETER_ERROR.getCode(), ex.getMessage());
     }
 
+    @ResponseBody
     @ResponseStatus(HttpStatus.OK)
     @ExceptionHandler(DuplicateKeyException.class)
     public Response handleDuplicateKeyException(DuplicateKeyException ex) {
-        log.error("handleDuplicateKeyException", ex);
-        return Response.buildFailure(ErrorCode.UNKNOWN_ERROR.getCode(), ErrorCode.UNKNOWN_ERROR.getMsg());
+        log.warn("handleDuplicateKeyException", ex);
+        return Response.buildFailure(ErrorCode.DUPLICATE_KEY.getCode(), ErrorCode.DUPLICATE_KEY.getMsg());
     }
 
-
+    @ResponseBody
     @ResponseStatus(HttpStatus.OK)
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public Response handlerMissingServletRequestParameterException(MissingServletRequestParameterException ex) {
@@ -147,15 +149,12 @@ public class UnifiedExceptionControllerAdvice {
     public Response handleThrowable(HttpServletRequest req, Throwable exception) {
         log.error("handleThrowable, req: {},Throwable:{}", req.getRequestURI(), ExceptionUtils.getStackTrace(exception));
         String errorMessage = exception.getMessage();
-
         if (exception instanceof ConstraintViolationException) {
             return Response.buildFailure(ErrorCode.FAIL.getCode(), errorMessage);
         }
-
         if (exception instanceof BindException) {
             return Response.buildFailure(ErrorCode.FAIL.getCode(), errorMessage);
         }
-
-        return Response.buildFailure(ErrorCode.FAIL.getCode(), errorMessage);
+        return Response.buildFailure(ErrorCode.SYS_ERROR.getCode(), errorMessage);
     }
 }

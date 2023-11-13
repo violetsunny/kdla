@@ -46,7 +46,7 @@ public class MultiThreadInvokeHelp {
         // 转换
         List<CompletableFuture<T>> completableFutures = executeS(suppliers, executor);
         for (CompletableFuture<T> completableFuture : completableFutures) {
-            // 等待获取结果
+            // 等待获取结果,get会抛出检查异常
             results.add(completableFuture.get());
         }
         return results;
@@ -63,7 +63,7 @@ public class MultiThreadInvokeHelp {
     private static <T> List<CompletableFuture<T>> executeS(List<Supplier<T>> suppliers, Executor executor) {
         List<CompletableFuture<T>> tasks = suppliers.stream()
             .map(supplier -> CompletableFuture.supplyAsync(supplier, executor)).collect(Collectors.toList());
-        // 转换并执行汇总等待结果
+        // 转换并执行汇总等待结果，join是运行时异常
         CompletableFuture.allOf(tasks.toArray(new CompletableFuture[tasks.size()])).join();
         return tasks;
     }

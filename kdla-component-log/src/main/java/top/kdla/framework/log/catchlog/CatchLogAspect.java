@@ -17,10 +17,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import top.kdla.framework.common.constants.CommonConstants;
 import top.kdla.framework.common.help.SelfSnowflakeGeneratorHelp;
-import top.kdla.framework.exception.BaseException;
-import top.kdla.framework.exception.BizException;
-import top.kdla.framework.exception.ResponseHandler;
-import top.kdla.framework.exception.SysException;
+import top.kdla.framework.dto.exception.ErrorCode;
+import top.kdla.framework.exception.*;
 import top.kdla.framework.log.LogTraceHolder;
 
 import javax.servlet.http.HttpServletRequest;
@@ -29,7 +27,8 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 /**
- *  Catching and Logging
+ * Catching and Logging
+ *
  * @author kll
  * @since 2021/7/9 14:15
  */
@@ -62,55 +61,58 @@ public class CatchLogAspect {
     }
 
     @Around(value = "pointcut()")
-    public Object around(ProceedingJoinPoint joinPoint ) {
+    public Object around(ProceedingJoinPoint joinPoint) {
         MethodSignature ms = (MethodSignature) joinPoint.getSignature();
         Method method = ms.getMethod();
         List<Object> args = filterArgs(joinPoint.getArgs());
-        String clazzMethodInfo =  method.getDeclaringClass().getName().concat(".").concat(method.getName());
-        log.info("====== {} Invoke start ======", clazzMethodInfo);
+        String clazzMethodInfo = method.getDeclaringClass().getName().concat(".").concat(method.getName());
+        log.debug("====== {} Invoke start ======", clazzMethodInfo);
         StopWatch sw = new StopWatch(clazzMethodInfo);
         sw.start();
         Object response = null;
         try {
-             response = joinPoint.proceed();
+            response = joinPoint.proceed();
         } catch (Throwable e) {
             response = handleException(joinPoint, e);
         } finally {
             sw.stop();
-            log.info("### {} Invoke Finished, requestParam: {}, response: {}, shortSummary:{}", clazzMethodInfo, JSON.toJSONString(args), JSON.toJSONString(response), sw.shortSummary());
+            log.debug("### {} Invoke Finished, requestParam: {}, response: {}, shortSummary:{}", clazzMethodInfo, JSON.toJSONString(args), JSON.toJSONString(response), sw.shortSummary());
             if (!LogTraceHolder.get()) {
                 MDC.remove(CommonConstants.LOG_TRACE_ID);
                 LogTraceHolder.remove();
             }
         }
 
-        return response ;
+        return response;
     }
 
     /**
      * 处理异常
+     *
      * @param joinPoint
      * @param e
      * @return
      */
     private Object handleException(ProceedingJoinPoint joinPoint, Throwable e) {
-        MethodSignature ms = (MethodSignature)joinPoint.getSignature();
+        MethodSignature ms = (MethodSignature) joinPoint.getSignature();
         Method method = ms.getMethod();
-        String clazzMethodInfo =  method.getDeclaringClass().getName().concat(".").concat(method.getName());
+        String clazzMethodInfo = method.getDeclaringClass().getName().concat(".").concat(method.getName());
         log.warn(clazzMethodInfo + " invoke failed,exception is:", e);
         Class returnType = ms.getReturnType();
-
         if (e instanceof BizException) {
-            log.warn(clazzMethodInfo+",BIZ EXCEPTION : {}" ,e.getMessage());
-            return ResponseHandler.handle(returnType, (BaseException)e);
+            log.warn(clazzMethodInfo + ",BIZ EXCEPTION : {}", e.getMessage());
+            return ResponseHandler.handle(returnType, (BaseException) e);
         }
-
         if (e instanceof SysException) {
-            log.warn(clazzMethodInfo+",SYS EXCEPTION :", e);
-            return ResponseHandler.handle(returnType, (BaseException)e);
+            log.warn(clazzMethodInfo + ",SYS EXCEPTION :", e);
+            return ResponseHandler.handle(returnType, (BaseException) e);
         }
-        log.error(clazzMethodInfo+",UNKNOWN EXCEPTION :", e);
-        return ResponseHandler.handle(returnType, "UNKNOWN_ERROR", e.getMessage());
+        if (e instanceof LockFailException) {
+            log.warn(clazzMethodInfo + ",LockFail EXCEPTION :", e);
+            return ResponseHandler.handle(returnType, (BaseException) e);
+        }
+        log.error(clazzMethodInfo + ",UNKNOWN EXCEPTION :", e);
+        return ResponseHandler.handle(returnType, ErrorCode.UNKNOWN_ERROR.getCode(), e.getMessage());
     }
 
     private List<Object> filterArgs(Object[] origArgs) {
@@ -119,8 +121,8 @@ public class CatchLogAspect {
             if (origArgs != null && origArgs.length > 0) {
                 for (Object arg : origArgs) {
                     if (arg instanceof HttpServletRequest
-                        || arg instanceof MultipartFile
-                        || arg instanceof HttpServletResponse) {
+                            || arg instanceof MultipartFile
+                            || arg instanceof HttpServletResponse) {
                         continue;
                     }
                     filteredArgs.add(arg);

@@ -1,1 +1,2 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration = top.kdla.framework.catchlog.CatchLogAutoConfiguration
+org.springframework.boot.autoconfigure.EnableAutoConfiguration = \
+top.kdla.framework.exception.UnifiedExceptionControllerAdvice

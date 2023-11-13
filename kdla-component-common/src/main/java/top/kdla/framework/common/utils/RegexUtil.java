@@ -64,6 +64,11 @@ public class RegexUtil {
     public static Pattern DATETIME_WITH_MILLISECOND_PATTERN_2 = Pattern.compile("^\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}$");
 
     /**
+     * 日期时间格式 yyyy-MM-ddTHH:mm:ss.SSS
+     */
+    public static Pattern DATETIME_WITH_MILLISECOND_PATTERN_3 = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}$");
+
+    /**
      * 小数的正则表达式
      */
     public static Pattern PATTERN_FLOAT = Pattern.compile("[+-]?[0-9]+(\\.[0-9]+)?");
@@ -92,4 +97,5 @@ public class RegexUtil {
     public static boolean validateFloatNumber(String str) {
         return PATTERN_FLOAT.matcher(str).matches();
     }
+
 }

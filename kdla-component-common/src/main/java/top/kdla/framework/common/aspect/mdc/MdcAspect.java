@@ -16,7 +16,6 @@ import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
-import org.springframework.stereotype.Component;
 import top.kdla.framework.common.help.MdcHelp;
 
 import java.lang.reflect.Method;

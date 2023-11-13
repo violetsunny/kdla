@@ -1,6 +1,6 @@
 package top.kdla.framework.exception;
 
-import top.kdla.framework.common.utils.KdlaStringUtil;
+import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.dto.exception.ErrorCodeI;
 
 /**
@@ -13,10 +13,8 @@ public class BizException extends BaseException {
 
     private static final long serialVersionUID = 1L;
 
-    private static final String DEFAULT_ERR_CODE = "BIZ_ERROR";
-
     public BizException(String message) {
-        super(DEFAULT_ERR_CODE, message);
+        super(ErrorCode.BIZ_ERROR.getCode(), message);
     }
 
     public BizException(String code, String message) {
@@ -28,7 +26,7 @@ public class BizException extends BaseException {
     }
 
     public BizException(String message, Throwable e) {
-        super(DEFAULT_ERR_CODE, message, e);
+        super(ErrorCode.BIZ_ERROR.getCode(), message, e);
     }
 
     public BizException(String code, String message, Throwable e) {
@@ -36,7 +34,7 @@ public class BizException extends BaseException {
     }
 
     public BizException(ErrorCodeI errCode, String errMessage) {
-        this(errCode.getCode(), KdlaStringUtil.isEmpty(errMessage) ? errCode.getMsg() : errMessage);
+        this(errCode.getCode(), errMessage == null || "".equals(errMessage.trim()) ? errCode.getMsg() : errMessage);
     }
 
     public BizException(ErrorCodeI errCode) {
