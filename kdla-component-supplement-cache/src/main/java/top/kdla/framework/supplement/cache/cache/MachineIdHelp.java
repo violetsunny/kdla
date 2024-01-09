@@ -51,7 +51,9 @@ public class MachineIdHelp {
             //创建一个机器ID
             getRandomMachineAndDataCenterId();
         }
-        log.info("初始化 machine_id:{},data_center_id:{},localIp:{}", machineId, dataCenterId, localIp);
+        if (log.isInfoEnabled()) {
+            log.info("初始化 machine_id:{},data_center_id:{},localIp:{}", machineId, dataCenterId, localIp);
+        }
         return new SnowflakeGenerator(machineId, dataCenterId);
     }
 
@@ -65,12 +67,16 @@ public class MachineIdHelp {
         InetAddress address = InetAddress.getLocalHost();
         String ip = address.getHostAddress();
         String ipStr = ip.replaceAll("\\.", "&");
-        log.info("MachineIdConfig.getIPAddress ip={},ipStr={}", ip, ipStr);
+        if (log.isInfoEnabled()) {
+            log.info("MachineIdConfig.getIPAddress ip={},ipStr={}", ip, ipStr);
+        }
         return ipStr;
     }
 
     private void init() {
-        log.info("MachineIdConfig init start....");
+        if (log.isInfoEnabled()) {
+            log.info("MachineIdConfig init start....");
+        }
         long start = System.currentTimeMillis();
         try {
             String ip = getIPAddress();
@@ -83,7 +89,9 @@ public class MachineIdHelp {
                     String cacheValue = (String) redisHelp.get(key);
                     if (StringUtils.isBlank(cacheValue)) {
                         redisHelp.set(key, ip, 3600L);
-                        log.info("MachineIdConfig.init ip:{},machineId:{},dataCenterId:{}, usedTime : {}", ip, machineId, dataCenterId, (System.currentTimeMillis() - start));
+                        if (log.isInfoEnabled()) {
+                            log.info("MachineIdConfig.init ip:{},machineId:{},dataCenterId:{}, usedTime : {}", ip, machineId, dataCenterId, (System.currentTimeMillis() - start));
+                        }
                         return;
                     }
                 }
@@ -101,10 +109,12 @@ public class MachineIdHelp {
         try {
             String key = keyPair.left + keyPair.right;
             redisHelp.set(key, StringUtils.EMPTY, 1L);
+            if (log.isInfoEnabled()) {
+                log.info("MachineIdConfig destroy start.... key:{}", keyPair.left);
+            }
         } catch (Exception e) {
             log.error("destroyMachineId failed. key={}", keyPair.left, e);
         }
-        log.info("MachineIdConfig destroy start.... key:{}", keyPair.left);
     }
 
 
@@ -119,7 +129,9 @@ public class MachineIdHelp {
     private void getRandomMachineAndDataCenterId() {
         machineId = (int) (Math.random() * 32);
         dataCenterId = (int) (Math.random() * 32);
-        log.info("MachineIdConfig.getRandomMachineAndDataCenterId machineId={},dataCenterId={}", machineId, dataCenterId);
+        if (log.isInfoEnabled()) {
+            log.info("MachineIdConfig.getRandomMachineAndDataCenterId machineId={},dataCenterId={}", machineId, dataCenterId);
+        }
     }
 
 }

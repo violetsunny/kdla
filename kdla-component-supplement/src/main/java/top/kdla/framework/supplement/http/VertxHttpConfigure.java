@@ -64,12 +64,12 @@ public class VertxHttpConfigure {
         return Vertx.vertx();
     }
 
-    @PreDestroy
-    //@ConditionalOnClass({Vertx.class, WebClient.class})
-    public void close() {
-        webClient(vertx()).close();
-        vertx().close();
-    }
+//    @PreDestroy
+//    //@ConditionalOnClass({Vertx.class, WebClient.class})
+//    public void close() {
+//        webClient(vertx()).close();
+//        vertx().close();
+//    }
 
 
 }

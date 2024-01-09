@@ -53,7 +53,7 @@ public class KdlaGcache<T, E> {
 
     private Function<T, E> loaderFunction;
 
-    public KdlaGcache<T, E> loaderFunction(Function<T, E> loaderFunction){
+    public KdlaGcache<T, E> loaderFunction(Function<T, E> loaderFunction) {
         this.loaderFunction = loaderFunction;
         return this;
     }
@@ -88,9 +88,13 @@ public class KdlaGcache<T, E> {
                 // 设置缓存最大容量，按照LRU最近虽少使用算法来移除缓存项
                 .maximumSize(this.maximumSize)
                 // 设置要统计缓存的命中率
-                .recordStats()
+//                .recordStats()
                 // 设置缓存的移除通知
-                .removalListener((RemovalListener<T, CacheValue<E>>) notification -> log.info("KdlaGcache {} was removed, cause is {}", notification.getKey(), notification.getCause()))
+                .removalListener((RemovalListener<T, CacheValue<E>>) notification -> {
+                    if (log.isWarnEnabled()) {
+                        log.warn("KdlaGcache {} was removed, cause is {}", notification.getKey(), notification.getCause());
+                    }
+                })
                 // build方法中可以指定CacheLoader，在缓存不存在时通过CacheLoader的实现自动加载缓存
                 .build();
     }

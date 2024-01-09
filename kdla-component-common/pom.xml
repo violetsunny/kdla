@@ -394,17 +394,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <dependency>
-            <groupId>ognl</groupId>
-            <artifactId>ognl</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.googlecode.aviator</groupId>
-            <artifactId>aviator</artifactId>
-            <scope>provided</scope>
-        </dependency>
     </dependencies>
 
 </project>

@@ -15,6 +15,7 @@ import java.util.Map;
 
 /**
  * Jackson工具类
+ *
  * @author kll
  * @since 2021/7/20
  */
@@ -40,6 +41,7 @@ public class JacksonUtil {
 
     /**
      * bean对象转Json
+     *
      * @param object bean对象
      * @return String
      */
@@ -48,7 +50,9 @@ public class JacksonUtil {
             try {
                 return OBJECT_MAPPER.writeValueAsString(object);
             } catch (JsonProcessingException e) {
-                log.warn("bean to json exception", e);
+                if (log.isWarnEnabled()) {
+                    log.warn("bean to json exception", e);
+                }
             }
         }
         return "";
@@ -56,7 +60,8 @@ public class JacksonUtil {
 
     /**
      * Json对象转bean
-     * @param json json字符串
+     *
+     * @param json      json字符串
      * @param classType bean对象的class
      * @return 对象
      */
@@ -65,7 +70,9 @@ public class JacksonUtil {
             try {
                 return OBJECT_MAPPER.readValue(json, classType);
             } catch (IOException e) {
-                log.warn("json to bean exception", e);
+                if (log.isWarnEnabled()) {
+                    log.warn("json to bean exception", e);
+                }
             }
         }
         return null;
@@ -75,8 +82,10 @@ public class JacksonUtil {
         try {
             return OBJECT_MAPPER.readValue(json, OBJECT_MAPPER.constructType(type));
         } catch (IOException ioe) {
-           String errMsg =  String.format("deserialize json for class [%s] failed. ", type.toString());
-            log.warn("json to bean exception", ioe);
+            String errMsg = String.format("deserialize json for class [%s] failed. ", type.toString());
+            if (log.isWarnEnabled()) {
+                log.warn("json to bean exception", ioe);
+            }
             throw new RuntimeException(errMsg);
         }
     }
@@ -85,15 +94,18 @@ public class JacksonUtil {
         try {
             return OBJECT_MAPPER.readValue(json, typeReference);
         } catch (IOException ioe) {
-            String errMsg =  String.format("deserialize json for class [%s] failed. ", typeReference.getClass().getName());
-            log.warn("json to bean exception", ioe);
+            String errMsg = String.format("deserialize json for class [%s] failed. ", typeReference.getClass().getName());
+            if (log.isWarnEnabled()) {
+                log.warn("json to bean exception", ioe);
+            }
             throw new RuntimeException(errMsg);
         }
     }
 
     /**
      * Json对象转List
-     * @param json json字符串
+     *
+     * @param json      json字符串
      * @param classType List对象的class
      * @return List
      */
@@ -110,7 +122,8 @@ public class JacksonUtil {
 
     /**
      * Json对象转Map
-     * @param json json字符串
+     *
+     * @param json  json字符串
      * @param kType Key的class
      * @param vType value的class
      * @return Map
@@ -128,6 +141,7 @@ public class JacksonUtil {
 
     /**
      * bean对象转Json,带下划线
+     *
      * @param object bean对象
      * @return String
      */
@@ -144,7 +158,8 @@ public class JacksonUtil {
 
     /**
      * Json转bean对象,带下划线
-     * @param json Json字符串，带下划线
+     *
+     * @param json      Json字符串，带下划线
      * @param classType 对象class
      * @return T对象
      */

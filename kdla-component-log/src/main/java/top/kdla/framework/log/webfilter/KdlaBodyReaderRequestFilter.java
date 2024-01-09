@@ -41,7 +41,7 @@ public class KdlaBodyReaderRequestFilter implements Filter {
             return;
         }
         KdlaHttpServletRequestWrapper requestWrapper = null;
-        if (request instanceof HttpServletRequest && KdlaStringUtil.startsWithIgnoreCase(request.getContentType(), MediaType.APPLICATION_JSON_VALUE)) {
+        if (KdlaStringUtil.startsWithIgnoreCase(request.getContentType(), MediaType.APPLICATION_JSON_VALUE)) {
             requestWrapper = new KdlaHttpServletRequestWrapper(request);
         }
         if (Objects.isNull(requestWrapper)) {

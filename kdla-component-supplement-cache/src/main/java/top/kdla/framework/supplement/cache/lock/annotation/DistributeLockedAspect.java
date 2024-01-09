@@ -34,6 +34,9 @@ public class DistributeLockedAspect {
 
     @Pointcut(value = "@annotation(top.kdla.framework.supplement.cache.lock.annotation.UnblockDistributeLocked)")
     public void pointCut() {
+        if (log.isDebugEnabled()) {
+            log.debug("--- DistributeLockedAspect start ---");
+        }
     }
 
     /**
@@ -45,7 +48,9 @@ public class DistributeLockedAspect {
      */
     @Around("pointCut()")
     public Object lockAround(ProceedingJoinPoint jp) throws Exception, Throwable {
-        log.info("DistributeLockedAspect.lockAround");
+        if (log.isInfoEnabled()) {
+            log.info("DistributeLockedAspect.lockAround");
+        }
         Object rvt = null;
 
         MethodSignature signature = (MethodSignature) jp.getSignature();
@@ -71,13 +76,13 @@ public class DistributeLockedAspect {
         RLock lock = null;
         try {
             key = LOCK_KEY_PREFIX + key;
-            if (log.isDebugEnabled()) {
-                log.debug("开始尝试上锁");
+            if (log.isInfoEnabled()) {
+                log.info("开始尝试上锁");
             }
             lock = redissonLockFactory.getLock(key);//非阻塞方法,取不到锁抛出LockFailException异常
             if (lock != null) {//获取到锁
-                if (log.isDebugEnabled()) {
-                    log.debug("上锁成功,执行业务代码");
+                if (log.isInfoEnabled()) {
+                    log.info("上锁成功,执行业务代码");
                 }
                 rvt = jp.proceed();
             } else {
@@ -87,7 +92,9 @@ public class DistributeLockedAspect {
             if (lockAction.throwEx()) {
                 throw new Exception("未获取到锁,请重新尝试");
             } else {
-                log.warn("未获取到锁");
+                if (log.isWarnEnabled()) {
+                    log.warn("未获取到锁");
+                }
             }
         } finally {
             if (lock != null) {

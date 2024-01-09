@@ -43,7 +43,9 @@ public class RedissonRedDisLock implements DistributeLock {
 
     @Override
     public RLock lock(String lockKey, TimeUnit unit, long timeout, long leaseTime) throws LockFailException {
-        log.info("lock use redlock with name {} start...", lockKey);
+        if (log.isInfoEnabled()) {
+            log.info("lock use redlock with name {} start...", lockKey);
+        }
 
         try {
             RedissonRedLock rdfaRedLock = (RedissonRedLock) factory.getLock(lockKey);
@@ -53,7 +55,9 @@ public class RedissonRedDisLock implements DistributeLock {
                 throw new LockFailException("lock use redlock with name " + lockKey + " failed.");
             }
         } catch (InterruptedException e) {
-            log.warn("lock time expired");
+            if (log.isWarnEnabled()) {
+                log.warn("lock time expired");
+            }
             throw new LockFailException("lock use redlock with name " + lockKey + " failed for " + e.getMessage());
         }
     }

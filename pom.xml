@@ -81,6 +81,8 @@
         <zxing.version>3.5.0</zxing.version>
         <ognl.version>3.4.1</ognl.version>
         <aviator.version>5.3.3</aviator.version>
+        <jython.version>2.7.3</jython.version>
+        <luaj.version>3.0.1</luaj.version>
         <spring-kafka.version>2.9.12</spring-kafka.version><!--spring-boot的2.7.14 有bug -->
         <!--项目工具配置 -->
     </properties>
@@ -436,6 +438,7 @@
                 <version>${zxing.version}</version>
             </dependency>
 
+            <!-- 脚本执行 -->
             <dependency>
                 <groupId>ognl</groupId>
                 <artifactId>ognl</artifactId>
@@ -446,6 +449,18 @@
                 <groupId>com.googlecode.aviator</groupId>
                 <artifactId>aviator</artifactId>
                 <version>${aviator.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.python</groupId>
+                <artifactId>jython</artifactId>
+                <version>${jython.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.luaj</groupId>
+                <artifactId>luaj-jse</artifactId>
+                <version>${luaj.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

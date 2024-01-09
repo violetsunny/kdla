@@ -16,7 +16,6 @@ import java.util.function.Supplier;
 /**
  * 异步工具类
  *
- * @author YiHui
  * @date 2023/6/12
  */
 @Slf4j
@@ -32,7 +31,7 @@ public class AsyncThreadHelp {
                 thread.setDaemon(true);
             }
 
-            thread.setName("paicoding-" + this.threadNumber.getAndIncrement());
+            thread.setName("kdlaCoding-" + this.threadNumber.getAndIncrement());
             return thread;
         }
     };
@@ -45,7 +44,15 @@ public class AsyncThreadHelp {
     }
 
     public static void initExecutorService(int core, int max) {
-        executorService = new ExecutorBuilder().setCorePoolSize(core).setMaxPoolSize(max).setKeepAliveTime(0).setKeepAliveTime(0, TimeUnit.SECONDS).setWorkQueue(new SynchronousQueue<Runnable>()).setHandler(new ThreadPoolExecutor.CallerRunsPolicy()).setThreadFactory(THREAD_FACTORY).buildFinalizable();
+        executorService = new ExecutorBuilder()
+                .setCorePoolSize(core)
+                .setMaxPoolSize(max)
+                .setKeepAliveTime(0)
+                .setKeepAliveTime(0, TimeUnit.SECONDS)
+                .setWorkQueue(new SynchronousQueue<Runnable>())
+                .setHandler(new ThreadPoolExecutor.CallerRunsPolicy())
+                .setThreadFactory(THREAD_FACTORY)
+                .buildFinalizable();
         simpleTimeLimiter = SimpleTimeLimiter.create(executorService);
     }
 
@@ -101,9 +108,9 @@ public class AsyncThreadHelp {
 
 
     public static class CompletableFutureBridge {
-        private List<CompletableFuture> list;
-        private Map<String, Long> cost;
-        private String taskName;
+        private final List<CompletableFuture> list;
+        private final Map<String, Long> cost;
+        private final String taskName;
 
         public CompletableFutureBridge() {
             this("CompletableFutureExecute");
@@ -111,9 +118,9 @@ public class AsyncThreadHelp {
 
         public CompletableFutureBridge(String task) {
             this.taskName = task;
-            list = new ArrayList<>();
-            cost = new ConcurrentHashMap<>();
-            cost.put(task, System.currentTimeMillis());
+            this.list = new ArrayList<>();
+            this.cost = new ConcurrentHashMap<>();
+            this.cost.put(task, System.currentTimeMillis());
         }
 
         /**
@@ -224,7 +231,9 @@ public class AsyncThreadHelp {
                     sb.append(entry.getKey()).append("\n");
                 }
             }
-            log.info("\n---------------------\n{}\n--------------------\n", sb);
+            if (log.isInfoEnabled()) {
+                log.info("\n---------------------\n{}\n--------------------\n", sb);
+            }
         }
     }
 

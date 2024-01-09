@@ -8,7 +8,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -34,7 +33,9 @@ public class BaseHttpClient {
 
 
     public ResponseEntity<String> get(String url, Map<String, Object> params) {
-        log.info("BaseHttpClient.get:URL:{};params:{}", url, JSON.toJSONString(params));
+        if (log.isInfoEnabled()) {
+            log.info("BaseHttpClient.get:URL:{};params:{}", url, JSON.toJSONString(params));
+        }
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         if (params != null) {
             for (Map.Entry<String, Object> entry : params.entrySet()) {
@@ -69,7 +70,9 @@ public class BaseHttpClient {
     }
 
     public ResponseEntity<String> post(String url, Object body) {
-        log.info("BaseHttpClient.post URL:{} body:{}", url, JSON.toJSONString(body));
+        if (log.isInfoEnabled()) {
+            log.info("BaseHttpClient.post URL:{} body:{}", url, JSON.toJSONString(body));
+        }
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
         ResponseEntity<String> response = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity, String.class);

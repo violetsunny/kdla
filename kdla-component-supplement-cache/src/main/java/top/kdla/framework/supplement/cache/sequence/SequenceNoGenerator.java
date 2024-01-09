@@ -108,7 +108,9 @@ public class SequenceNoGenerator {
                     log.error("createNo,tryLock exception:", e);
                 }
                 if (!isLocked) {
-                    log.warn("createNo failed,get lock failed");
+                    if (log.isWarnEnabled()) {
+                        log.warn("createNo failed,get lock failed");
+                    }
                     throw new BizException("生成流水号失败");
                 }
                 try {
@@ -119,7 +121,9 @@ public class SequenceNoGenerator {
                     try {
                         lock.unlock();
                     } catch (Exception e) {
-                        log.warn("createNo,unlock failed,exception is:", e);
+                        if (log.isWarnEnabled()) {
+                            log.warn("createNo,unlock failed,exception is:", e);
+                        }
                     }
                 }
             }
@@ -156,7 +160,9 @@ public class SequenceNoGenerator {
         stopWatch.start("getHeadStr");
         String headStr = getHeadStr(rule);
         stopWatch.stop();
-        log.info("getKey consume time:{}", stopWatch);
+        if (log.isInfoEnabled()) {
+            log.info("getKey consume time:{}", stopWatch);
+        }
         return headStr;
     }
 
@@ -245,24 +251,26 @@ public class SequenceNoGenerator {
 
         for (int i = 1; i < cacheNum + 1; ++i) {
             Long sequenceNo = new Long(dbMaxSequenceNo) + (long) i;
-            if (sequenceNo.toString().length() > Integer.valueOf(sequenceLen)) {
-                log.warn("{}生成的号码已经超过最大限度，当前最大编号为{},生成号码失败", mod.getCode(), dbMaxSequenceNo);
+            if (sequenceNo.toString().length() > Integer.parseInt(sequenceLen)) {
+                if (log.isWarnEnabled()) {
+                    log.warn("{}生成的号码已经超过最大限度，当前最大编号为{},生成号码失败", mod.getCode(), dbMaxSequenceNo);
+                }
                 break;
             }
             if (StringUtils.isNotBlank(dbMaxKey)) {
                 if (dbMaxKey.equals(key)) {
                     currentMaxNo =
-                            dbMaxKey + fillLeft(sequenceNo.toString(), DEFAULT_FILL_CHAR, Integer.valueOf(sequenceLen));
+                            dbMaxKey + fillLeft(sequenceNo.toString(), DEFAULT_FILL_CHAR, Integer.parseInt(sequenceLen));
                 } else {
                     //如果key不同了，说明时间走到了下一个节点，开始重新计数
                     sequenceNo = 1L;
                     dbMaxSequenceNo = "0";
                     dbMaxKey = key;
                     currentMaxNo =
-                            key + fillLeft(sequenceNo.toString(), DEFAULT_FILL_CHAR, Integer.valueOf(sequenceLen));
+                            key + fillLeft(sequenceNo.toString(), DEFAULT_FILL_CHAR, Integer.parseInt(sequenceLen));
                 }
             } else {
-                currentMaxNo = fillLeft(sequenceNo.toString(), DEFAULT_FILL_CHAR, Integer.valueOf(sequenceLen));
+                currentMaxNo = fillLeft(sequenceNo.toString(), DEFAULT_FILL_CHAR, Integer.parseInt(sequenceLen));
             }
 
             if (cacheNum > 1 && queue != null) {

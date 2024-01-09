@@ -73,8 +73,7 @@ public class FieldValueFindHelp {
         Map<String, List<ProcessFieldDto>> listMap = listBatchQueryList.stream().collect(Collectors.groupingBy(e -> {
             Class queryClass = e.getFieldValueFind().queryClass();
             String queryMethod = e.getFieldValueFind().queryMethod();
-            String key = queryClass.getName() + "#" + queryMethod;
-            return key;
+            return queryClass.getName() + "#" + queryMethod;
         }));
         for (List<ProcessFieldDto> dtoList : listMap.values()) {
             batchQuery(dtoList);

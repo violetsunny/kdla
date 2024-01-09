@@ -42,6 +42,9 @@ public class CatchLogAspect {
      */
     @Pointcut("@within(top.kdla.framework.log.catchlog.CatchAndLog) && execution(public * *(..))")
     public void pointcut() {
+        if (log.isDebugEnabled()) {
+            log.debug("======CatchLogAspect start ======");
+        }
     }
 
     /**
@@ -66,7 +69,6 @@ public class CatchLogAspect {
         Method method = ms.getMethod();
         List<Object> args = filterArgs(joinPoint.getArgs());
         String clazzMethodInfo = method.getDeclaringClass().getName().concat(".").concat(method.getName());
-        log.debug("====== {} Invoke start ======", clazzMethodInfo);
         StopWatch sw = new StopWatch(clazzMethodInfo);
         sw.start();
         Object response = null;
@@ -76,7 +78,9 @@ public class CatchLogAspect {
             response = handleException(joinPoint, e);
         } finally {
             sw.stop();
-            log.debug("### {} Invoke Finished, requestParam: {}, response: {}, shortSummary:{}", clazzMethodInfo, JSON.toJSONString(args), JSON.toJSONString(response), sw.shortSummary());
+            if (log.isInfoEnabled()) {
+                log.info("### {} Invoke Finished, requestParam: {}, response: {}, shortSummary:{}", clazzMethodInfo, JSON.toJSONString(args), JSON.toJSONString(response), sw.shortSummary());
+            }
             if (!LogTraceHolder.get()) {
                 MDC.remove(CommonConstants.LOG_TRACE_ID);
                 LogTraceHolder.remove();
@@ -97,18 +101,28 @@ public class CatchLogAspect {
         MethodSignature ms = (MethodSignature) joinPoint.getSignature();
         Method method = ms.getMethod();
         String clazzMethodInfo = method.getDeclaringClass().getName().concat(".").concat(method.getName());
-        log.warn(clazzMethodInfo + " invoke failed,exception is:", e);
+        if (log.isWarnEnabled()) {
+            log.warn(clazzMethodInfo + " invoke failed,exception is:", e);
+        }
         Class returnType = ms.getReturnType();
         if (e instanceof BizException) {
-            log.warn(clazzMethodInfo + ",BIZ EXCEPTION : {}", e.getMessage());
+            if (log.isWarnEnabled()) {
+                if (log.isWarnEnabled()) {
+                    log.warn(clazzMethodInfo + ",BIZ EXCEPTION : {}", e.getMessage());
+                }
+            }
             return ResponseHandler.handle(returnType, (BaseException) e);
         }
         if (e instanceof SysException) {
-            log.warn(clazzMethodInfo + ",SYS EXCEPTION :", e);
+            if (log.isWarnEnabled()) {
+                log.warn(clazzMethodInfo + ",SYS EXCEPTION :", e);
+            }
             return ResponseHandler.handle(returnType, (BaseException) e);
         }
         if (e instanceof LockFailException) {
-            log.warn(clazzMethodInfo + ",LockFail EXCEPTION :", e);
+            if (log.isWarnEnabled()) {
+                log.warn(clazzMethodInfo + ",LockFail EXCEPTION :", e);
+            }
             return ResponseHandler.handle(returnType, (BaseException) e);
         }
         log.error(clazzMethodInfo + ",UNKNOWN EXCEPTION :", e);
@@ -129,7 +143,9 @@ public class CatchLogAspect {
                 }
             }
         } catch (Exception e) {
-            log.warn("filterArgs execute Exception:", e);
+            if (log.isWarnEnabled()) {
+                log.warn("filterArgs execute Exception:", e);
+            }
         }
 
         return filteredArgs;

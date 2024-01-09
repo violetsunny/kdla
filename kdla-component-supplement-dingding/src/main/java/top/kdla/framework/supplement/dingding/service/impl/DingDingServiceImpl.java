@@ -5,8 +5,7 @@
 package top.kdla.framework.supplement.dingding.service.impl;
 
 import com.alibaba.fastjson.JSON;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import top.kdla.framework.common.enums.ContentTypeEnum;
 import top.kdla.framework.common.enums.MsgTypeEnum;
@@ -31,9 +30,8 @@ import java.util.Objects;
  * @version $Id: DingDingServiceImpl, v 0.1 2023/2/2 14:26 kanglele Exp $
  */
 @Service
+@Slf4j
 public class DingDingServiceImpl implements DingDingService {
-
-    private static final Logger logger = LoggerFactory.getLogger(DingDingServiceImpl.class);
 
     @Resource
     private DingAlertConfigure dingAlertConfigure;
@@ -42,20 +40,26 @@ public class DingDingServiceImpl implements DingDingService {
     public String sendTextMessage(String msg) {
         try {
             if (!this.dingAlertConfigure.isDingAlertEnable()) {
-                logger.info("DingDingServiceImpl.sendMessage#no need send.");
+                if (log.isInfoEnabled()) {
+                    log.info("DingDingServiceImpl.sendMessage#no need send.");
+                }
                 return MsgSendRespEnum.NO_NEED.getCode();
             }
 
             StringBuilder sb = this.initDingdingMessage(msg);
-            DingDingMessage dingDingMessage = new DingDingMessage(MsgTypeEnum.TEXT.getCode(), new TextMessage(sb.toString()), new DingMessageAt((List)null, true));
+            DingDingMessage dingDingMessage = new DingDingMessage(MsgTypeEnum.TEXT.getCode(), new TextMessage(sb.toString()), new DingMessageAt(null, true));
             String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
             DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
-                logger.info("DingDingServiceImpl.sendMessage failed#msg:{}, rest:{}", msg, rest);
+                if (log.isInfoEnabled()) {
+                    log.info("DingDingServiceImpl.sendMessage failed#msg:{}, rest:{}", msg, rest);
+                }
                 return MsgSendRespEnum.FAIL.getCode();
             }
         } catch (Exception var6) {
-            logger.warn("钉钉预警异常", var6);
+            if (log.isWarnEnabled()) {
+                log.warn("钉钉预警异常", var6);
+            }
             return MsgSendRespEnum.FAIL.getCode();
         }
 
@@ -66,7 +70,9 @@ public class DingDingServiceImpl implements DingDingService {
     public String sendTextMessage(String msg, List<String> atMobiles) {
         try {
             if (!this.dingAlertConfigure.isDingAlertEnable()) {
-                logger.info("DingDingServiceImpl.sendMessage#no need send.");
+                if (log.isInfoEnabled()) {
+                    log.info("DingDingServiceImpl.sendMessage#no need send.");
+                }
                 return MsgSendRespEnum.NO_NEED.getCode();
             }
 
@@ -75,11 +81,15 @@ public class DingDingServiceImpl implements DingDingService {
             String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
             DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
-                logger.info("DingDingServiceImpl.sendMessage failed#msg:{},atMobiles:{}, rest:{}", msg, atMobiles, rest);
+                if (log.isInfoEnabled()) {
+                    log.info("DingDingServiceImpl.sendMessage failed#msg:{},atMobiles:{}, rest:{}", msg, atMobiles, rest);
+                }
                 return MsgSendRespEnum.FAIL.getCode();
             }
         } catch (Exception var7) {
-            logger.warn("钉钉预警异常", var7);
+            if (log.isWarnEnabled()) {
+                log.warn("钉钉预警异常", var7);
+            }
             return MsgSendRespEnum.FAIL.getCode();
         }
 
@@ -100,7 +110,9 @@ public class DingDingServiceImpl implements DingDingService {
     public String sendMessage(String title, String msg) {
         try {
             if (!this.dingAlertConfigure.isDingAlertEnable()) {
-                logger.info("DingDingServiceImpl.sendMessage#no need send.");
+                if (log.isInfoEnabled()) {
+                    log.info("DingDingServiceImpl.sendMessage#no need send.");
+                }
                 return MsgSendRespEnum.NO_NEED.getCode();
             }
 
@@ -109,11 +121,15 @@ public class DingDingServiceImpl implements DingDingService {
             String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
             DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
-                logger.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{}, rest:{}", title, msg, rest);
+                if (log.isInfoEnabled()) {
+                    log.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{}, rest:{}", title, msg, rest);
+                }
                 return MsgSendRespEnum.FAIL.getCode();
             }
         } catch (Exception var7) {
-            logger.warn("钉钉预警异常", var7);
+            if (log.isWarnEnabled()) {
+                log.warn("钉钉预警异常", var7);
+            }
             return MsgSendRespEnum.FAIL.getCode();
         }
 
@@ -124,20 +140,26 @@ public class DingDingServiceImpl implements DingDingService {
     public String sendMessage(String title, String msg, List<String> atMobiles) {
         try {
             if (!this.dingAlertConfigure.isDingAlertEnable()) {
-                logger.info("DingDingServiceImpl.sendMessage#no need send.");
+                if (log.isInfoEnabled()) {
+                    log.info("DingDingServiceImpl.sendMessage#no need send.");
+                }
                 return MsgSendRespEnum.NO_NEED.getCode();
             }
 
             StringBuilder content = this.initDingdingMessage(msg);
             DingDingMessage dingDingMessage = new DingDingMessage(MsgTypeEnum.MARKDOWN.getCode(), new MarkdownMessage(title, content.toString()), new DingMessageAt(atMobiles, false));
             String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
-            DingDingAlertResult result = (DingDingAlertResult)JSON.parseObject(rest, DingDingAlertResult.class);
+            DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
-                logger.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{},atMobiles:{}, rest:{}", title, msg, atMobiles, rest);
+                if (log.isInfoEnabled()) {
+                    log.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{},atMobiles:{}, rest:{}", title, msg, atMobiles, rest);
+                }
                 return MsgSendRespEnum.FAIL.getCode();
             }
         } catch (Exception var8) {
-            logger.warn("钉钉预警异常", var8);
+            if (log.isWarnEnabled()) {
+                log.warn("钉钉预警异常", var8);
+            }
             return MsgSendRespEnum.FAIL.getCode();
         }
 

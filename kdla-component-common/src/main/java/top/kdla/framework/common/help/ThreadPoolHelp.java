@@ -17,6 +17,8 @@ import java.util.concurrent.*;
 
 /**
  * 自定义线程池
+ * 线程池刚启动的时候会有消耗导致延迟，在高并发的情况下需要先将线程池预热起来。
+ *
  * <p>
  * 1，maximunPoolSize设置大小依据：
  * 有业务类型类配置，分为以下两种类型，由Runtime.getRuntime().availableProcessors()

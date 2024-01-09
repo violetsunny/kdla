@@ -95,7 +95,9 @@ public class RedissonLockFactory implements DistributeLockFactory {
         config.setEventLoopGroup(new NioEventLoopGroup());
         config.setTransportMode(TransportMode.NIO);
         try {
-            log.info("inti the redisson client with config: {}", config.toYAML());
+            if (log.isInfoEnabled()) {
+                log.info("inti the redisson client with config: {}", config.toYAML());
+            }
         } catch (IOException ex) {
             log.error("parse json error:", ex);
         }
@@ -120,7 +122,9 @@ public class RedissonLockFactory implements DistributeLockFactory {
             try {
                 client.shutdown();
             } catch (Exception e) {
-                log.warn(e.getMessage(), e);
+                if (log.isWarnEnabled()) {
+                    log.warn(e.getMessage(), e);
+                }
             }
         });
     }

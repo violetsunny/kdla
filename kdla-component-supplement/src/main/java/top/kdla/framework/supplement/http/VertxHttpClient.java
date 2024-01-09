@@ -96,11 +96,15 @@ public class VertxHttpClient {
                     if (res.equals(String.class)) {
                         String result = response.bodyAsString();
                         future.complete((T) result);
-                        log.info("VertxHttpClient-send url:{} req:{} result:{}", url, JSON.toJSONString(req), result);
+                        if (log.isInfoEnabled()) {
+                            log.info("VertxHttpClient-send url:{} req:{} result:{}", url, JSON.toJSONString(req), result);
+                        }
                     } else {
                         T result = response.bodyAsJson(res);//默认json返回
                         future.complete(result);
-                        log.info("VertxHttpClient-send url:{} req:{} result:{}", url, JSON.toJSONString(req), JSON.toJSONString(result));
+                        if (log.isInfoEnabled()) {
+                            log.info("VertxHttpClient-send url:{} req:{} result:{}", url, JSON.toJSONString(req), JSON.toJSONString(result));
+                        }
                     }
                 } catch (Exception e) {
                     future.completeExceptionally(e.getCause());

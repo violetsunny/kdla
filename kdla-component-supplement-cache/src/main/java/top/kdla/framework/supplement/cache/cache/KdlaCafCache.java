@@ -42,9 +42,9 @@ public class KdlaCafCache<T, E> {
     /**
      * @param duration    超时时间，秒
      * @param maximumSize 最大容量，超过则移除
-     * @param cacheName cache名称
+     * @param cacheName   cache名称
      */
-    public KdlaCafCache(String cacheName,Long duration, Integer initialCapacity, Integer maximumSize) {
+    public KdlaCafCache(String cacheName, Long duration, Integer initialCapacity, Integer maximumSize) {
         this.cacheName = cacheName;
         this.setCafCache(duration, initialCapacity, maximumSize);
         this.init();
@@ -54,7 +54,7 @@ public class KdlaCafCache<T, E> {
 
     private Function<T, E> loaderFunction;
 
-    public KdlaCafCache<T, E> loaderFunction(Function<T, E> loaderFunction){
+    public KdlaCafCache<T, E> loaderFunction(Function<T, E> loaderFunction) {
         this.loaderFunction = loaderFunction;
         return this;
     }
@@ -83,9 +83,13 @@ public class KdlaCafCache<T, E> {
                 // 设置缓存过期时间-公共过期
                 .expireAfterWrite(this.duration, TimeUnit.SECONDS)
                 // 设置要统计缓存的命中率
-                .recordStats()
+//                .recordStats()
                 // 设置缓存的移除通知
-                .removalListener((RemovalListener<T, E>) (t, e, removalCause) -> log.info("KdlaCafCache {} was removed, cause is {}", t, e))
+                .removalListener((RemovalListener<T, E>) (k, v, removalCause) -> {
+                    if (log.isWarnEnabled()) {
+                        log.warn("KdlaCafCache {} was removed, cause is {}", k, removalCause);
+                    }
+                })
                 // build方法中可以指定CacheLoader，在缓存不存在时通过CacheLoader的实现自动加载缓存
 //                .build(key -> {
 //                    log.info("KdlaCafCache load {}", key);

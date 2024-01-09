@@ -76,11 +76,15 @@ public class KdlaBizDisLockService {
             lockRst = lock.tryLock();
             //数据库锁
             if (lockRst && (dbPredicate == null || dbPredicate.test(lockKey))) {
-                log.info("lock {} success!", lockKey);
+                if (log.isInfoEnabled()) {
+                    log.info("lock {} success!", lockKey);
+                }
                 // do the business
                 return bizSupplier.get();
             } else {
-                log.info("lock {} failed!", lockKey);
+                if (log.isInfoEnabled()) {
+                    log.info("lock {} failed!", lockKey);
+                }
                 if (Objects.nonNull(errCode)) {
                     throw new LockFailException(errCode);
                 } else {

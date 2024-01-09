@@ -32,9 +32,13 @@ public class VertxMqttClient {
                 false,
                 res -> {
                     if (res.succeeded()) {
-                        log.debug("publish mqtt [{}] message success", mqttClient.clientId());
+                        if (log.isInfoEnabled()) {
+                            log.info("publish mqtt [{}] message success", mqttClient.clientId());
+                        }
                     } else {
-                        log.warn("publish mqtt [{}] message error", mqttClient.clientId(), res.cause());
+                        if (log.isWarnEnabled()) {
+                            log.warn("publish mqtt [{}] message error", mqttClient.clientId(), res.cause());
+                        }
                         throw new BizException(ErrorCode.FAIL.getCode(), "发送mqtt失败", res.cause());
                     }
                 });

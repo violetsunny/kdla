@@ -174,7 +174,9 @@ public class SequenceNoGeneratorV2 {
                 try {
                     lock.unlock();
                 } catch (Exception e) {
-                    log.warn("createNo,unlock failed,exception is:", e);
+                    if (log.isWarnEnabled()) {
+                        log.warn("createNo,unlock failed,exception is:", e);
+                    }
                 }
             }
 

@@ -71,7 +71,9 @@ public class HttpContextHelp {
      */
     public static void ignoreSSL() throws Exception {
         HostnameVerifier hv = (urlHostName, session) -> {
-            log.warn("Warning: URL Host: " + urlHostName + " vs. " + session.getPeerHost());
+            if (log.isWarnEnabled()) {
+                log.warn("Warning: URL Host: " + urlHostName + " vs. " + session.getPeerHost());
+            }
             return true;
         };
         trustAllHttpsCertificates();

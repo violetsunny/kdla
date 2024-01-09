@@ -43,7 +43,9 @@ public class QrCodeHelp {
      * @return
      */
     public static String createQRCode(QrCodeCreateParam param) {
-        log.info("QrCodeUtil.createQRCode param={}", JSON.toJSONString(param));
+        if (log.isInfoEnabled()) {
+            log.info("QrCodeUtil.createQRCode param={}", JSON.toJSONString(param));
+        }
         try {
             Map<EncodeHintType, Object> hintMap = createHintMap(4);
             BarcodeFormat type = getBarcodeFormat(param.getCodeType());

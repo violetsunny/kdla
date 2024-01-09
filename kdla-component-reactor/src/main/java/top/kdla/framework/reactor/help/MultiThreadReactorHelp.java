@@ -21,7 +21,7 @@ import java.util.function.Function;
 @Slf4j
 public class MultiThreadReactorHelp<T, R> {
 
-    public R exe(List<T> reqs, Function<? super T, ? extends Publisher<? extends R>> function, ExecutorService executorService){
+    public R exe(List<T> reqs, Function<? super T, ? extends Publisher<? extends R>> function, ExecutorService executorService) {
         long startTime = System.currentTimeMillis();
         AtomicReference<R> res = new AtomicReference<>();
         Flux.fromIterable(reqs)
@@ -32,19 +32,25 @@ public class MultiThreadReactorHelp<T, R> {
                 .sequential()
                 .doOnError(MultiThreadReactorHelp::doOnError)
                 .doOnComplete(MultiThreadReactorHelp::doOnComplete)
-                .doFinally(signalType -> log.info("并发执行的时间: " + (System.currentTimeMillis()-startTime)))
+                .doFinally(signalType -> {
+                    if (log.isInfoEnabled()) {
+                        log.info("并发执行的时间: " + (System.currentTimeMillis() - startTime));
+                    }
+                })
                 .subscribe(responseData -> res.set(responseData), e -> log.error("error", e));
 
         return res.get();
     }
 
     private static void doOnError(Object o) {
-        log.error("{}",o);
+        log.error("{}", o);
     }
 
 
     private static void doOnComplete() {
-        log.info("并发远程调用异常完成");
+        if (log.isInfoEnabled()) {
+            log.info("并发远程调用异常完成");
+        }
     }
 
     /**

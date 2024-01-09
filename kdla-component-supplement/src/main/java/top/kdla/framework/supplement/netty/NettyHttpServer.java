@@ -85,7 +85,9 @@ public class NettyHttpServer {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if (future.isSuccess()) {
-                        log.info("服务端口" + port + "绑定成功!");
+                        if (log.isInfoEnabled()) {
+                            log.info("服务端口" + port + "绑定成功!");
+                        }
                     }
                 }
             });
@@ -96,7 +98,9 @@ public class NettyHttpServer {
                     workerGroup.shutdownGracefully();
                     bossGroup.shutdownGracefully();
                     close.set(true);
-                    log.info(future.channel().toString() + "链路关闭");
+                    if (log.isInfoEnabled()) {
+                        log.info(future.channel().toString() + "链路关闭");
+                    }
                 }
             });
         } finally {
@@ -160,13 +164,17 @@ public class NettyHttpServer {
 
         @Override
         public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) throws Exception {
-            log.info("客服端地址:{}", ctx.channel().remoteAddress());
-            log.info("请求数据:{}", JSONObject.toJSONString(msg));
+            if (log.isInfoEnabled()) {
+                log.info("客服端地址:{}", ctx.channel().remoteAddress());
+                log.info("请求数据:{}", JSONObject.toJSONString(msg));
+            }
             HttpHeaders headers = msg.headers();
             String headValue = headers.get(HttpHeaderNames.CONTENT_TYPE.toString());
             String uri = msg.uri();
             HttpMethod method = msg.method();
-            log.info("Uri:{} method:{} headValue:{}", uri, method, headers.toString());
+            if (log.isInfoEnabled()) {
+                log.info("Uri:{} method:{} headValue:{}", uri, method, headers.toString());
+            }
             if (method.equals(HttpMethod.GET)) {
                 QueryStringDecoder decoderQuery = new QueryStringDecoder(msg.uri());
                 Map<String, List<String>> uriAttributes = decoderQuery.parameters();
@@ -213,7 +221,9 @@ public class NettyHttpServer {
         }
 
         private void writeHttpResponseJson(FullHttpRequest request, String res, ChannelHandlerContext ctx, HttpResponseStatus status) {
-            log.info("writeHttpResponseJson 开始写入返回数据...");
+            if (log.isInfoEnabled()) {
+                log.info("writeHttpResponseJson 开始写入返回数据...");
+            }
             FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, status, Unpooled.wrappedBuffer(res.getBytes(Charsets.UTF_8)));
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON + ";charset=utf-8");
             response.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
@@ -230,7 +240,9 @@ public class NettyHttpServer {
         }
 
         private void writeHttpResponseImage(FullHttpRequest request, File file, ChannelHandlerContext ctx, HttpResponseStatus status) {
-            log.info("writeHttpResponseImage 开始写入返回数据...");
+            if (log.isInfoEnabled()) {
+                log.info("writeHttpResponseImage 开始写入返回数据...");
+            }
             FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, status);
             //byte[] fileToByte = this.fileToByte("f://test.jpg");
             response.content().writeBytes(FileUtil.readBytes(file));
@@ -248,7 +260,9 @@ public class NettyHttpServer {
         }
 
         private void writeHttpResponseHtml(FullHttpRequest request, File file, ChannelHandlerContext ctx, HttpResponseStatus status) throws Exception {
-            log.info("writeHttpResponseHtml 开始写入返回数据...");
+            if (log.isInfoEnabled()) {
+                log.info("writeHttpResponseHtml 开始写入返回数据...");
+            }
             RandomAccessFile raf = new RandomAccessFile(file, "r");
             FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, status);
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html;charset=utf-8");
@@ -267,7 +281,9 @@ public class NettyHttpServer {
         }
 
         private void writeHttpResponseHtml2(FullHttpRequest request, String msg, ChannelHandlerContext ctx, HttpResponseStatus status) throws Exception {
-            log.info("writeHttpResponseHtml2 开始写入返回数据...");
+            if (log.isInfoEnabled()) {
+                log.info("writeHttpResponseHtml2 开始写入返回数据...");
+            }
             //2.给浏览器进行响应
             ByteBuf byteBuf = Unpooled.copiedBuffer(msg, CharsetUtil.UTF_8);
             DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, byteBuf);
@@ -286,7 +302,9 @@ public class NettyHttpServer {
         }
 
         private void writeHttpResponsePlain(FullHttpRequest request, String msg, ChannelHandlerContext ctx, HttpResponseStatus status) throws Exception {
-            log.info("writeHttpResponsePlain 开始写入返回数据...");
+            if (log.isInfoEnabled()) {
+                log.info("writeHttpResponsePlain 开始写入返回数据...");
+            }
             // 构造一个http响应体，即HttpResponse
             DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.copiedBuffer(msg, CharsetUtil.UTF_8));
             // 设置响应头信息

@@ -59,9 +59,13 @@ public class VertxMqttConfigure {
                 .setAutoKeepAlive(true));
         mqttClient.connect(port, host, res -> {
             if (!res.succeeded()) {
-                log.warn("connect mqtt [{}] error", clientId, res.cause());
+                if (log.isWarnEnabled()) {
+                    log.warn("connect mqtt [{}] error", clientId, res.cause());
+                }
             } else {
-                log.debug("connect mqtt [{}] success", clientId);
+                if (log.isInfoEnabled()) {
+                    log.info("connect mqtt [{}] success", clientId);
+                }
             }
         });
         return mqttClient;
@@ -73,10 +77,10 @@ public class VertxMqttConfigure {
         return Vertx.vertx();
     }
 
-    @PreDestroy
-    public void close() {
-        vertx().close();
-    }
+//    @PreDestroy
+//    public void close() {
+//        vertx().close();
+//    }
 
 
 }

@@ -34,7 +34,9 @@ public class StopWatchWrapperAspect {
 
     @Pointcut("@annotation(top.kdla.framework.common.aspect.watch.StopWatchWrapper) && execution(public * *(..))")
     public void pointcut() {
-        log.debug("--- StopWatchWrapperAspect start ---");
+        if (log.isDebugEnabled()) {
+            log.debug("--- StopWatchWrapperAspect start ---");
+        }
     }
 
     @Around("pointcut()")
@@ -58,11 +60,17 @@ public class StopWatchWrapperAspect {
             sw.stop();
             //不同的级别打印日志不同
             if (sw.elapsed(TimeUnit.MILLISECONDS) > errorTimeOut) {
-                log.warn(logTitle + " " + "接口超过" + errorTimeOut + "ms 运行:{}", sw.toString());
+                if (log.isWarnEnabled()) {
+                    log.warn(logTitle + " " + "接口超过" + errorTimeOut + "ms 运行:{}", sw.toString());
+                }
             } else if (sw.elapsed(TimeUnit.MILLISECONDS) > warnTimeOut) {
-                log.warn(logTitle + " " + "接口超过" + warnTimeOut + "ms 运行:{}", sw.toString());
+                if (log.isWarnEnabled()) {
+                    log.warn(logTitle + " " + "接口超过" + warnTimeOut + "ms 运行:{}", sw.toString());
+                }
             } else {
-                log.info(logTitle + " " + "运行:{}", sw.toString());
+                if (log.isInfoEnabled()) {
+                    log.info(logTitle + " " + "运行:{}", sw.toString());
+                }
             }
         }
         return ob;

@@ -136,7 +136,9 @@ public class RequestLogAspect {
 
         beforeReqLog.append("================  Request End   ================\n");
         long startNs = System.nanoTime();
-        log.info(beforeReqLog.toString(), beforeReqArgs.toArray());
+        if (log.isInfoEnabled()) {
+            log.info(beforeReqLog.toString(), beforeReqArgs.toArray());
+        }
         StringBuilder afterReqLog = new StringBuilder(200);
         List<Object> afterReqArgs = new ArrayList<>();
         afterReqLog.append("\n\n================  Response Start  ================\n");
@@ -158,7 +160,9 @@ public class RequestLogAspect {
                 afterReqArgs.add(requestURI);
                 afterReqArgs.add(tookMs);
                 afterReqLog.append("================  Response End   ================\n");
-                log.info(afterReqLog.toString(), afterReqArgs.toArray());
+                if (log.isInfoEnabled()) {
+                    log.info(afterReqLog.toString(), afterReqArgs.toArray());
+                }
             }
         }
 
@@ -168,7 +172,9 @@ public class RequestLogAspect {
         afterReqArgs.add(requestURI);
         afterReqArgs.add(tookMs);
         afterReqLog.append("================  Response End   ================\n");
-        log.info(afterReqLog.toString(), afterReqArgs.toArray());
+        if (log.isInfoEnabled()) {
+            log.info(afterReqLog.toString(), afterReqArgs.toArray());
+        }
         return var17;
     }
 }

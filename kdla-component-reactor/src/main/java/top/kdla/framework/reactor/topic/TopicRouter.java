@@ -30,7 +30,9 @@ class TopicRouter<T, R> implements Router<T, R> {
         return root.findTopic(topic)
                 .flatMapIterable(Topic::getSubscribers)
                 .switchIfEmpty(Mono.fromRunnable(() -> {
-                    log.debug("not handler for {}", topic);
+                    if (log.isInfoEnabled()) {
+                        log.info("not handler for {}", topic);
+                    }
                 }))
                 .distinct()
                 .map(runner -> runner.apply(data))

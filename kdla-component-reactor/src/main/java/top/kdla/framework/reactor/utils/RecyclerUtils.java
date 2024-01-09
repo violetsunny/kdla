@@ -31,11 +31,11 @@ public class RecyclerUtils {
                 .map(Integer::parseInt)
                 .orElse(defaultRatio);
 
-        if (log.isDebugEnabled()) {
-            log.debug("-D{}: {}", getConfigName(type, "maxCapacityPerThread"), maxCapacityPerThread);
-            log.debug("-D{}: {}", getConfigName(type, "maxSharedCapacityFactor"), maxSharedCapacityFactor);
-            log.debug("-D{}: {}", getConfigName(type, "maxDelayedQueuesPerThread"), maxDelayedQueuesPerThread);
-            log.debug("-D{}: {}", getConfigName(type, "ratio"), ratio);
+        if (log.isInfoEnabled()) {
+            log.info("-D{}: {}", getConfigName(type, "maxCapacityPerThread"), maxCapacityPerThread);
+            log.info("-D{}: {}", getConfigName(type, "maxSharedCapacityFactor"), maxSharedCapacityFactor);
+            log.info("-D{}: {}", getConfigName(type, "maxDelayedQueuesPerThread"), maxDelayedQueuesPerThread);
+            log.info("-D{}: {}", getConfigName(type, "ratio"), ratio);
         }
         return new Recycler<T>(maxCapacityPerThread, ratio, chunkSize) {
             @Override

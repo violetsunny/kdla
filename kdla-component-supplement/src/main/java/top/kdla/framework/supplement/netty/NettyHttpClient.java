@@ -100,7 +100,9 @@ public class NettyHttpClient {
                 public void operationComplete(ChannelFuture future) throws Exception {
                     workerGroup.shutdownGracefully();
                     close.set(true);
-                    log.info(future.channel().toString() + "链路关闭");
+                    if (log.isInfoEnabled()) {
+                        log.info(future.channel().toString() + "链路关闭");
+                    }
                 }
             });
 
@@ -135,7 +137,9 @@ public class NettyHttpClient {
                 public void operationComplete(ChannelFuture future) throws Exception {
                     workerGroup.shutdownGracefully();
                     close.set(true);
-                    log.info(future.channel().toString() + "链路关闭");
+                    if (log.isInfoEnabled()) {
+                        log.info(future.channel().toString() + "链路关闭");
+                    }
                 }
             });
 
@@ -174,7 +178,9 @@ public class NettyHttpClient {
                 public void operationComplete(ChannelFuture future) throws Exception {
                     workerGroup.shutdownGracefully();
                     close.set(true);
-                    log.info(future.channel().toString() + "链路关闭");
+                    if (log.isInfoEnabled()) {
+                        log.info(future.channel().toString() + "链路关闭");
+                    }
                 }
             });
 
@@ -332,7 +338,9 @@ public class NettyHttpClient {
             if (!msg.headers().isEmpty()) {
                 for (String name : msg.headers().names()) {
                     for (String value : msg.headers().getAll(name)) {
-                        log.info("HEADER: " + name + " = " + value);
+                        if (log.isInfoEnabled()) {
+                            log.info("HEADER: " + name + " = " + value);
+                        }
                     }
                 }
             }
@@ -342,7 +350,9 @@ public class NettyHttpClient {
                 response.completeExceptionally(new BizException(ErrorCode.FAIL.getCode(), "调用外部接口失败", msg.decoderResult().cause()));
             } else {
                 ByteBuf buf = msg.content();
-                log.info("content:{}", buf.toString(CharsetUtil.UTF_8));
+                if (log.isInfoEnabled()) {
+                    log.info("content:{}", buf.toString(CharsetUtil.UTF_8));
+                }
                 response.complete(buf.toString(CharsetUtil.UTF_8));
             }
         }
@@ -367,7 +377,9 @@ public class NettyHttpClient {
             if (!msg.headers().isEmpty()) {
                 for (String name : msg.headers().names()) {
                     for (String value : msg.headers().getAll(name)) {
-                        log.info("HEADER: " + name + " = " + value);
+                        if (log.isInfoEnabled()) {
+                            log.info("HEADER: " + name + " = " + value);
+                        }
                     }
                 }
             }
@@ -377,7 +389,9 @@ public class NettyHttpClient {
                 response.setFailure(new BizException(ErrorCode.FAIL.getCode(), "调用外部接口失败", msg.decoderResult().cause()));
             } else {
                 ByteBuf buf = msg.content();
-                log.info("content:{}", buf.toString(CharsetUtil.UTF_8));
+                if (log.isInfoEnabled()) {
+                    log.info("content:{}", buf.toString(CharsetUtil.UTF_8));
+                }
                 response.setSuccess(buf.toString(CharsetUtil.UTF_8));
             }
 
@@ -409,7 +423,9 @@ public class NettyHttpClient {
             if (!msg.headers().isEmpty()) {
                 for (String name : msg.headers().names()) {
                     for (String value : msg.headers().getAll(name)) {
-                        log.info("HEADER: " + name + " = " + value);
+                        if (log.isInfoEnabled()) {
+                            log.info("HEADER: " + name + " = " + value);
+                        }
                     }
                 }
             }
@@ -419,7 +435,9 @@ public class NettyHttpClient {
                 response.onError(new BizException(ErrorCode.FAIL.getCode(), "调用外部接口失败", msg.decoderResult().cause()));
             } else {
                 ByteBuf buf = msg.content();
-                log.info("content:{}", buf.toString(CharsetUtil.UTF_8));
+                if (log.isInfoEnabled()) {
+                    log.info("content:{}", buf.toString(CharsetUtil.UTF_8));
+                }
                 response.onResponse(buf.toString(CharsetUtil.UTF_8));
             }
 

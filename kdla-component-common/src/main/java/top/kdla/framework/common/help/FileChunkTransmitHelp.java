@@ -43,7 +43,10 @@ public class FileChunkTransmitHelp {
 
         //初始化对象参数
         init();
-        log.info("init FileChunkTransmitHelp successfully");
+        if (log.isInfoEnabled()) {
+            log.info("init FileChunkTransmitHelp successfully");
+        }
+
     }
 
     /**
@@ -51,7 +54,9 @@ public class FileChunkTransmitHelp {
      */
     private void init() {
         if (!this.src.exists()) {
-            log.warn("FileChunkTransmitHelp init 输入源 不存在{} ", this.src.getName());
+            if (log.isWarnEnabled()) {
+                log.warn("FileChunkTransmitHelp init 输入源 不存在{} ", this.src.getName());
+            }
             return;
         }
 
@@ -75,7 +80,9 @@ public class FileChunkTransmitHelp {
 
     public void split() {
         if (!this.src.exists()) {
-            log.warn("FileChunkTransmitHelp split 输入源 不存在{} ", this.src.getName());
+            if (log.isWarnEnabled()) {
+                log.warn("FileChunkTransmitHelp split 输入源 不存在{} ", this.src.getName());
+            }
             return;
         }
         //总长度
@@ -95,7 +102,9 @@ public class FileChunkTransmitHelp {
 
             splitDetail(i, beginPos, actualSize);
         }
-        log.info("子文件切分后保存至{}", this.destDir);
+        if (log.isInfoEnabled()) {
+            log.info("子文件切分后保存至{}", this.destDir);
+        }
     }
 
     /**

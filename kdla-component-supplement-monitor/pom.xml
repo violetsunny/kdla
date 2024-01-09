@@ -34,6 +34,11 @@
 
         <dependency>
             <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
             <artifactId>simpleclient_httpserver</artifactId>
             <scope>provided</scope>
         </dependency>

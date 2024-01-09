@@ -33,6 +33,9 @@ public class MdcAspect implements ApplicationContextAware {
 
     @Pointcut("@annotation(MdcDot) || @within(MdcDot)")
     public void getLogAnnotation() {
+        if (log.isDebugEnabled()) {
+            log.debug("--- MdcAspect start ---");
+        }
     }
 
     @Around("getLogAnnotation()")
@@ -42,7 +45,9 @@ public class MdcAspect implements ApplicationContextAware {
         try {
             return joinPoint.proceed();
         } finally {
-            log.info("方法执行耗时: {}#{} = {}", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName() , System.currentTimeMillis() - start);
+            if (log.isInfoEnabled()) {
+                log.info("方法执行耗时: {}#{} = {}", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName() , System.currentTimeMillis() - start);
+            }
             if (hasTag) {
                 MdcHelp.clear();
             }
