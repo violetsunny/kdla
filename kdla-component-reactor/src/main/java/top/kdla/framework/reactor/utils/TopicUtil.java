@@ -7,7 +7,7 @@ import org.springframework.util.PathMatcher;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-public class TopicUtils {
+public class TopicUtil {
     public static final char PATH_SPLITTER = '/';
 
     private final static PathMatcher PATH_MATCHER = new AntPathMatcher();

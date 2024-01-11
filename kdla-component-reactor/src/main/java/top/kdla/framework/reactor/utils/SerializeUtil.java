@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public class SerializeUtils {
+public class SerializeUtil {
 
     @SneakyThrows
     public static String readNullableUTF(ObjectInput in) {
@@ -374,7 +374,7 @@ public class SerializeUtils {
                 int len = input.readInt();
                 Object array = Array.newInstance(elementType.javaType, len);
                 for (int i = 0; i < len; i++) {
-                    Array.set(array, i, SerializeUtils.readObject(input));
+                    Array.set(array, i, SerializeUtil.readObject(input));
                 }
                 return array;
             }
@@ -397,7 +397,7 @@ public class SerializeUtils {
         MAP(0x0D, Map.class) {
             @Override
             Object read(ObjectInput input) {
-                return SerializeUtils.readMap(input, Maps::newLinkedHashMapWithExpectedSize);
+                return SerializeUtil.readMap(input, Maps::newLinkedHashMapWithExpectedSize);
             }
 
             @Override
@@ -425,7 +425,7 @@ public class SerializeUtils {
                 int len = input.readInt();
                 List<Object> list = new ArrayList<>(len);
                 for (int i = 0; i < len; i++) {
-                    list.add(SerializeUtils.readObject(input));
+                    list.add(SerializeUtil.readObject(input));
                 }
                 return list;
             }
@@ -451,7 +451,7 @@ public class SerializeUtils {
                 int len = input.readInt();
                 Set<Object> list = Sets.newLinkedHashSetWithExpectedSize(len);
                 for (int i = 0; i < len; i++) {
-                    list.add(SerializeUtils.readObject(input));
+                    list.add(SerializeUtil.readObject(input));
                 }
                 return list;
             }
@@ -477,7 +477,7 @@ public class SerializeUtils {
                 int len = input.readInt();
                 Set<Object> list = ConcurrentHashMap.newKeySet(len);
                 for (int i = 0; i < len; i++) {
-                    list.add(SerializeUtils.readObject(input));
+                    list.add(SerializeUtil.readObject(input));
                 }
                 return list;
             }
@@ -499,7 +499,7 @@ public class SerializeUtils {
         C_MAP(0x20, ConcurrentMap.class) {
             @Override
             Object read(ObjectInput input) {
-                return SerializeUtils.readMap(input, ConcurrentHashMap::new);
+                return SerializeUtil.readMap(input, ConcurrentHashMap::new);
             }
 
             @Override
@@ -562,7 +562,7 @@ public class SerializeUtils {
 
             @SneakyThrows
             private Class<?> loadClass(String name) {
-                return SerializeUtils.class.getClassLoader().loadClass(name);
+                return SerializeUtil.class.getClassLoader().loadClass(name);
             }
 
             @Override

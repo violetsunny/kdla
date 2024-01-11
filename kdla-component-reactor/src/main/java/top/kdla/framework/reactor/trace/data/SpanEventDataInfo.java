@@ -6,7 +6,7 @@ import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.sdk.trace.data.EventData;
 import lombok.Getter;
 import lombok.Setter;
-import top.kdla.framework.reactor.utils.SerializeUtils;
+import top.kdla.framework.reactor.utils.SerializeUtil;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -56,13 +56,13 @@ public class SpanEventDataInfo implements Externalizable {
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeUTF(name);
         out.writeLong(timeNanos);
-        SerializeUtils.writeKeyValue(attributes, out);
+        SerializeUtil.writeKeyValue(attributes, out);
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         this.name = in.readUTF();
         this.timeNanos = in.readLong();
-        this.attributes = SerializeUtils.readMap(in, Maps::newHashMapWithExpectedSize);
+        this.attributes = SerializeUtil.readMap(in, Maps::newHashMapWithExpectedSize);
     }
 }

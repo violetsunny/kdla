@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 @Slf4j
-public class RecyclerUtils {
+public class RecyclerUtil {
 
     public static <T> Recycler<T> newRecycler(Class<T> type, Function<Recycler.Handle<T>, T> objectSupplier, int defaultRatio) {
         int maxCapacityPerThread = getPoolConfig(type, "maxCapacityPerThread")

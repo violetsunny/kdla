@@ -56,27 +56,37 @@ public class RegexUtil {
     /**
      * 日期时间格式 yyyy-MM-dd HH:mm:ss.SSS
      */
-    public static Pattern DATETIME_WITH_MILLISECOND_PATTERN_1 = Pattern.compile("^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}$");
+    public static Pattern DATETIME_WITH_MILLISECOND_1 = Pattern.compile("^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}$");
 
     /**
      * 日期时间格式 yyyy/MM/dd HH:mm:ss.SSS
      */
-    public static Pattern DATETIME_WITH_MILLISECOND_PATTERN_2 = Pattern.compile("^\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}$");
+    public static Pattern DATETIME_WITH_MILLISECOND_2 = Pattern.compile("^\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}$");
 
     /**
      * 日期时间格式 yyyy-MM-ddTHH:mm:ss.SSS
      */
-    public static Pattern DATETIME_WITH_MILLISECOND_PATTERN_3 = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}$");
+    public static Pattern DATETIME_WITH_MILLISECOND_3 = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}$");
 
     /**
      * 小数的正则表达式
      */
-    public static Pattern PATTERN_FLOAT = Pattern.compile("[+-]?[0-9]+(\\.[0-9]+)?");
+    public static Pattern DOUBLE = Pattern.compile("[+-]?[0-9]+(\\.[0-9]+)?");
+
+    /**
+     * 整数的正则表达式
+     */
+    public static Pattern INTEGER = Pattern.compile("^-?\\d+$");
 
     /**
      * 数字的正则表达式
      */
     public static Pattern NUMBER = Pattern.compile("[0-9]*");
+
+    /**
+     * 科学计数法的正则表达式
+     */
+    public static Pattern SCIENTIFIC_NOTATION = Pattern.compile("[+-]?\\d+(\\.\\d+)?([Ee][+-]?\\d+)?");
 
     /**
      * CJK统一汉字
@@ -95,7 +105,7 @@ public class RegexUtil {
      * @return
      */
     public static boolean validateFloatNumber(String str) {
-        return PATTERN_FLOAT.matcher(str).matches();
+        return DOUBLE.matcher(str).matches();
     }
 
 }

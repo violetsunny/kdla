@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 
-public class FluxUtils {
+public class FluxUtil {
 
 
     /**

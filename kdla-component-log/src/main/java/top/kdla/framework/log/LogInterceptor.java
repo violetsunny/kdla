@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 @Slf4j
 public class LogInterceptor implements AsyncHandlerInterceptor {
 
-    private static final ThreadLocal<Long> BEGIN_TIMESTAMP = new ThreadLocal<>();
+    private static final InheritableThreadLocal<Long> BEGIN_TIMESTAMP = new InheritableThreadLocal<>();
 
     private void printHttpRequestHeaderInfo(final HttpServletRequest request) {
         try {

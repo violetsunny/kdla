@@ -13,7 +13,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import javax.annotation.PreDestroy;
 import java.util.Random;
 
 /**
@@ -39,8 +38,11 @@ public class VertxMqttConfigure {
     @Value("${kdla.mqtt.port:1883}")
     private int port;
 
-    @Value("${kdla.mqtt.acktimeout:60000}")
+    @Value("${kdla.mqtt.ack.timeout:60000}")
     private int acktimeout;
+
+    @Value("${kdla.mqtt.ack.retry:1000}")
+    private long retry;
 
     @Bean
     public VertxMqttClient vertxMqttClient(MqttClient mqttClient) {
@@ -67,6 +69,22 @@ public class VertxMqttConfigure {
                     log.info("connect mqtt [{}] success", clientId);
                 }
             }
+        });
+        mqttClient.closeHandler(v -> {
+            vertx.setTimer(retry, id -> {
+                mqttClient.connect(port, host)
+                        .onSuccess(v1 -> {
+                            vertx.cancelTimer(id);
+                            if (log.isInfoEnabled()) {
+                                log.info("reconnect mqtt [{}] success", clientId);
+                            }
+                        })
+                        .onFailure(cause -> {
+                            if (log.isWarnEnabled()) {
+                                log.warn("reconnect mqtt [{}] error", clientId, cause);
+                            }
+                        });
+            });
         });
         return mqttClient;
     }

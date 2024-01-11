@@ -10,8 +10,8 @@ import reactor.core.publisher.Flux;
 import reactor.function.Consumer4;
 import reactor.function.Consumer5;
 import top.kdla.framework.reactor.help.RecyclableDequeue;
-import top.kdla.framework.reactor.utils.RecyclerUtils;
-import top.kdla.framework.reactor.utils.TopicUtils;
+import top.kdla.framework.reactor.utils.RecyclerUtil;
+import top.kdla.framework.reactor.utils.TopicUtil;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -76,7 +76,7 @@ public final class Topic<T> {
         if (topics != null) {
             return topics;
         }
-        return topics = TopicUtils.split(getTopic());
+        return topics = TopicUtil.split(getTopic());
     }
 
     public String getTopic() {
@@ -202,7 +202,7 @@ public final class Topic<T> {
                                                    ARG0 arg0, ARG1 arg1, ARG2 arg2, ARG3 arg3,
                                                    Consumer5<ARG0, ARG1, ARG2, ARG3, Topic<T>> sink,
                                                    Consumer4<ARG0, ARG1, ARG2, ARG3> end) {
-        String[] topics = TopicUtils.split(topic, true);
+        String[] topics = TopicUtil.split(topic, true);
 
         if (!topic.startsWith("/")) {
             String[] newTopics = new String[topics.length + 1];
@@ -220,8 +220,8 @@ public final class Topic<T> {
     }
 
     protected boolean match(String[] pars) {
-        return TopicUtils.match(getTopics(), pars)
-                || TopicUtils.match(pars, getTopics());
+        return TopicUtil.match(getTopics(), pars)
+                || TopicUtil.match(pars, getTopics());
     }
 
     public static <T, ARG0, ARG1, ARG2, ARG3> void find(
@@ -231,7 +231,7 @@ public final class Topic<T> {
             Consumer5<ARG0, ARG1, ARG2, ARG3, Topic<T>> sink,
             Consumer4<ARG0, ARG1, ARG2, ARG3> end) {
 
-        RecyclableDequeue<Topic<T>> cache = RecyclerUtils.dequeue();
+        RecyclableDequeue<Topic<T>> cache = RecyclerUtil.dequeue();
         try {
             cache.add(topicPart);
 

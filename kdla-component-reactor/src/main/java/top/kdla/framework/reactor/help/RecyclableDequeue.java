@@ -28,11 +28,10 @@ public final class RecyclableDequeue<T> extends ArrayDeque<T> {
         this.handle = handle;
     }
 
-    public boolean recycle() {
+    public void recycle() {
         clear();
         if (handle != null) {
             handle.recycle(this);
         }
-        return true;
     }
 }

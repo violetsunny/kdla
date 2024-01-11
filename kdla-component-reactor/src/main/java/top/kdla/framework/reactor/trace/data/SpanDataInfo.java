@@ -8,7 +8,7 @@ import io.opentelemetry.sdk.trace.data.SpanData;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
-import top.kdla.framework.reactor.utils.SerializeUtils;
+import top.kdla.framework.reactor.utils.SerializeUtil;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -86,7 +86,7 @@ public class SpanDataInfo implements Externalizable {
         out.writeUTF(traceId);
         out.writeLong(startWithNanos);
         out.writeLong(endWithNanos);
-        SerializeUtils.writeKeyValue(attributes, out);
+        SerializeUtil.writeKeyValue(attributes, out);
         if (events == null) {
             out.writeInt(0);
         } else {
@@ -104,7 +104,7 @@ public class SpanDataInfo implements Externalizable {
         this.traceId = in.readUTF();
         this.startWithNanos = in.readLong();
         this.endWithNanos = in.readLong();
-        this.attributes = SerializeUtils.readMap(in, Maps::newHashMapWithExpectedSize);
+        this.attributes = SerializeUtil.readMap(in, Maps::newHashMapWithExpectedSize);
         int eventSize = in.readInt();
         if (eventSize > 0) {
             events = new ArrayList<>(eventSize);

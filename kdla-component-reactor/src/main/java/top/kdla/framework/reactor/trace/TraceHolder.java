@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * 基于<a href="https://github.com/open-telemetry/opentelemetry-java/">OpenTelemetry</a>链路追踪工具类，
  * 用于进行响应式链路追踪的常用.
- * 支持动态全局开启关闭追踪,支持开启禁用特定的spanName,spanName支持类似url的洗粒度控制.
+ * 支持动态全局开启关闭追踪,支持开启禁用特定的spanName,spanName支持类似url的细粒度控制.
  *
  * @author zhouhao
  * @see MonoTracer

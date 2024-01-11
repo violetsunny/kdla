@@ -9,7 +9,7 @@ import java.util.Objects;
  */
 public class LogTraceHolder {
 
-    public static ThreadLocal<Boolean> holder = new ThreadLocal<>();
+    public static InheritableThreadLocal<Boolean> holder = new InheritableThreadLocal<>();
 
     public static boolean get() {
         if (Objects.isNull(holder.get())) {
