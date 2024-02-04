@@ -1,5 +1,6 @@
 package top.kdla.framework.exception;
 
+import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -167,7 +168,7 @@ public class UnifiedExceptionControllerAdvice {
     @ExceptionHandler(Throwable.class)
     @ResponseBody
     public Response handleThrowable(HttpServletRequest req, Throwable exception) {
-        log.error("handleThrowable, req: {},Throwable:{}", req.getRequestURI(), ExceptionUtils.getStackTrace(exception));
+        log.error("handleThrowable,url:{} req: {},Throwable:{}", req.getRequestURI(), JSON.toJSONString(req.getParameterNames()), ExceptionUtils.getStackTrace(exception));
         String errorMessage = exception.getMessage();
         if (exception instanceof ConstraintViolationException) {
             return Response.buildFailure(ErrorCode.FAIL.getCode(), errorMessage);

@@ -25,6 +25,10 @@ public class BizException extends BaseException {
         super(code, String.format(message, args));
     }
 
+    public BizException(String code, Throwable e, String message, Object... args) {
+        super(code, String.format(message, args), e);
+    }
+
     public BizException(String message, Throwable e) {
         super(ErrorCode.BIZ_ERROR.getCode(), message, e);
     }

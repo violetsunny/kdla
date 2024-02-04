@@ -23,6 +23,8 @@ public class Response extends BaseModel {
 
     private String msg;
 
+    private String message;
+
     @Override
     public String toString() {
         return "Response [success=" + success + ", code=" + code + ", message=" + msg + "]";
@@ -39,6 +41,7 @@ public class Response extends BaseModel {
         response.setSuccess(false);
         response.setCode(code);
         response.setMsg(message);
+        response.setMessage(message);
         return response;
     }
 
@@ -53,6 +56,7 @@ public class Response extends BaseModel {
     protected void setSuccess() {
         this.code = ErrorCode.SUCCESS.getCode();
         this.msg = ErrorCode.SUCCESS.getMsg();
+        this.message = ErrorCode.SUCCESS.getMsg();
     }
 
 

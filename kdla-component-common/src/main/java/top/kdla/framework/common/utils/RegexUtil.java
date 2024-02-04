@@ -96,16 +96,30 @@ public class RegexUtil {
     /**
      * CJK统一汉字
      */
-    public static Pattern CHINESE_NAME = Pattern.compile("\\p{InCJK Unified Ideographs}&amp;&amp;\\P{Cn}");
+    public static Pattern CHINESE_NAME = Pattern.compile("\\p{InCJK Unified Ideographs}&&\\P{Cn}");
 
     /**
      * 判断是否为小数
+     * 如果你只需要找到输入序列中的任何位置的匹配，可以使用m.find()。
+     * 如果你需要整个输入序列完全匹配模式，可以使用m.matches()。
      *
      * @param str
      * @return
      */
     public static boolean validateFloatNumber(String str) {
         return DOUBLE.matcher(str).matches();
+    }
+
+    /**
+     * 判断是否有汉字
+     * 如果你只需要找到输入序列中的任何位置的匹配，可以使用m.find()。
+     * 如果你需要整个输入序列完全匹配模式，可以使用m.matches()。
+     *
+     * @param str
+     * @return
+     */
+    public static boolean validateChinese(String str) {
+        return CHINESE_REG.matcher(str).find();
     }
 
 }

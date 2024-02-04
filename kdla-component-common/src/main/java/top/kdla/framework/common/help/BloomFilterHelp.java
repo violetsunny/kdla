@@ -52,8 +52,8 @@ public class BloomFilterHelp {
     /**
      * 是否存在
      * 
-     * @param bloomFilter
-     * @param oj
+     * @param bloomFilter 过滤器
+     * @param oj 值
      * @return false 不存在
      */
     public static Boolean exist(BloomFilter bloomFilter, Object oj) {
@@ -62,4 +62,5 @@ public class BloomFilterHelp {
         }
         return bloomFilter.mightContain(oj);
     }
+
 }

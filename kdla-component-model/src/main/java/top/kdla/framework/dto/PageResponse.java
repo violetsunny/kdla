@@ -111,6 +111,7 @@ public class PageResponse<T> extends Response {
         response.setSuccess(false);
         response.setCode(code);
         response.setMsg(message);
+        response.setMessage(message);
         return response;
     }
 
