@@ -24,6 +24,7 @@ import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.BizException;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -86,12 +87,12 @@ public class VertxHttpClient {
         return future;
     }
 
-    public <T> CompletableFuture<T> sendRequest(HttpMethod method, String url, Map<String, String> headers, Object req, Class<T> res) {
+    public <T> CompletableFuture<T> sendRequest(String method, String url, Map<String, String> headers, Object req, Class<T> res) {
         if (RegexUtil.validateChinese(url)) {
             throw new BizException(ErrorCode.FAIL.getCode(), "有中文字符，需要重新编码再请求：%s", url);
         }
         CompletableFuture<T> future = new CompletableFuture<>();
-        Future<HttpResponse<Buffer>> responseFuture = this.createRequest(method, url, headers, req);
+        Future<HttpResponse<Buffer>> responseFuture = this.createRequest(HttpMethod.valueOf(method.toUpperCase(Locale.ROOT)), url, headers, req);
         responseFuture.onComplete(ar -> {
             if (ar.succeeded()) {
                 HttpResponse<Buffer> response = ar.result();
@@ -99,14 +100,14 @@ public class VertxHttpClient {
                     if (res.equals(String.class)) {
                         String result = response.bodyAsString();
                         future.complete((T) result);
-                        if (log.isInfoEnabled()) {
-                            log.info("VertxHttpClient-send url:{} req:{} result:{}", url, JSON.toJSONString(req), result);
+                        if (log.isDebugEnabled()) {
+                            log.debug("VertxHttpClient-send url:{} req:{} result:{}", url, JSON.toJSONString(req), result);
                         }
                     } else {
                         T result = response.bodyAsJson(res);//默认json返回
                         future.complete(result);
-                        if (log.isInfoEnabled()) {
-                            log.info("VertxHttpClient-send url:{} req:{} result:{}", url, JSON.toJSONString(req), JSON.toJSONString(result));
+                        if (log.isDebugEnabled()) {
+                            log.debug("VertxHttpClient-send url:{} req:{} result:{}", url, JSON.toJSONString(req), JSON.toJSONString(result));
                         }
                     }
                 } catch (Exception e) {

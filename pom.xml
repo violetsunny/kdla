@@ -6,7 +6,7 @@
 
     <groupId>top.kdla.framework</groupId>
     <artifactId>kdla-components</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.1-SNAPSHOT</version>
     <modules>
         <module>kdla-component-common</module>
         <module>kdla-component-dal</module>
@@ -20,6 +20,7 @@
         <module>kdla-component-supplement-monitor</module>
         <module>kdla-component-reactor</module>
         <module>kdla-component-log</module>
+        <module>kdla-component-supplement-job</module>
     </modules>
     <packaging>pom</packaging>
     <name>${project.artifactId}:${project.version}</name>
@@ -32,7 +33,7 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <java.version>1.8</java.version>
-        <kdla.framework.version>1.0.0-SNAPSHOT</kdla.framework.version>
+        <kdla.framework.version>1.0.1-SNAPSHOT</kdla.framework.version>
         <!--基础配置 -->
         <!--架构配置 -->
         <!--spring.boot3.0.0以上是Spring-6,jdk版本要求至少jdk17以上,对maven版本的要求是3.6以上;spring.cloud2022.0.0以上是spring.boot3.0.0 -->
@@ -84,6 +85,7 @@
         <jython.version>2.7.3</jython.version>
         <luaj.version>3.0.1</luaj.version>
         <spring-kafka.version>2.9.12</spring-kafka.version><!--spring-boot的2.7.14 有bug -->
+        <xxl-job.version>2.4.0</xxl-job.version>
         <!--项目工具配置 -->
     </properties>
     <distributionManagement>
@@ -181,7 +183,25 @@
 
             <dependency>
                 <groupId>top.kdla.framework</groupId>
+                <artifactId>kdla-component-supplement-job</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>top.kdla.framework</groupId>
                 <artifactId>kdla-component-validator</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>top.kdla.framework</groupId>
+                <artifactId>kdla-component-log</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>top.kdla.framework</groupId>
+                <artifactId>kdla-component-reactor</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- kdla组件 end -->
@@ -461,6 +481,12 @@
                 <groupId>org.luaj</groupId>
                 <artifactId>luaj-jse</artifactId>
                 <version>${luaj.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.xuxueli</groupId>
+                <artifactId>xxl-job-core</artifactId>
+                <version>${xxl-job.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

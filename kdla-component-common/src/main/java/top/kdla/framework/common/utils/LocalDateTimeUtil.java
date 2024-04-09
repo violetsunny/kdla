@@ -216,7 +216,6 @@ public class LocalDateTimeUtil {
     }
 
 
-
     /**
      * {@link TemporalAccessor}转换为 时间戳（从1970-01-01T00:00:00Z开始的毫秒数）
      *
@@ -265,6 +264,7 @@ public class LocalDateTimeUtil {
 
     /**
      * 相差多少年
+     *
      * @param startTime
      * @param endTime
      * @return
@@ -273,4 +273,19 @@ public class LocalDateTimeUtil {
         return TemporalUtil.between(startTime, endTime, ChronoUnit.YEARS);
     }
 
+    /**
+     * 昨天
+     * @return
+     */
+    public static LocalDateTime yesterday() {
+        return LocalDateTime.now().minusDays(1);
+    }
+
+    /**
+     * 明天
+     * @return
+     */
+    public static LocalDateTime tomorrow() {
+        return LocalDateTime.now().plusDays(1);
+    }
 }

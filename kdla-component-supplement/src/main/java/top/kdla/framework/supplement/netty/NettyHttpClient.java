@@ -37,10 +37,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -81,7 +78,7 @@ public class NettyHttpClient {
         return this;
     }
 
-    public String sendRequestPromise(String url, Object reqMsg, HttpMethod method, Map<String, String> headers) throws Exception {
+    public String sendRequestPromise(String url, Object reqMsg, String method, Map<String, String> headers) throws Exception {
         AtomicBoolean close = new AtomicBoolean(false);
         DefaultPromise<String> respPromise = new DefaultPromise<>(workerGroup.next());
         try {
@@ -92,7 +89,7 @@ public class NettyHttpClient {
             // 获取返回
             f.channel().pipeline().addLast(outputResultHandler);
             // 发送http请求
-            HttpRequest request = getRequestMethod(url, reqMsg, method, headers);
+            HttpRequest request = getRequestMethod(url, reqMsg, HttpMethod.valueOf(method.toUpperCase(Locale.ROOT)), headers);
             f.channel().writeAndFlush(request);
             //f.channel().closeFuture().sync();//不建议使用阻塞方式
             f.channel().closeFuture().addListener(new ChannelFutureListener() {
@@ -118,7 +115,7 @@ public class NettyHttpClient {
         return respPromise.get();
     }
 
-    public String sendRequestCompletable(String url, Object reqMsg, HttpMethod method, Map<String, String> headers) throws Exception {
+    public String sendRequestCompletable(String url, Object reqMsg, String method, Map<String, String> headers) throws Exception {
         AtomicBoolean close = new AtomicBoolean(false);
         CompletableFuture<String> future = new CompletableFuture<>();
         try {
@@ -129,7 +126,7 @@ public class NettyHttpClient {
             // 获取返回
             f.channel().pipeline().addLast(outputResultHandler);
             // 发送http请求
-            HttpRequest request = getRequestMethod(url, reqMsg, method, headers);
+            HttpRequest request = getRequestMethod(url, reqMsg, HttpMethod.valueOf(method.toUpperCase(Locale.ROOT)), headers);
             f.channel().writeAndFlush(request);
             //f.channel().closeFuture().sync();//不建议使用阻塞方式
             f.channel().closeFuture().addListener(new ChannelFutureListener() {
@@ -162,7 +159,7 @@ public class NettyHttpClient {
         return this;
     }
 
-    public void sendRequestAsync(String url, Object reqMsg, HttpMethod method, Map<String, String> headers) throws Exception {
+    public void sendRequestAsync(String url, Object reqMsg, String method, Map<String, String> headers) throws Exception {
         AtomicBoolean close = new AtomicBoolean(false);
         try {
             // Start the client.
@@ -170,7 +167,7 @@ public class NettyHttpClient {
             // 获取返回
             f.channel().pipeline().addLast(new OutputResultHandlerAsync(this.responseCallback));
             // 发送http请求
-            HttpRequest request = getRequestMethod(url, reqMsg, method, headers);
+            HttpRequest request = getRequestMethod(url, reqMsg, HttpMethod.valueOf(method.toUpperCase(Locale.ROOT)), headers);
             f.channel().writeAndFlush(request);
             //f.channel().closeFuture().sync();//不建议使用阻塞方式
             f.channel().closeFuture().addListener(new ChannelFutureListener() {

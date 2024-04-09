@@ -25,6 +25,7 @@ public class AsyncThreadHelp {
         private final ThreadFactory defaultFactory = Executors.defaultThreadFactory();
         private final AtomicInteger threadNumber = new AtomicInteger(1);
 
+        @Override
         public Thread newThread(Runnable r) {
             Thread thread = this.defaultFactory.newThread(r);
             if (!thread.isDaemon()) {
