@@ -65,7 +65,8 @@ public class DistributeLockedAspect {
             Expression expression = spelExpressionParser.parseExpression(key);
             EvaluationContext evalContext = new StandardEvaluationContext(jp.getArgs());
             evalContext.setVariable("args", jp.getArgs());
-            key = expression.getValue(evalContext).toString();
+            Object eval = expression.getValue(evalContext);
+            key = eval == null ? "" : String.valueOf(eval);
         }
 
         if (StringUtils.isBlank(key)) {//如果key值为空,不加锁,放行

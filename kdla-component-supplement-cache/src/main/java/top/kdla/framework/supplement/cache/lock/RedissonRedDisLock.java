@@ -42,7 +42,7 @@ public class RedissonRedDisLock implements DistributeLock {
     }
 
     @Override
-    public RLock lock(String lockKey, TimeUnit unit, long timeout, long leaseTime) throws LockFailException {
+    public synchronized RLock lock(String lockKey, TimeUnit unit, long timeout, long leaseTime) throws LockFailException {
         if (log.isInfoEnabled()) {
             log.info("lock use redlock with name {} start...", lockKey);
         }

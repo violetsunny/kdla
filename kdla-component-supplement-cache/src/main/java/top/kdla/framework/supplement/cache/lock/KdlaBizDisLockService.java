@@ -66,16 +66,15 @@ public class KdlaBizDisLockService {
      * @param <T>
      * @return
      */
-    public <T> T biz(String lockKey, Predicate<String> dbPredicate, Supplier<T> bizSupplier, ErrorCodeI errCode) {
+    public synchronized <T> T biz(String lockKey, Predicate<String> dbPredicate, Supplier<T> bizSupplier, ErrorCodeI errCode) {
         RLock lock = null;
         boolean lockRst = false;
         // must use try catch finnaly to lock and unlock!
         try {
             lock = redDisLock.lock(lockKey);
             // lock.lock()
-            lockRst = lock.tryLock();
-            //数据库锁
-            if (lockRst && (dbPredicate == null || dbPredicate.test(lockKey))) {
+            // 数据库锁
+            if (lock.tryLock() && (dbPredicate == null || dbPredicate.test(lockKey))) {
                 if (log.isInfoEnabled()) {
                     log.info("lock {} success!", lockKey);
                 }
@@ -86,13 +85,13 @@ public class KdlaBizDisLockService {
                     log.info("lock {} failed!", lockKey);
                 }
                 if (Objects.nonNull(errCode)) {
-                    throw new LockFailException(errCode);
+                    throw new LockFailException(errCode.getCode(),lockKey+"-重复请求");
                 } else {
-                    throw new LockFailException("重复请求");
+                    throw new LockFailException(lockKey+"-重复请求");
                 }
             }
         } finally {
-            if (lockRst) {
+            if(lock!=null){
                 lock.unlock();
             }
         }

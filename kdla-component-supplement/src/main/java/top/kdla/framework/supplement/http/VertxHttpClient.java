@@ -88,9 +88,6 @@ public class VertxHttpClient {
     }
 
     public <T> CompletableFuture<T> sendRequest(String method, String url, Map<String, String> headers, Object req, Class<T> res) {
-        if (RegexUtil.validateChinese(url)) {
-            throw new BizException(ErrorCode.FAIL.getCode(), "有中文字符，需要重新编码再请求：%s", url);
-        }
         CompletableFuture<T> future = new CompletableFuture<>();
         Future<HttpResponse<Buffer>> responseFuture = this.createRequest(HttpMethod.valueOf(method.toUpperCase(Locale.ROOT)), url, headers, req);
         responseFuture.onComplete(ar -> {
@@ -117,9 +114,23 @@ public class VertxHttpClient {
                 }
             } else {
                 future.completeExceptionally(ar.cause());
-                throw new BizException(ErrorCode.FAIL.getCode(), "调用外部接口失败");
+                throw new BizException(ErrorCode.FAIL.getCode(), ar.cause(), "调用外部接口失败");
             }
         });
+        return future;
+    }
+
+    public CompletableFuture<HttpResponse<Buffer>> sendRequest(String method, String url, Map<String, String> headers, Object req) {
+        CompletableFuture<HttpResponse<Buffer>> future = new CompletableFuture<>();
+        Future<HttpResponse<Buffer>> responseFuture = this.createRequest(HttpMethod.valueOf(method.toUpperCase(Locale.ROOT)), url, headers, req);
+        responseFuture.onComplete(ar -> {
+            if (ar.succeeded()) {
+                future.complete(ar.result());
+            } else {
+                throw new BizException(ErrorCode.FAIL.getCode(), ar.cause(), "调用外部接口失败");
+            }
+        });
+
         return future;
     }
 
@@ -133,6 +144,9 @@ public class VertxHttpClient {
      * @return
      */
     private Future<HttpResponse<Buffer>> createRequest(HttpMethod method, String url, Map<String, String> header, Object req) {
+        if (RegexUtil.validateChinese(url)) {
+            throw new BizException(ErrorCode.FAIL.getCode(), "有中文字符，需要重新编码再请求：%s", url);
+        }
         Map<String, String> headers;
         if (header != null) {
             //指定为小写
