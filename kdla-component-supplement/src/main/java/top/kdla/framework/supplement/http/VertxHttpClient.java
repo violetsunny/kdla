@@ -24,9 +24,11 @@ import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.BizException;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 /**
@@ -87,9 +89,6 @@ public class VertxHttpClient {
     }
 
     public <T> CompletableFuture<T> sendRequest(HttpMethod method, String url, Map<String, String> headers, Object req, Class<T> res) {
-        if (RegexUtil.validateChinese(url)) {
-            throw new BizException(ErrorCode.FAIL.getCode(), "有中文字符，需要重新编码再请求：%s", url);
-        }
         CompletableFuture<T> future = new CompletableFuture<>();
         Future<HttpResponse<Buffer>> responseFuture = this.createRequest(method, url, headers, req);
         responseFuture.onComplete(ar -> {
@@ -122,6 +121,24 @@ public class VertxHttpClient {
         return future;
     }
 
+    public <T> CompletableFuture<T> sendRequest(String method, String url, Map<String, String> headers, Object req, Class<T> res) {
+        return this.sendRequest(HttpMethod.valueOf(method.toUpperCase(Locale.ROOT)), url, headers, req, res);
+    }
+
+    public CompletableFuture<HttpResponse<Buffer>> sendRequest(String method, String url, Map<String, String> headers, Object req) {
+        CompletableFuture<HttpResponse<Buffer>> future = new CompletableFuture<>();
+        Future<HttpResponse<Buffer>> responseFuture = this.createRequest(HttpMethod.valueOf(method.toUpperCase(Locale.ROOT)), url, headers, req);
+        responseFuture.onComplete(ar -> {
+            if (ar.succeeded()) {
+                future.complete(ar.result());
+            } else {
+                future.completeExceptionally(ar.cause());
+                throw new BizException(ErrorCode.FAIL.getCode(), ar.cause(), "调用外部接口失败");
+            }
+        });
+        return future;
+    }
+
     /**
      * Get请求的参数，请直接在url后拼接，不走addQueryParam
      *
@@ -132,6 +149,9 @@ public class VertxHttpClient {
      * @return
      */
     private Future<HttpResponse<Buffer>> createRequest(HttpMethod method, String url, Map<String, String> header, Object req) {
+        if (RegexUtil.validateChinese(url)) {
+            throw new BizException(ErrorCode.FAIL.getCode(), "有中文字符，需要重新编码再请求：%s", url);
+        }
         Map<String, String> headers;
         if (header != null) {
             //指定为小写
