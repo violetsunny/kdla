@@ -85,6 +85,7 @@
         <jython.version>2.7.3</jython.version>
         <luaj.version>3.0.1</luaj.version>
         <spring-kafka.version>2.9.12</spring-kafka.version><!--spring-boot的2.7.14 有bug -->
+        <bcprov.version>1.78</bcprov.version>
         <xxl-job.version>2.4.0</xxl-job.version>
         <!--项目工具配置 -->
     </properties>
@@ -456,6 +457,12 @@
                 <groupId>com.google.zxing</groupId>
                 <artifactId>javase</artifactId>
                 <version>${zxing.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>${bcprov.version}</version>
             </dependency>
 
             <!-- 脚本执行 -->

@@ -5,24 +5,33 @@
 package top.kdla.framework.supplement.http;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
+import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.multipart.MultipartForm;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.http.MediaType;
 import top.kdla.framework.common.utils.ObjectUtil;
 import top.kdla.framework.common.utils.RegexUtil;
 import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.BizException;
 
+import javax.annotation.PreDestroy;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -37,10 +46,16 @@ import java.util.stream.Collectors;
 @Slf4j
 public class VertxHttpClient {
 
-    private final WebClient webClient;
+    private final WebClient webClientHttp;
+    private final WebClient webClientHttps;
 
-    public VertxHttpClient(WebClient webClient) {
-        this.webClient = webClient;
+    public VertxHttpClient(WebClient webClientHttp, WebClient webClientHttps) {
+        this.webClientHttp = webClientHttp;
+        this.webClientHttps = webClientHttps;
+    }
+
+    private WebClient getWebClient(String url) {
+        return url.startsWith("https") ? this.webClientHttps : this.webClientHttp;
     }
 
     /**
@@ -59,7 +74,7 @@ public class VertxHttpClient {
      */
     public <T> CompletableFuture<T> getJson(String url, Optional<Map<String, String>> headers, Class<T> res) {
         CompletableFuture<T> future = new CompletableFuture<>();
-        HttpRequest<Buffer> request = webClient.getAbs(url).putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON_VALUE);
+        HttpRequest<Buffer> request = getWebClient(url).getAbs(url).putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON_VALUE);
         headers.ifPresent(h -> request.putHeaders(HeadersMultiMap.httpHeaders().setAll(h)));
         request.send(ar -> {
             if (ar.succeeded()) {
@@ -74,7 +89,7 @@ public class VertxHttpClient {
 
     public <T> CompletableFuture<T> postJson(String url, Optional<Map<String, String>> headers, Object req, Class<T> res) {
         CompletableFuture<T> future = new CompletableFuture<>();
-        HttpRequest<Buffer> request = webClient.postAbs(url).putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON_VALUE);
+        HttpRequest<Buffer> request = getWebClient(url).postAbs(url).putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON_VALUE);
         headers.ifPresent(h -> request.putHeaders(HeadersMultiMap.httpHeaders().setAll(h)));
         request.sendJson(req, ar -> {
             if (ar.succeeded()) {
@@ -87,7 +102,7 @@ public class VertxHttpClient {
         return future;
     }
 
-    public <T> CompletableFuture<T> sendRequest(String method, String url, Map<String, String> headers, Object req, Class<T> res) {
+    public <T> CompletableFuture<T> sendRequest(HttpMethod method, String url, Map<String, String> headers, Object req, Class<T> res) {
         CompletableFuture<T> future = new CompletableFuture<>();
         Future<HttpResponse<Buffer>> responseFuture = this.createRequest(HttpMethod.valueOf(method.toUpperCase(Locale.ROOT)), url, headers, req);
         responseFuture.onComplete(ar -> {
@@ -120,6 +135,10 @@ public class VertxHttpClient {
         return future;
     }
 
+    public <T> CompletableFuture<T> sendRequest(String method, String url, Map<String, String> headers, Object req, Class<T> res) {
+        return this.sendRequest(HttpMethod.valueOf(method.toUpperCase(Locale.ROOT)), url, headers, req, res);
+    }
+
     public CompletableFuture<HttpResponse<Buffer>> sendRequest(String method, String url, Map<String, String> headers, Object req) {
         CompletableFuture<HttpResponse<Buffer>> future = new CompletableFuture<>();
         Future<HttpResponse<Buffer>> responseFuture = this.createRequest(HttpMethod.valueOf(method.toUpperCase(Locale.ROOT)), url, headers, req);
@@ -127,10 +146,10 @@ public class VertxHttpClient {
             if (ar.succeeded()) {
                 future.complete(ar.result());
             } else {
+                future.completeExceptionally(ar.cause());
                 throw new BizException(ErrorCode.FAIL.getCode(), ar.cause(), "调用外部接口失败");
             }
         });
-
         return future;
     }
 
@@ -159,15 +178,15 @@ public class VertxHttpClient {
         HttpRequest<Buffer> request = null;
         //HTTP method
         if (HttpMethod.GET.equals(method)) {
-            request = webClient.getAbs(url);
+            request = getWebClient(url).getAbs(url);
         } else if (HttpMethod.POST.equals(method)) {
-            request = webClient.postAbs(url);
+            request = getWebClient(url).postAbs(url);
         } else if (HttpMethod.PUT.equals(method)) {
-            request = webClient.putAbs(url);
+            request = getWebClient(url).putAbs(url);
         } else if (HttpMethod.PATCH.equals(method)) {
-            request = webClient.patchAbs(url);
+            request = getWebClient(url).patchAbs(url);
         } else if (HttpMethod.DELETE.equals(method)) {
-            request = webClient.deleteAbs(url);
+            request = getWebClient(url).deleteAbs(url);
         } else {
             throw new IllegalArgumentException("Unsupported HTTP method: " + method);
         }
@@ -180,9 +199,10 @@ public class VertxHttpClient {
             if (contentType.equalsIgnoreCase(HttpHeaderValues.APPLICATION_JSON.toString())) {
                 responseFuture = request.sendJson(req);
             } else if (contentType.equalsIgnoreCase(HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.toString())) {
-                responseFuture = request.sendForm((MultiMap) req);
+                MultiMap form = transformMultiMap(JSONObject.parseObject(JSON.toJSONString(req)));
+                responseFuture = request.sendForm(form);
             } else if (contentType.equalsIgnoreCase(HttpHeaderValues.MULTIPART_FORM_DATA.toString())) {
-                responseFuture = request.sendMultipartForm((MultipartForm) req);
+                responseFuture = request.sendMultipartForm((MultipartForm) req);//文件上传下载 req必须是MultipartForm对象
             } else {
                 byte[] data = ObjectUtil.ObjectToByte(req);
                 responseFuture = request.sendBuffer(Buffer.buffer(data));
@@ -192,6 +212,56 @@ public class VertxHttpClient {
         }
 
         return responseFuture;
+    }
+
+    private MultiMap transformMultiMap(JSONObject jOb) {
+        // 创建一个新的MultiMap
+        MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
+
+        convertJSONObjectToMultiMap(jOb, multiMap, null);
+
+        return multiMap;
+    }
+
+    private static void convertJSONObjectToMultiMap(JSONObject jOb, MultiMap multiMap, String parentKey) {
+        for (String key : jOb.keySet()) {
+            Object value = jOb.get(key);
+            String newKey = (parentKey != null) ? parentKey + "." + key : key;
+            if (value instanceof JSONObject) {
+                // 如果值是一个嵌套的JSONObject，递归地处理它
+                convertJSONObjectToMultiMap((JSONObject) value, multiMap, newKey);
+            } else if (value instanceof JSONArray) {
+                // 如果值是一个JSONArray，将其转换为一个字符串列表并添加到MultiMap中
+                JSONArray array = (JSONArray) value;
+                convertJSONArrayToMultiMap(array, multiMap, newKey);
+            } else {
+                // 否则，直接将值添加到MultiMap中
+                multiMap.add(newKey, String.valueOf(value));
+            }
+        }
+    }
+
+    private static void convertJSONArrayToMultiMap(JSONArray jArray, MultiMap multiMap, String newKey) {
+        for (Object object : jArray) {
+            if (object instanceof JSONObject) {
+                JSONObject jsonObject = JSONObject.parseObject(JSON.toJSONString(object));
+                convertJSONObjectToMultiMap(jsonObject, multiMap, newKey);
+            } else {
+                multiMap.add(newKey, String.valueOf(object));
+            }
+        }
+    }
+
+
+    @PreDestroy
+    @ConditionalOnClass({Vertx.class, WebClient.class})
+    public void close() {
+        if (this.webClientHttp != null) {
+            this.webClientHttp.close();
+        }
+        if (this.webClientHttps != null) {
+            this.webClientHttps.close();
+        }
     }
 
 }

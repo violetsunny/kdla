@@ -2,7 +2,6 @@ package top.kdla.framework.common.utils;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.*;
@@ -13,6 +12,7 @@ import java.util.Optional;
 
 /**
  * ip
+ *
  * @author kll
  * @version $Id: LocalIpUtils.java $
  */
@@ -41,13 +41,13 @@ public class LocalIpUtil {
                 Enumeration allNetInterfaces = NetworkInterface.getNetworkInterfaces();
                 InetAddress ip = null;
                 while (allNetInterfaces.hasMoreElements()) {
-                    NetworkInterface netInterface = (NetworkInterface)allNetInterfaces.nextElement();
-                    System.out.println(netInterface.getName());
+                    NetworkInterface netInterface = (NetworkInterface) allNetInterfaces.nextElement();
+                    log.info("NetworkInterface {}", netInterface.getName());
                     Enumeration addresses = netInterface.getInetAddresses();
                     while (addresses.hasMoreElements()) {
-                        ip = (InetAddress)addresses.nextElement();
+                        ip = (InetAddress) addresses.nextElement();
                         if (ip != null && ip instanceof Inet4Address) {
-                            System.out.println("本机的IP = " + ip.getHostAddress());
+                            log.info("本机的IP = {}", ip.getHostAddress());
                             result = ip.getHostAddress();
                         }
                     }
@@ -65,7 +65,7 @@ public class LocalIpUtil {
 
     /**
      * 获取IP地址
-     *
+     * <p>
      * 使用Nginx等反向代理软件， 则不能通过request.getRemoteAddr()获取IP地址
      * 如果使用了多级反向代理的话，X-Forwarded-For的值并不止一个，而是一串IP地址，X-Forwarded-For中第一个非unknown的有效IP字符串，则为真实IP地址
      */
@@ -73,7 +73,7 @@ public class LocalIpUtil {
         try {
             String xIp = request.getHeader("X-Real-IP");
             String xFor = request.getHeader("X-Forwarded-For");
-            if (org.apache.commons.lang3.StringUtils.isNotEmpty(xFor) && !UNKNOWN.equalsIgnoreCase(xFor)) {
+            if (KdlaStringUtil.isNotEmpty(xFor) && !UNKNOWN.equalsIgnoreCase(xFor)) {
                 //多次反向代理后会有多个ip值，第一个ip才是真实ip
                 int index = xFor.indexOf(",");
                 if (index != -1) {
@@ -83,22 +83,22 @@ public class LocalIpUtil {
                 }
             }
             xFor = xIp;
-            if (org.apache.commons.lang3.StringUtils.isNotEmpty(xFor) && !UNKNOWN.equalsIgnoreCase(xFor)) {
+            if (KdlaStringUtil.isNotEmpty(xFor) && !UNKNOWN.equalsIgnoreCase(xFor)) {
                 return xFor;
             }
-            if (org.apache.commons.lang3.StringUtils.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
+            if (KdlaStringUtil.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
                 xFor = request.getHeader("Proxy-Client-IP");
             }
-            if (org.apache.commons.lang3.StringUtils.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
+            if (KdlaStringUtil.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
                 xFor = request.getHeader("WL-Proxy-Client-IP");
             }
-            if (org.apache.commons.lang3.StringUtils.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
+            if (KdlaStringUtil.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
                 xFor = request.getHeader("HTTP_CLIENT_IP");
             }
-            if (org.apache.commons.lang3.StringUtils.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
+            if (KdlaStringUtil.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
                 xFor = request.getHeader("HTTP_X_FORWARDED_FOR");
             }
-            if (StringUtils.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
+            if (KdlaStringUtil.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
                 xFor = request.getRemoteAddr();
             }
 
