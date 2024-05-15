@@ -9,6 +9,7 @@ import io.vertx.core.http.HttpVersion;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,13 +44,13 @@ public class VertxHttpConfigure {
 
     @Bean
     @ConditionalOnMissingBean(name = "vertxHttpClient")
-    public VertxHttpClient vertxHttpClient(WebClient webClientHttp,WebClient webClientHttps) {
-        return new VertxHttpClient(webClientHttp,webClientHttps);
+    public VertxHttpClient vertxHttpClient(WebClient webClient,WebClient webClientHttps) {
+        return new VertxHttpClient(webClient,webClientHttps);
     }
 
     @Bean
-    @ConditionalOnMissingBean(name = "webClientHttp")
-    public WebClient webClientHttp(Vertx vertx) {
+    @ConditionalOnMissingBean(name = "webClient")
+    public WebClient webClient(Vertx vertx) {
         return WebClient.create(vertx, new WebClientOptions()
                 .setProtocolVersion(HttpVersion.HTTP_1_1)
                 .setKeepAlive(true)
@@ -81,13 +82,5 @@ public class VertxHttpConfigure {
     public Vertx vertx() {
         return Vertx.vertx();
     }
-
-//    @PreDestroy
-//    //@ConditionalOnClass({Vertx.class, WebClient.class})
-//    public void close() {
-//        webClient(vertx()).close();
-//        vertx().close();
-//    }
-
 
 }

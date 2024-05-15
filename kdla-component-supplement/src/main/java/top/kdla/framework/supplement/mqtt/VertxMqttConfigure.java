@@ -95,10 +95,4 @@ public class VertxMqttConfigure {
         return Vertx.vertx();
     }
 
-//    @PreDestroy
-//    public void close() {
-//        vertx().close();
-//    }
-
-
 }

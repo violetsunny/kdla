@@ -19,6 +19,8 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.concurrent.TimeUnit;
+
 
 @Configuration
 public class RestHttpConfigure {
@@ -37,23 +39,23 @@ public class RestHttpConfigure {
 
     @Bean
     @ConditionalOnMissingBean(BaseHttpClient.class)
-    public BaseHttpClient baseHttpClient() {
-        return new BaseHttpClient(restTemplate());
+    public BaseHttpClient baseHttpClient(RestTemplate restTemplate) {
+        return new BaseHttpClient(restTemplate);
     }
 
     @Bean
     @ConditionalOnMissingBean(RestTemplate.class)
-    public RestTemplate restTemplate() {
+    public RestTemplate restTemplate(ClientHttpRequestFactory httpRequestFactory) {
         RestTemplate restTemplate = new RestTemplate();
-        restTemplate.setRequestFactory(httpRequestFactory());
+        restTemplate.setRequestFactory(httpRequestFactory);
         restTemplate.setErrorHandler(new DefaultResponseErrorHandler());
         return restTemplate;
     }
 
     @Bean
     @ConditionalOnMissingBean(ClientHttpRequestFactory.class)
-    public ClientHttpRequestFactory httpRequestFactory() {
-        return new HttpComponentsClientHttpRequestFactory(httpClient());
+    public ClientHttpRequestFactory httpRequestFactory(HttpClient httpClient) {
+        return new HttpComponentsClientHttpRequestFactory(httpClient);
     }
 
     @Bean
@@ -76,6 +78,7 @@ public class RestHttpConfigure {
         return HttpClientBuilder.create()
                 .setDefaultRequestConfig(requestConfig)
                 .setConnectionManager(connectionManager)
+                .setConnectionTimeToLive(60, TimeUnit.SECONDS)
                 .build();
     }
 }

@@ -24,12 +24,14 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.multipart.MultipartForm;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.http.MediaType;
 import top.kdla.framework.common.utils.ObjectUtil;
 import top.kdla.framework.common.utils.RegexUtil;
 import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.BizException;
 
+import javax.annotation.PreDestroy;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -47,12 +49,12 @@ public class VertxHttpClient {
     private final WebClient webClientHttp;
     private final WebClient webClientHttps;
 
-    public VertxHttpClient(WebClient webClientHttp,WebClient webClientHttps) {
+    public VertxHttpClient(WebClient webClientHttp, WebClient webClientHttps) {
         this.webClientHttp = webClientHttp;
         this.webClientHttps = webClientHttps;
     }
 
-    private WebClient getWebClient(String url){
+    private WebClient getWebClient(String url) {
         return url.startsWith("https") ? this.webClientHttps : this.webClientHttp;
     }
 
@@ -249,4 +251,17 @@ public class VertxHttpClient {
             }
         }
     }
+
+
+    @PreDestroy
+    @ConditionalOnClass({Vertx.class, WebClient.class})
+    public void close() {
+        if (this.webClientHttp != null) {
+            this.webClientHttp.close();
+        }
+        if (this.webClientHttps != null) {
+            this.webClientHttps.close();
+        }
+    }
+
 }
