@@ -11,12 +11,17 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
+import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.multipart.MultipartForm;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -39,10 +44,16 @@ import java.util.stream.Collectors;
 @Slf4j
 public class VertxHttpClient {
 
-    private final WebClient webClient;
+    private final WebClient webClientHttp;
+    private final WebClient webClientHttps;
 
-    public VertxHttpClient(WebClient webClient) {
-        this.webClient = webClient;
+    public VertxHttpClient(WebClient webClientHttp,WebClient webClientHttps) {
+        this.webClientHttp = webClientHttp;
+        this.webClientHttps = webClientHttps;
+    }
+
+    private WebClient getWebClient(String url){
+        return url.startsWith("https") ? this.webClientHttps : this.webClientHttp;
     }
 
     /**
@@ -61,7 +72,7 @@ public class VertxHttpClient {
      */
     public <T> CompletableFuture<T> getJson(String url, Optional<Map<String, String>> headers, Class<T> res) {
         CompletableFuture<T> future = new CompletableFuture<>();
-        HttpRequest<Buffer> request = webClient.getAbs(url).putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON_VALUE);
+        HttpRequest<Buffer> request = getWebClient(url).getAbs(url).putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON_VALUE);
         headers.ifPresent(h -> request.putHeaders(HeadersMultiMap.httpHeaders().setAll(h)));
         request.send(ar -> {
             if (ar.succeeded()) {
@@ -76,7 +87,7 @@ public class VertxHttpClient {
 
     public <T> CompletableFuture<T> postJson(String url, Optional<Map<String, String>> headers, Object req, Class<T> res) {
         CompletableFuture<T> future = new CompletableFuture<>();
-        HttpRequest<Buffer> request = webClient.postAbs(url).putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON_VALUE);
+        HttpRequest<Buffer> request = getWebClient(url).postAbs(url).putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON_VALUE);
         headers.ifPresent(h -> request.putHeaders(HeadersMultiMap.httpHeaders().setAll(h)));
         request.sendJson(req, ar -> {
             if (ar.succeeded()) {
@@ -165,15 +176,15 @@ public class VertxHttpClient {
         HttpRequest<Buffer> request = null;
         //HTTP method
         if (HttpMethod.GET.equals(method)) {
-            request = webClient.getAbs(url);
+            request = getWebClient(url).getAbs(url);
         } else if (HttpMethod.POST.equals(method)) {
-            request = webClient.postAbs(url);
+            request = getWebClient(url).postAbs(url);
         } else if (HttpMethod.PUT.equals(method)) {
-            request = webClient.putAbs(url);
+            request = getWebClient(url).putAbs(url);
         } else if (HttpMethod.PATCH.equals(method)) {
-            request = webClient.patchAbs(url);
+            request = getWebClient(url).patchAbs(url);
         } else if (HttpMethod.DELETE.equals(method)) {
-            request = webClient.deleteAbs(url);
+            request = getWebClient(url).deleteAbs(url);
         } else {
             throw new IllegalArgumentException("Unsupported HTTP method: " + method);
         }
@@ -186,9 +197,10 @@ public class VertxHttpClient {
             if (contentType.equalsIgnoreCase(HttpHeaderValues.APPLICATION_JSON.toString())) {
                 responseFuture = request.sendJson(req);
             } else if (contentType.equalsIgnoreCase(HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.toString())) {
-                responseFuture = request.sendForm(transformMultiMap(JSONObject.parseObject(JSON.toJSONString(req))));
+                MultiMap form = transformMultiMap(JSONObject.parseObject(JSON.toJSONString(req)));
+                responseFuture = request.sendForm(form);
             } else if (contentType.equalsIgnoreCase(HttpHeaderValues.MULTIPART_FORM_DATA.toString())) {
-                responseFuture = request.sendMultipartForm((MultipartForm) req);
+                responseFuture = request.sendMultipartForm((MultipartForm) req);//文件上传下载 req必须是MultipartForm对象
             } else {
                 byte[] data = ObjectUtil.ObjectToByte(req);
                 responseFuture = request.sendBuffer(Buffer.buffer(data));
