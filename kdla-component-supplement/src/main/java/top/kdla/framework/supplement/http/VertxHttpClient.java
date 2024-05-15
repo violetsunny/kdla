@@ -13,15 +13,11 @@ import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.multipart.MultipartForm;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -104,7 +100,7 @@ public class VertxHttpClient {
 
     public <T> CompletableFuture<T> sendRequest(HttpMethod method, String url, Map<String, String> headers, Object req, Class<T> res) {
         CompletableFuture<T> future = new CompletableFuture<>();
-        Future<HttpResponse<Buffer>> responseFuture = this.createRequest(HttpMethod.valueOf(method.toUpperCase(Locale.ROOT)), url, headers, req);
+        Future<HttpResponse<Buffer>> responseFuture = this.createRequest(method, url, headers, req);
         responseFuture.onComplete(ar -> {
             if (ar.succeeded()) {
                 HttpResponse<Buffer> response = ar.result();
