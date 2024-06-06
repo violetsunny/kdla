@@ -4,7 +4,6 @@
  */
 package top.kdla.framework.supplement.mqtt;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.vertx.core.Vertx;
@@ -51,6 +50,9 @@ public class VertxMqttConfigure {
     @Value("${kdla.mqtt.topics}")
     private List<String> topics;
 
+    @Value("${kdla.mqtt.qos:0}")
+    private int qos;
+
     @Value("${kdla.mqtt.ack.timeout:60000}")
     private int acktimeout;
 
@@ -73,17 +75,6 @@ public class VertxMqttConfigure {
                 .setAckTimeout(acktimeout)
                 .setAutoKeepAlive(true));
 
-        connect(mqttClient);
-
-        mqttClient.closeHandler(v -> {
-            vertx.setTimer(retry, id -> {
-                connect(mqttClient);
-            });
-        });
-        return mqttClient;
-    }
-
-    private void connect(MqttClient mqttClient){
         mqttClient.connect(port, host, res -> {
             if (!res.succeeded()) {
                 if (log.isWarnEnabled()) {
@@ -93,40 +84,73 @@ public class VertxMqttConfigure {
                 if (log.isInfoEnabled()) {
                     log.info("connect mqtt [{}] success", clientId);
                 }
+                mqttClient.closeHandler(v -> {
+                    if (log.isInfoEnabled()) {
+                        log.info("connect mqtt [{}] close", clientId);
+                    }
+                    retryConnect(vertx, mqttClient);
+                });
+
+                subscribe(mqttClient);
             }
         });
-        if(CollectionUtils.isNotEmpty(topics)){
-            IntStream.range(0, topics.size())
-                    .forEach(i -> {
-                        mqttClient.subscribe(topics.get(i), MqttQoS.AT_MOST_ONCE.value())
-                                .onSuccess(id -> {
-                                    log.info("topic={} subscribe success", topics.get(i));
-                                })
-                                .onFailure(throwable -> {
-                                    log.error("topic subscribe failed", throwable);
-                                });
-                    });
 
-            Map<String, MqttHandler> mqttHandlers = ApplicationContextHelp.getBeansOfType(MqttHandler.class);
+        return mqttClient;
+    }
 
-            mqttClient.publishHandler(message -> {
-                // 处理接收到的消息
-                String topicName = message.topicName();
-                Buffer payload = message.payload();
-                System.out.println("Received message from topic: " + topicName + " with payload: " + payload.toString());
-                // 可以添加更多的业务逻辑处理
-
-               if(MapUtils.isNotEmpty(mqttHandlers)){
-                   MqttHandler mqttHandlerImpl = mqttHandlers.values().stream().filter(mqttHandler -> mqttHandler.topicPattern().matcher(topicName).matches()).findFirst().orElse(null);
-                   if(mqttHandlerImpl!=null){
-                       byte[] bytes = payload.getBytes();
-                       mqttHandlerImpl.onMessage(topicName,Unpooled.wrappedBuffer(bytes));
-                   }
-               }
-
+    private void retryConnect(Vertx vertx, MqttClient mqttClient) {
+        vertx.setTimer(retry, id -> {
+            if (log.isInfoEnabled()) {
+                log.info("connect mqtt [{}] retry", clientId);
+            }
+            mqttClient.connect(port, host, res -> {
+                if (!res.succeeded()) {
+                    if (log.isWarnEnabled()) {
+                        log.warn("connect mqtt [{}] error", clientId, res.cause());
+                    }
+                    retryConnect(vertx, mqttClient);
+                } else {
+                    if (log.isInfoEnabled()) {
+                        log.info("connect mqtt [{}] success", clientId);
+                    }
+                    subscribe(mqttClient);
+                }
             });
+        });
+    }
+
+    private void subscribe(MqttClient mqttClient) {
+        if (CollectionUtils.isEmpty(topics)) {
+            return;
         }
 
+        IntStream.range(0, topics.size())
+                .forEach(i -> {
+                    mqttClient.subscribe(topics.get(i), MqttQoS.valueOf(qos).value())
+                            .onSuccess(id -> {
+                                log.info("topic={} subscribe success", topics.get(i));
+                            })
+                            .onFailure(throwable -> {
+                                log.error("topic subscribe failed", throwable);
+                            });
+                });
+
+        Map<String, MqttHandler> mqttHandlers = ApplicationContextHelp.getBeansOfType(MqttHandler.class);
+
+        mqttClient.publishHandler(message -> {
+            // 处理接收到的消息
+            String topicName = message.topicName();
+            Buffer payload = message.payload();
+            // 可以添加更多的业务逻辑处理
+            if (MapUtils.isNotEmpty(mqttHandlers)) {
+                MqttHandler mqttHandlerImpl = mqttHandlers.values().stream().filter(mqttHandler -> mqttHandler.topicPattern().matcher(topicName).matches()).findFirst().orElse(null);
+                if (mqttHandlerImpl != null) {
+                    byte[] bytes = payload.getBytes();
+                    mqttHandlerImpl.onMessage(topicName, Unpooled.wrappedBuffer(bytes));
+                }
+            }
+
+        });
     }
 
     @Bean
