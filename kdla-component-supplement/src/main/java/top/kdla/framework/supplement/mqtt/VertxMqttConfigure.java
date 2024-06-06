@@ -4,16 +4,26 @@
  */
 package top.kdla.framework.supplement.mqtt;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.mqtt.MqttClient;
 import io.vertx.mqtt.MqttClientOptions;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import top.kdla.framework.domain.ApplicationContextHelp;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.stream.IntStream;
 
 /**
  * @author kanglele
@@ -38,6 +48,9 @@ public class VertxMqttConfigure {
     @Value("${kdla.mqtt.port:1883}")
     private int port;
 
+    @Value("${kdla.mqtt.topics}")
+    private List<String> topics;
+
     @Value("${kdla.mqtt.ack.timeout:60000}")
     private int acktimeout;
 
@@ -59,6 +72,18 @@ public class VertxMqttConfigure {
                 .setPassword(password)
                 .setAckTimeout(acktimeout)
                 .setAutoKeepAlive(true));
+
+        connect(mqttClient);
+
+        mqttClient.closeHandler(v -> {
+            vertx.setTimer(retry, id -> {
+                connect(mqttClient);
+            });
+        });
+        return mqttClient;
+    }
+
+    private void connect(MqttClient mqttClient){
         mqttClient.connect(port, host, res -> {
             if (!res.succeeded()) {
                 if (log.isWarnEnabled()) {
@@ -70,23 +95,38 @@ public class VertxMqttConfigure {
                 }
             }
         });
-        mqttClient.closeHandler(v -> {
-            vertx.setTimer(retry, id -> {
-                mqttClient.connect(port, host)
-                        .onSuccess(v1 -> {
-                            vertx.cancelTimer(id);
-                            if (log.isInfoEnabled()) {
-                                log.info("reconnect mqtt [{}] success", clientId);
-                            }
-                        })
-                        .onFailure(cause -> {
-                            if (log.isWarnEnabled()) {
-                                log.warn("reconnect mqtt [{}] error", clientId, cause);
-                            }
-                        });
+        if(CollectionUtils.isNotEmpty(topics)){
+            IntStream.range(0, topics.size())
+                    .forEach(i -> {
+                        mqttClient.subscribe(topics.get(i), MqttQoS.AT_MOST_ONCE.value())
+                                .onSuccess(id -> {
+                                    log.info("topic={} subscribe success", topics.get(i));
+                                })
+                                .onFailure(throwable -> {
+                                    log.error("topic subscribe failed", throwable);
+                                });
+                    });
+
+            Map<String, MqttHandler> mqttHandlers = ApplicationContextHelp.getBeansOfType(MqttHandler.class);
+
+            mqttClient.publishHandler(message -> {
+                // 处理接收到的消息
+                String topicName = message.topicName();
+                Buffer payload = message.payload();
+                System.out.println("Received message from topic: " + topicName + " with payload: " + payload.toString());
+                // 可以添加更多的业务逻辑处理
+
+               if(MapUtils.isNotEmpty(mqttHandlers)){
+                   MqttHandler mqttHandlerImpl = mqttHandlers.values().stream().filter(mqttHandler -> mqttHandler.topicPattern().matcher(topicName).matches()).findFirst().orElse(null);
+                   if(mqttHandlerImpl!=null){
+                       byte[] bytes = payload.getBytes();
+                       mqttHandlerImpl.onMessage(topicName,Unpooled.wrappedBuffer(bytes));
+                   }
+               }
+
             });
-        });
-        return mqttClient;
+        }
+
     }
 
     @Bean

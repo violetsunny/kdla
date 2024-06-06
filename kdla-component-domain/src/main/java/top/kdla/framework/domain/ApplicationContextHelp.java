@@ -4,6 +4,8 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
+import java.util.Map;
+
 /**
  * ApplicationContextHelper
  *
@@ -49,6 +51,10 @@ public class ApplicationContextHelp implements ApplicationContextAware {
 
     public static <T> T getBean(Class<T> requiredType, Object... params) {
         return ApplicationContextHelp.applicationContext.getBean(requiredType, params);
+    }
+
+    public static <T> Map<String, T> getBeansOfType(Class<T> requiredType){
+        return ApplicationContextHelp.applicationContext.getBeansOfType(requiredType);
     }
 
     public static ApplicationContext getApplicationContext() {
