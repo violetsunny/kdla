@@ -2,7 +2,7 @@
  * llkang.com Inc.
  * Copyright (c) 2010-2023 All Rights Reserved.
  */
-package top.kdla.framework.supplement.mqtt;
+package top.kdla.framework.supplement.mqtt.vertx;
 
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.mqtt.MqttQoS;
@@ -18,6 +18,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import top.kdla.framework.domain.ApplicationContextHelp;
+import top.kdla.framework.supplement.mqtt.MqttHandler;
 
 import java.util.List;
 import java.util.Map;
@@ -143,7 +144,12 @@ public class VertxMqttConfigure {
             Buffer payload = message.payload();
             // 可以添加更多的业务逻辑处理
             if (MapUtils.isNotEmpty(mqttHandlers)) {
-                MqttHandler mqttHandlerImpl = mqttHandlers.values().stream().filter(mqttHandler -> mqttHandler.topicPattern().matcher(topicName).matches()).findFirst().orElse(null);
+                MqttHandler mqttHandlerImpl = null;
+                if(mqttHandlers.size()==1){
+                    mqttHandlerImpl = mqttHandlers.values().stream().findFirst().orElse(null);
+                } else {
+                    mqttHandlerImpl = mqttHandlers.values().stream().filter(mqttHandler -> mqttHandler.topicPattern().matcher(topicName).matches()).findFirst().orElse(null);
+                }
                 if (mqttHandlerImpl != null) {
                     byte[] bytes = payload.getBytes();
                     mqttHandlerImpl.onMessage(topicName, Unpooled.wrappedBuffer(bytes));
