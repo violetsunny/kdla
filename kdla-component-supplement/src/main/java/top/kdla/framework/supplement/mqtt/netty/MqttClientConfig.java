@@ -32,7 +32,7 @@ public final class MqttClientConfig {
 
     private String clientId;
     private int timeoutSeconds = 60;
-    private MqttVersion protocolVersion = MqttVersion.MQTT_3_1;
+    private MqttVersion protocolVersion = MqttVersion.MQTT_5;//MQTT_3_1 和 MQTT_3_1_1 clientid限制23字符，MQTT_5取决于broker配置
     @Nullable
     private String username = null;
     @Nullable
