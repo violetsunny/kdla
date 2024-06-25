@@ -1,6 +1,6 @@
 
 
-package top.kdla.framework.common.utils;
+package top.kdla.framework.common.help;
 
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -10,6 +10,10 @@ import org.joda.time.format.DateTimeFormatter;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+import static java.lang.System.currentTimeMillis;
 
 /**
  * 日期处理
@@ -18,7 +22,7 @@ import java.util.Date;
  * @date 2021-02-02
  **/
 @Slf4j
-public class DateUtil {
+public class DateHelp {
 	/** 时间格式(yyyy-MM-dd) */
 	public final static String DATE_PATTERN = "yyyy-MM-dd";
     /** 时间格式(yyyy/MM/dd) */
@@ -31,6 +35,10 @@ public class DateUtil {
     public final static String DATE_TIME_PATTERN_2 = "yyyy-MM-dd HH:mm:ss.SSS";
     /** 时间格式(yyyy-MM-dd HH:mm:ss.SSS) */
     public final static String DATE_TIME_PATTERN_3 = "yyyy-MM-ddTHH:mm:ss.SSS";
+
+    public final static int MILLION_SECOND_UNIT = 1000;
+
+    public final static int MINUTE_UNIT = 60;
 
     /**
      * 日期格式化 日期格式为：yyyy-MM-dd
@@ -48,7 +56,7 @@ public class DateUtil {
      * @return  返回yyyy-MM-dd格式日期
      */
     public static String format(Date date, String pattern) {
-        if(null != date && KdlaStringUtil.isNotEmpty(pattern)) {
+        if(null != date && KdlaStringHelp.isNotEmpty(pattern)) {
             ThreadLocal<SimpleDateFormat> formatThreadLocal = ThreadLocal.withInitial(() -> new SimpleDateFormat(pattern));
             try {
                 return formatThreadLocal.get().format(date);
@@ -68,7 +76,7 @@ public class DateUtil {
      * @param pattern 日期的格式，如：DateUtils.DATE_TIME_PATTERN
      */
     public static Date stringToDate(String strDate, String pattern) {
-        if (KdlaStringUtil.isBlank(strDate)){
+        if (KdlaStringHelp.isBlank(strDate)){
             return null;
         }
 
@@ -222,5 +230,63 @@ public class DateUtil {
             retStr = "" + i;
         }
         return retStr;
+    }
+
+    /**
+     * 获得当前时间的ms
+     * @return long
+     */
+    public static long now() {
+        return currentTimeMillis();
+    }
+
+    /**
+     * time to date
+     * @param time
+     * @return
+     */
+    public static Date date(long time){
+        return new Date(time);
+    }
+
+    /**
+     * 获得某时间的几天之前的时间 ms
+     * @param timestamp 时间
+     * @param days 天数
+     * @return long
+     */
+    public static long getTimeWithFewDaysAgo(final long timestamp, final int days) {
+        long fewDaysAgo = timestamp - TimeUnit.DAYS.toMillis(days);
+        if (fewDaysAgo <= 0) {
+            return 0;
+        }
+        return fewDaysAgo;
+    }
+    /**
+     * 获得某时间的几天之前的时间 ms
+     * @param timestamp 时间
+     * @param minutes  分钟数
+     * @return long
+     */
+    public static long getTimeWithFewMinutes(final long timestamp, final int minutes) {
+        long fewMinutesAgo = timestamp - TimeUnit.MINUTES.toMillis(minutes);
+        if (fewMinutesAgo <= 0) {
+            return 0;
+        }
+        return fewMinutesAgo;
+    }
+
+    /**
+     * 获得两个时间的间隔分钟数
+     * @param begin 开始时间ms
+     * @param end  结束时间ms
+     * @return long
+     */
+    public static long getMinutesBetween(final Optional<Long> begin,
+                                         final Optional<Long> end) {
+        if (!begin.isPresent() || !end.isPresent()) {
+            return -1;
+        }
+        return (end.get() - begin.get()) / MILLION_SECOND_UNIT / MINUTE_UNIT;
     }
 }

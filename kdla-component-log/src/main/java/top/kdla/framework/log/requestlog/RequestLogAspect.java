@@ -23,7 +23,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
 import top.kdla.framework.common.utils.JacksonUtil;
-import top.kdla.framework.common.utils.KdlaStringUtil;
+import top.kdla.framework.common.help.KdlaStringHelp;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -94,7 +94,7 @@ public class RequestLogAspect {
                             }
                         } else {
                             RequestParam requestParam = methodParam.getParameterAnnotation(RequestParam.class);
-                            if (requestParam != null && KdlaStringUtil.isNotBlank(requestParam.value())) {
+                            if (requestParam != null && KdlaStringHelp.isNotBlank(requestParam.value())) {
                                 paraName = requestParam.value();
                             } else {
                                 paraName = methodParam.getParameterName();

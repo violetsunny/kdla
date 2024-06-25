@@ -5,34 +5,27 @@
 package top.kdla.framework.supplement.http;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.multipart.MultipartForm;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.http.MediaType;
 import top.kdla.framework.common.utils.ObjectUtil;
-import top.kdla.framework.common.utils.RegexUtil;
+import top.kdla.framework.common.help.RegexHelp;
 import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.BizException;
 
 import javax.annotation.PreDestroy;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -166,7 +159,7 @@ public class VertxHttpClient {
      * @return
      */
     private Future<HttpResponse<Buffer>> createRequest(HttpMethod method, String url, Map<String, String> header, Object req) {
-        if (RegexUtil.validateChinese(url)) {
+        if (RegexHelp.validateChinese(url)) {
             throw new BizException(ErrorCode.FAIL.getCode(), "有中文字符，需要重新编码再请求：%s", url);
         }
         Map<String, String> headers;

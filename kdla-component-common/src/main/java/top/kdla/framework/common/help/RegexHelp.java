@@ -1,4 +1,4 @@
-package top.kdla.framework.common.utils;
+package top.kdla.framework.common.help;
 
 import java.util.regex.Pattern;
 
@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
  * @author kll
  * @since 2021-07-12
  */
-public class RegexUtil {
+public class RegexHelp {
 
     /**
      * 过滤非法字符正则
@@ -97,6 +97,22 @@ public class RegexUtil {
      * CJK统一汉字
      */
     public static Pattern CHINESE_NAME = Pattern.compile("\\p{InCJK Unified Ideographs}&&\\P{Cn}");
+
+
+    /**
+     * 数字，大小写字母，特殊字符
+     */
+    public static Pattern CHARS = Pattern.compile("[a-zA-Z0-9\\W_]*");
+
+    /**
+     * url
+     */
+    public static Pattern URL = Pattern.compile("((http|ftp|https)://)(([a-zA-Z0-9\\._-]+\\.[a-zA-Z]{2,6})|([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}))(:[0-9]{1,4})*(/[a-zA-Z0-9\\&%_\\./-~-]*)?");
+
+    /**
+     * IP或域名
+     */
+    public static Pattern IP_AND_HOSTNAME = Pattern.compile("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9\\-]*[A-Za-z0-9])$");
 
     /**
      * 判断是否为小数

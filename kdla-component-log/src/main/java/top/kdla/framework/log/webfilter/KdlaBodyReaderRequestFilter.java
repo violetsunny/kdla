@@ -2,7 +2,7 @@ package top.kdla.framework.log.webfilter;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
-import top.kdla.framework.common.utils.KdlaStringUtil;
+import top.kdla.framework.common.help.KdlaStringHelp;
 
 import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
@@ -41,7 +41,7 @@ public class KdlaBodyReaderRequestFilter implements Filter {
             return;
         }
         KdlaHttpServletRequestWrapper requestWrapper = null;
-        if (KdlaStringUtil.startsWithIgnoreCase(request.getContentType(), MediaType.APPLICATION_JSON_VALUE)) {
+        if (KdlaStringHelp.startsWithIgnoreCase(request.getContentType(), MediaType.APPLICATION_JSON_VALUE)) {
             requestWrapper = new KdlaHttpServletRequestWrapper(request);
         }
         if (Objects.isNull(requestWrapper)) {
@@ -58,6 +58,6 @@ public class KdlaBodyReaderRequestFilter implements Filter {
         if (method == null || method.matches(METHOD_DELETE)) {
             return true;
         }
-        return KdlaStringUtil.matches(url, excludes);
+        return KdlaStringHelp.matches(url, excludes);
     }
 }

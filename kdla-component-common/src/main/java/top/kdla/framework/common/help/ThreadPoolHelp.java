@@ -298,15 +298,7 @@ public class ThreadPoolHelp {
 
         @Override
         public Thread newThread(Runnable r) {
-            return new Thread(r, namePrefix + "_" + threadNumber.getAndIncrement()) {
-                @Override
-                public void run() {
-                    // 可以在这里设置线程的属性
-                    setPriority(Thread.NORM_PRIORITY);
-                    setDaemon(false);
-                    super.run();
-                }
-            };
+            return new Thread(r, namePrefix + "_" + threadNumber.getAndIncrement());
         }
     }
 }

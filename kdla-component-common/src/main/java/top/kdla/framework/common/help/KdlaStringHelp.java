@@ -1,4 +1,4 @@
-package top.kdla.framework.common.utils;
+package top.kdla.framework.common.help;
 
 import cn.hutool.core.text.StrFormatter;
 import org.apache.commons.lang3.StringUtils;
@@ -12,7 +12,7 @@ import java.util.*;
  *
  * @author kll
  */
-public class KdlaStringUtil extends StringUtils {
+public class KdlaStringHelp extends StringUtils {
     /**
      * 空字符串
      */
@@ -27,6 +27,16 @@ public class KdlaStringUtil extends StringUtils {
      * 下划线
      */
     public static final char SEPARATOR = '_';
+
+    /**
+     * http请求
+     */
+    public static final String HTTP = "http://";
+
+    /**
+     * https请求
+     */
+    public static final String HTTPS = "https://";
 
     /**
      * 获取参数不为空值
@@ -246,7 +256,7 @@ public class KdlaStringUtil extends StringUtils {
      * @return 结果
      */
     public static boolean isHttp(String link) {
-        return startsWithAny(link, CommonConstants.HTTP, CommonConstants.HTTPS);
+        return startsWithAny(link, HTTP, HTTPS);
     }
 
     /**
@@ -460,6 +470,6 @@ public class KdlaStringUtil extends StringUtils {
 
     @SuppressWarnings("unchecked")
     public static <T> T cast(Object obj) {
-        return (T)obj;
+        return (T) obj;
     }
 }

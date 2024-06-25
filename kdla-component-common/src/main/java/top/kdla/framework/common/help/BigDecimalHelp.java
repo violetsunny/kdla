@@ -1,4 +1,4 @@
-package top.kdla.framework.common.utils;
+package top.kdla.framework.common.help;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -8,9 +8,9 @@ import java.math.BigInteger;
  *
  * @author kll
  */
-public class BigDecimalUtil {
+public class BigDecimalHelp {
 
-    private BigDecimalUtil() {
+    private BigDecimalHelp() {
     }
 
     /**
