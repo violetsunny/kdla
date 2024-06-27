@@ -282,8 +282,7 @@ public class DateHelp {
      * @param end  结束时间ms
      * @return long
      */
-    public static long getMinutesBetween(final Optional<Long> begin,
-                                         final Optional<Long> end) {
+    public static long getMinutesBetween(final Optional<Long> begin, final Optional<Long> end) {
         if (!begin.isPresent() || !end.isPresent()) {
             return -1;
         }
