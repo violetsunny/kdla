@@ -45,8 +45,17 @@ public class DateHelp {
      * @param date  日期
      * @return  返回yyyy-MM-dd格式日期
      */
-	public static String format(Date date) {
+	public static String formatDate(Date date) {
         return format(date, DATE_PATTERN);
+    }
+
+    /**
+     * 日期格式化 日期格式为：yyyy-MM-dd HH:mm:ss
+     * @param date  日期
+     * @return  返回yyyy-MM-dd HH:mm:ss格式日期
+     */
+    public static String formatTime(Date date) {
+        return format(date, DATE_TIME_PATTERN);
     }
 
     /**
