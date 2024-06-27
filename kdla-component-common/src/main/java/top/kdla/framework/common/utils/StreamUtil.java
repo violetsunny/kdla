@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 /**
  * The type Stream utils.
  *
- * @author zjx18216
+ * @author 
  * @version Id : StreamUtils, v 0.1 2018/3/13 17:31 zjx18216 Exp $
  */
 public class StreamUtil {
@@ -59,7 +59,7 @@ public class StreamUtil {
      * @return the t
      */
     public static <T> T findFirst(List<T> data, Comparator<T> comparator) {
-        return data.stream().sorted(comparator).findFirst().orElse(null);
+        return data.stream().min(comparator).orElse(null);
     }
 
     /**

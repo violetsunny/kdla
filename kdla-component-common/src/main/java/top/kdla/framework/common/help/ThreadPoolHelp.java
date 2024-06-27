@@ -14,6 +14,7 @@ import lombok.Builder;
 import lombok.Setter;
 
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 自定义线程池
@@ -64,12 +65,17 @@ public class ThreadPoolHelp {
     private BlockingQueue<Runnable> workQueue;
     //拒绝策略
     private RejectedExecutionHandler handler;
+    //线程工厂
+    private String factoryName;
+
     //服务器的cpu核数
     private static final Integer CPUS = Runtime.getRuntime().availableProcessors();
     //默认阻塞队列
     private static final BlockingQueue<Runnable> DEFAULT_WORK_QUEUE = new LinkedBlockingQueue<Runnable>();
     //默认直接抛异常
     private static final RejectedExecutionHandler DEFAULT_HANDLER = new ThreadPoolExecutor.AbortPolicy();
+    //默认工厂
+    private static final ThreadFactory DEFAULT_FACTORY = Executors.defaultThreadFactory();
 
     public ThreadPoolHelp() {
     }
@@ -80,13 +86,15 @@ public class ThreadPoolHelp {
                           Long keepAliveTime,
                           TimeUnit unit,
                           BlockingQueue<Runnable> workQueue,
-                          RejectedExecutionHandler handler) {
+                          RejectedExecutionHandler handler,
+                          String factoryName) {
         this.corePoolSize = corePoolSize;
         this.maximumPoolSize = maximumPoolSize;
         this.keepAliveTime = keepAliveTime;
         this.unit = unit;
         this.workQueue = workQueue;
         this.handler = handler;
+        this.factoryName = factoryName;
     }
 
     /**
@@ -101,7 +109,7 @@ public class ThreadPoolHelp {
                 0L,
                 TimeUnit.SECONDS,
                 new SynchronousQueue<Runnable>(),
-                Executors.defaultThreadFactory(),
+                DEFAULT_FACTORY,
                 DEFAULT_HANDLER);
         return TtlExecutors.getTtlExecutorService(threadPool);
     }
@@ -117,7 +125,8 @@ public class ThreadPoolHelp {
                 this.keepAliveTime,
                 this.unit,
                 this.workQueue,
-                this.handler);
+                this.handler,
+                this.factoryName==null?"kdlaThreadPool":this.factoryName);
     }
 
     /**
@@ -132,7 +141,7 @@ public class ThreadPoolHelp {
                 0L,
                 TimeUnit.SECONDS,
                 DEFAULT_WORK_QUEUE,
-                Executors.defaultThreadFactory(),
+                DEFAULT_FACTORY,
                 DEFAULT_HANDLER);
         return TtlExecutors.getTtlExecutorService(threadPool);
     }
@@ -159,7 +168,6 @@ public class ThreadPoolHelp {
 
     /**
      * 得到线程执行对象ExecutorService
-     * 固定拒绝策略为：AbortPolicy
      *
      * @return ExecutorService
      */
@@ -167,14 +175,15 @@ public class ThreadPoolHelp {
                                               Long keepAliveTime,
                                               TimeUnit unit,
                                               BlockingQueue<Runnable> workQueue,
-                                              RejectedExecutionHandler handler) {
+                                              RejectedExecutionHandler handler,
+                                              String factoryName) {
         ExecutorService threadPool = new ThreadPoolExecutor(
                 corePoolSize,
                 maximumPoolSize,
                 keepAliveTime,
                 unit,
                 workQueue,
-                Executors.defaultThreadFactory(),
+                new SimpleThreadFactory(factoryName),
                 handler);
         return TtlExecutors.getTtlExecutorService(threadPool);
     }
@@ -188,14 +197,15 @@ public class ThreadPoolHelp {
                                                       Long keepAliveTime,
                                                       TimeUnit unit,
                                                       BlockingQueue<Runnable> workQueue,
-                                                      RejectedExecutionHandler handler) {
+                                                      RejectedExecutionHandler handler,
+                                                      String factoryName) {
         ExecutorService threadPool = new ThreadPoolExecutor(
                 corePoolSize,
                 initMirrorIOMaxPoolSize(),
                 keepAliveTime,
                 unit,
                 workQueue,
-                Executors.defaultThreadFactory(),
+                new SimpleThreadFactory(factoryName),
                 handler);
         return TtlExecutors.getTtlExecutorService(threadPool);
     }
@@ -210,14 +220,15 @@ public class ThreadPoolHelp {
                                                     Long keepAliveTime,
                                                     TimeUnit unit,
                                                     BlockingQueue<Runnable> workQueue,
-                                                    RejectedExecutionHandler handler) {
+                                                    RejectedExecutionHandler handler,
+                                                    String factoryName) {
         ExecutorService threadPool = new ThreadPoolExecutor(
                 corePoolSize,
                 initFullIOMaxPoolSize(),
                 keepAliveTime,
                 unit,
                 workQueue,
-                Executors.defaultThreadFactory(),
+                new SimpleThreadFactory(factoryName),
                 handler);
         return TtlExecutors.getTtlExecutorService(threadPool);
     }
@@ -232,14 +243,15 @@ public class ThreadPoolHelp {
                                                  Long keepAliveTime,
                                                  TimeUnit unit,
                                                  BlockingQueue<Runnable> workQueue,
-                                                 RejectedExecutionHandler handler) {
+                                                 RejectedExecutionHandler handler,
+                                                 String factoryName) {
         ExecutorService threadPool = new ThreadPoolExecutor(
                 corePoolSize,
                 initCPUMaxPoolSize(),
                 keepAliveTime,
                 unit,
                 workQueue,
-                Executors.defaultThreadFactory(),
+                new SimpleThreadFactory(factoryName),
                 handler);
         return TtlExecutors.getTtlExecutorService(threadPool);
     }
@@ -271,5 +283,22 @@ public class ThreadPoolHelp {
      */
     public Integer initCPUMaxPoolSize() {
         return CPUS + 2;
+    }
+
+    /**
+     * 简单线程工厂
+     */
+    public static class SimpleThreadFactory implements ThreadFactory {
+        private final String namePrefix;
+        private final AtomicInteger threadNumber = new AtomicInteger(1);
+
+        public SimpleThreadFactory(String namePrefix) {
+            this.namePrefix = namePrefix;
+        }
+
+        @Override
+        public Thread newThread(Runnable r) {
+            return new Thread(r, namePrefix + "_" + threadNumber.getAndIncrement());
+        }
     }
 }

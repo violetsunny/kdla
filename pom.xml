@@ -36,7 +36,8 @@
         <kdla.framework.version>1.0.1-SNAPSHOT</kdla.framework.version>
         <!--基础配置 -->
         <!--架构配置 -->
-        <!--spring.boot3.0.0以上是Spring-6,jdk版本要求至少jdk17以上,对maven版本的要求是3.6以上;spring.cloud2022.0.0以上是spring.boot3.0.0 -->
+        <!--spring.boot3.0.0以上是Spring-6,jdk版本要求至少jdk17以上,对maven版本的要求是3.6以上;-->
+        <!--spring.cloud2022.0.0以上是spring.boot3.0.0 -->
         <!--
         https://start.spring.io/actuator/info
         "spring-cloud":{
@@ -44,8 +45,8 @@
             "2022.0.4":"Spring Boot &gt;=3.0.0 and &lt;3.2.0-M1"
         }
         -->
-        <spring.boot.version>2.7.14</spring.boot.version>
-        <spring.cloud.version>2021.0.8</spring.cloud.version>
+        <spring.boot.version>2.7.18</spring.boot.version>
+        <spring.cloud.version>2021.0.9</spring.cloud.version>
         <!-- mybatis-spring-boot-starter的版本需要和spring-boot-starter匹配 -->
         <mybatis-spring-boot.version>2.3.1</mybatis-spring-boot.version>
         <mybatis-plus-boot.version>3.5.3.2</mybatis-plus-boot.version>
@@ -77,16 +78,17 @@
         <jtidy.version>r938</jtidy.version>
         <mockito-junit-jupiter.version>4.6.1</mockito-junit-jupiter.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
-        <vertx.version>4.4.5</vertx.version>
+        <vertx.version>4.5.7</vertx.version>
         <opentelemetry.version>1.23.0</opentelemetry.version>
         <zxing.version>3.5.0</zxing.version>
+        <groovy.version>4.0.21</groovy.version>
         <ognl.version>3.4.1</ognl.version>
         <aviator.version>5.3.3</aviator.version>
         <jython.version>2.7.3</jython.version>
         <luaj.version>3.0.1</luaj.version>
         <spring-kafka.version>2.9.12</spring-kafka.version><!--spring-boot的2.7.14 有bug -->
         <bcprov.version>1.78</bcprov.version>
-        <xxl-job.version>2.4.0</xxl-job.version>
+        <camel.version>3.22.2</camel.version>
         <!--项目工具配置 -->
     </properties>
     <distributionManagement>
@@ -491,9 +493,16 @@
             </dependency>
 
             <dependency>
-                <groupId>com.xuxueli</groupId>
-                <artifactId>xxl-job-core</artifactId>
-                <version>${xxl-job.version}</version>
+                <groupId>org.apache.groovy</groupId>
+                <artifactId>groovy</artifactId>
+                <version>${groovy.version}</version>
+            </dependency>
+
+            <!--router 路由通道 -->
+            <dependency>
+                <groupId>org.apache.camel.springboot</groupId>
+                <artifactId>camel-spring-boot-starter</artifactId>
+                <version>${camel.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

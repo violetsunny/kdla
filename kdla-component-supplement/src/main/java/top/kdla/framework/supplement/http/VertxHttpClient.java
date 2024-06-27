@@ -5,12 +5,10 @@
 package top.kdla.framework.supplement.http;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
@@ -23,11 +21,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.http.MediaType;
 import top.kdla.framework.common.utils.ObjectUtil;
-import top.kdla.framework.common.utils.RegexUtil;
+import top.kdla.framework.common.help.RegexHelp;
 import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.BizException;
 
 import javax.annotation.PreDestroy;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -159,7 +159,7 @@ public class VertxHttpClient {
      * @return
      */
     private Future<HttpResponse<Buffer>> createRequest(HttpMethod method, String url, Map<String, String> header, Object req) {
-        if (RegexUtil.validateChinese(url)) {
+        if (RegexHelp.validateChinese(url)) {
             throw new BizException(ErrorCode.FAIL.getCode(), "有中文字符，需要重新编码再请求：%s", url);
         }
         Map<String, String> headers;
@@ -195,8 +195,21 @@ public class VertxHttpClient {
             if (contentType.equalsIgnoreCase(HttpHeaderValues.APPLICATION_JSON.toString())) {
                 responseFuture = request.sendJson(req);
             } else if (contentType.equalsIgnoreCase(HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.toString())) {
-                MultiMap form = transformMultiMap(JSONObject.parseObject(JSON.toJSONString(req)));
-                responseFuture = request.sendForm(form);
+                String reqJson = JSON.toJSONString(req);
+                String requestBody = JSONObject.parseObject(reqJson).entrySet().stream()
+                        .map(entry -> {
+                            try {
+                                return entry.getKey() + "=" + URLEncoder.encode(String.valueOf(entry.getValue()), StandardCharsets.UTF_8.name());
+                            } catch (Exception e) {
+                                throw new BizException(ErrorCode.FAIL.getCode(), "编码有错误：%s", reqJson);
+                            }
+                        })
+                        .collect(Collectors.joining("&"));
+                responseFuture = request
+                        //.putHeader(HttpHeaderNames.CONTENT_TYPE.toString(),HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.toString())//已经有了
+                        .sendBuffer(Buffer.buffer(requestBody));
+
+                //request.sendForm(form); //sendForm实际请求用的是MultipartForm，有些服务不认识这个实体，会导致无法解析。
             } else if (contentType.equalsIgnoreCase(HttpHeaderValues.MULTIPART_FORM_DATA.toString())) {
                 responseFuture = request.sendMultipartForm((MultipartForm) req);//文件上传下载 req必须是MultipartForm对象
             } else {
@@ -210,43 +223,43 @@ public class VertxHttpClient {
         return responseFuture;
     }
 
-    private MultiMap transformMultiMap(JSONObject jOb) {
-        // 创建一个新的MultiMap
-        MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
-
-        convertJSONObjectToMultiMap(jOb, multiMap, null);
-
-        return multiMap;
-    }
-
-    private static void convertJSONObjectToMultiMap(JSONObject jOb, MultiMap multiMap, String parentKey) {
-        for (String key : jOb.keySet()) {
-            Object value = jOb.get(key);
-            String newKey = (parentKey != null) ? parentKey + "." + key : key;
-            if (value instanceof JSONObject) {
-                // 如果值是一个嵌套的JSONObject，递归地处理它
-                convertJSONObjectToMultiMap((JSONObject) value, multiMap, newKey);
-            } else if (value instanceof JSONArray) {
-                // 如果值是一个JSONArray，将其转换为一个字符串列表并添加到MultiMap中
-                JSONArray array = (JSONArray) value;
-                convertJSONArrayToMultiMap(array, multiMap, newKey);
-            } else {
-                // 否则，直接将值添加到MultiMap中
-                multiMap.add(newKey, String.valueOf(value));
-            }
-        }
-    }
-
-    private static void convertJSONArrayToMultiMap(JSONArray jArray, MultiMap multiMap, String newKey) {
-        for (Object object : jArray) {
-            if (object instanceof JSONObject) {
-                JSONObject jsonObject = JSONObject.parseObject(JSON.toJSONString(object));
-                convertJSONObjectToMultiMap(jsonObject, multiMap, newKey);
-            } else {
-                multiMap.add(newKey, String.valueOf(object));
-            }
-        }
-    }
+//    private MultiMap transformMultiMap(JSONObject jOb) {
+//        // 创建一个新的MultiMap
+//        MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
+//
+//        convertJSONObjectToMultiMap(jOb, multiMap, null);
+//
+//        return multiMap;
+//    }
+//
+//    private static void convertJSONObjectToMultiMap(JSONObject jOb, MultiMap multiMap, String parentKey) {
+//        for (String key : jOb.keySet()) {
+//            Object value = jOb.get(key);
+//            String newKey = (parentKey != null) ? parentKey + "." + key : key;
+//            if (value instanceof JSONObject) {
+//                // 如果值是一个嵌套的JSONObject，递归地处理它
+//                convertJSONObjectToMultiMap((JSONObject) value, multiMap, newKey);
+//            } else if (value instanceof JSONArray) {
+//                // 如果值是一个JSONArray，将其转换为一个字符串列表并添加到MultiMap中
+//                JSONArray array = (JSONArray) value;
+//                convertJSONArrayToMultiMap(array, multiMap, newKey);
+//            } else {
+//                // 否则，直接将值添加到MultiMap中
+//                multiMap.add(newKey, String.valueOf(value));
+//            }
+//        }
+//    }
+//
+//    private static void convertJSONArrayToMultiMap(JSONArray jArray, MultiMap multiMap, String newKey) {
+//        for (Object object : jArray) {
+//            if (object instanceof JSONObject) {
+//                JSONObject jsonObject = JSONObject.parseObject(JSON.toJSONString(object));
+//                convertJSONObjectToMultiMap(jsonObject, multiMap, newKey);
+//            } else {
+//                multiMap.add(newKey, String.valueOf(object));
+//            }
+//        }
+//    }
 
 
     @PreDestroy

@@ -1,4 +1,4 @@
-package top.kdla.framework.common.utils;
+package top.kdla.framework.common.help;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -8,9 +8,9 @@ import java.math.BigInteger;
  *
  * @author kll
  */
-public class BigDecimalUtil {
+public class BigDecimalHelp {
 
-    private BigDecimalUtil() {
+    private BigDecimalHelp() {
     }
 
     /**
@@ -49,27 +49,38 @@ public class BigDecimalUtil {
     }
 
     public static BigDecimal filter(BigDecimal val) {
-        return null == val ? new BigDecimal(0) : val;
+        return null == val ? new BigDecimal("0") : val;
     }
 
     public static BigDecimal filter(Integer val) {
-        return null == val ? new BigDecimal(0) : new BigDecimal(val);
+        return null == val ? new BigDecimal("0") : new BigDecimal(Integer.toString(val));
     }
 
     public static BigDecimal filter(BigInteger val) {
-        return null == val ? new BigDecimal(0) : new BigDecimal(val);
+        return null == val ? new BigDecimal("0") : new BigDecimal(val.toString(20));
     }
 
     public static BigDecimal filter(Double val) {
-        return null == val ? new BigDecimal(0) : new BigDecimal(Double.toString(val));
+        return null == val ? new BigDecimal("0") : new BigDecimal(Double.toString(val));
     }
 
     public static BigDecimal filter(Float val) {
-        return null == val ? new BigDecimal(0) : new BigDecimal(Float.toString(val));
+        return null == val ? new BigDecimal("0") : new BigDecimal(Float.toString(val));
     }
 
     public static BigDecimal filter(Long val) {
-        return null == val ? new BigDecimal(0) : BigDecimal.valueOf(val);
+        return null == val ? new BigDecimal("0") : BigDecimal.valueOf(val);
+    }
+
+    /**
+     * toString() 科学计数法 1E+3
+     * toEngineeringString() 工程计数法 1E3
+     * toPlainString() 返回有效数字 1000
+     * @param val
+     * @return
+     */
+    public static String toString(BigDecimal val){
+        return val.toPlainString();
     }
 
     /**
@@ -80,7 +91,7 @@ public class BigDecimalUtil {
      * @return
      */
     public static BigDecimal filterScale(BigDecimal val,int scale) {
-        return null == val ? new BigDecimal(0) : val.setScale(scale, BigDecimal.ROUND_HALF_UP);
+        return null == val ? new BigDecimal("0") : val.setScale(scale, BigDecimal.ROUND_HALF_UP);
     }
 
     /**

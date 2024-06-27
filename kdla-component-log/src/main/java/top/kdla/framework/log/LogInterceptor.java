@@ -7,9 +7,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.AsyncHandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 import top.kdla.framework.common.constants.CommonConstants;
+import top.kdla.framework.common.help.DateHelp;
 import top.kdla.framework.common.help.SelfSnowflakeGeneratorHelp;
 import top.kdla.framework.common.utils.JacksonUtil;
-import top.kdla.framework.common.utils.TimeUtil;
 import top.kdla.framework.log.webfilter.KdlaHttpServletRequestWrapper;
 
 import javax.servlet.http.HttpServletRequest;
@@ -50,7 +50,7 @@ public class LogInterceptor implements AsyncHandlerInterceptor {
             MDC.put(CommonConstants.LOG_TRACE_ID, traceIdInfo.toJSONString());
         }
         LogTraceHolder.set(Boolean.TRUE);
-        BEGIN_TIMESTAMP.set(TimeUtil.now());
+        BEGIN_TIMESTAMP.set(DateHelp.now());
         printHttpRequestHeaderInfo(request);
         return true;
     }
@@ -63,7 +63,7 @@ public class LogInterceptor implements AsyncHandlerInterceptor {
     @Override
     public void afterCompletion(final HttpServletRequest request, final HttpServletResponse response,
                                 final Object handler, final Exception ex) throws Exception {
-        Long executionTime = TimeUtil.now() - BEGIN_TIMESTAMP.get();
+        Long executionTime = DateHelp.now() - BEGIN_TIMESTAMP.get();
         if (log.isInfoEnabled()) {
             log.info("### uri: {}, remote-addr: {}, execution: {}", request.getRequestURI(), request.getRemoteAddr(), executionTime);
         }

@@ -12,13 +12,4 @@ public interface CommonConstants {
      */
     String LOG_TRACE_ID = "traceId";
 
-    /**
-     * http请求
-     */
-    String HTTP = "http://";
-
-    /**
-     * https请求
-     */
-    String HTTPS = "https://";
 }

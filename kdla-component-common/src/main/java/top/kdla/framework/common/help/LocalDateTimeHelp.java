@@ -1,7 +1,7 @@
 /**
  * kanglele Inc. Copyright (c) 2022 All Rights Reserved.
  */
-package top.kdla.framework.common.utils;
+package top.kdla.framework.common.help;
 
 import cn.hutool.core.date.TemporalAccessorUtil;
 import cn.hutool.core.date.TemporalUtil;
@@ -20,7 +20,7 @@ import java.util.Date;
  * @author kanglele
  * @version $Id: LocalDateTimeUtils, v 0.1 2022/1/11 19:09 Exp $
  */
-public class LocalDateTimeUtil {
+public class LocalDateTimeHelp {
 
     /**
      * LocalDate --> Date
@@ -43,6 +43,24 @@ public class LocalDateTimeUtil {
     }
 
     /**
+     * LocalDate.now()
+     *
+     * @return
+     */
+    public static LocalDate asLocalDate() {
+        return LocalDate.now();
+    }
+
+    /**
+     * LocalDateTime.now()
+     *
+     * @return
+     */
+    public static LocalDateTime asLocalDateTime() {
+        return LocalDateTime.now();
+    }
+
+    /**
      * Date --> LocalDate
      *
      * @param date
@@ -60,6 +78,34 @@ public class LocalDateTimeUtil {
      */
     public static LocalDateTime asLocalDateTime(Date date) {
         return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime();
+    }
+
+    /**
+     * time --> LocalDate
+     * @param time
+     * @return
+     */
+    public static LocalDate asLocalDate(long time) {
+        if(String.valueOf(time).length() == 10){
+            return Instant.ofEpochSecond(time).atZone(ZoneId.systemDefault()).toLocalDate();
+        } else if(String.valueOf(time).length() == 13){
+            return Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDate();
+        }
+        return null;
+    }
+
+    /**
+     * time --> LocalDateTime
+     * @param time
+     * @return
+     */
+    public static LocalDateTime asLocalDateTime(long time) {
+        if(String.valueOf(time).length() == 10){
+            return Instant.ofEpochSecond(time).atZone(ZoneId.systemDefault()).toLocalDateTime();
+        } else if(String.valueOf(time).length() == 13){
+            return Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDateTime();
+        }
+        return null;
     }
 
     /**

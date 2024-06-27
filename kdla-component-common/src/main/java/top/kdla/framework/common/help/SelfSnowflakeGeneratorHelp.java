@@ -2,7 +2,6 @@ package top.kdla.framework.common.help;
 
 import com.google.common.base.Splitter;
 import lombok.extern.slf4j.Slf4j;
-import top.kdla.framework.common.utils.LocalIpUtil;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
@@ -41,7 +40,7 @@ public class SelfSnowflakeGeneratorHelp {
         StringBuilder traceId = new StringBuilder();
         try {
             // 1. IP - 8
-            traceId.append(convertIp(LocalIpUtil.getLocalIp4Address())).append(".");
+            traceId.append(convertIp(LocalIpHelp.getLocalIp4Address())).append(".");
             // 2. 时间戳 - 13
             traceId.append(Instant.now().toEpochMilli()).append(".");
             // 3. 当前进程号 - 5

@@ -1,4 +1,4 @@
-package top.kdla.framework.common.utils;
+package top.kdla.framework.common.help;
 
 import org.springframework.aop.framework.AdvisedSupport;
 import org.springframework.aop.framework.AopProxy;
@@ -7,15 +7,15 @@ import org.springframework.aop.support.AopUtils;
 import java.lang.reflect.Field;
 
 /**
- * @author czj12867
+ * @author
  * @version Id: AopTargetUtils, v 0.1 2018/2/28 20:14 czj12867 Exp $
  */
-public class AopTargetUtil {
+public class AopTargetHelp {
 
     /**
      * Constructor AopTargetUtils creates a new AopTargetUtils instance.
      */
-    private AopTargetUtil() {
+    private AopTargetHelp() {
         throw new IllegalAccessError("Utility class");
     }
 

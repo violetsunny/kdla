@@ -2,7 +2,7 @@
  * llkang.com Inc.
  * Copyright (c) 2010-2023 All Rights Reserved.
  */
-package top.kdla.framework.supplement.mqtt;
+package top.kdla.framework.supplement.mqtt.vertx;
 
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.vertx.core.buffer.Buffer;

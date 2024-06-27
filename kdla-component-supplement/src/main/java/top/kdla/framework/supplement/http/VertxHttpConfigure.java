@@ -9,13 +9,9 @@ import io.vertx.core.http.HttpVersion;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import javax.annotation.PreDestroy;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author kanglele
@@ -24,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class VertxHttpConfigure {
 
-    @Value("${http.connectionPoolSize:100}")
+    @Value("${http.connectionPoolSize:1000}")
     private int connectionPoolSize;
 
     @Value("${http.connectTimeout:3000}")
@@ -36,7 +32,7 @@ public class VertxHttpConfigure {
     @Value("${http.idleTimeout:10}")
     private int idleTimeout;
 
-    @Value("${http.maxWaitQueueSize:50}")
+    @Value("${http.maxWaitQueueSize:500}")
     private int maxWaitQueueSize;
 
     @Value("${http.sslHandshakeTimeout:10000}")

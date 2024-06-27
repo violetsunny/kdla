@@ -1,4 +1,4 @@
-package top.kdla.framework.common.utils;
+package top.kdla.framework.common.help;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -17,7 +17,7 @@ import java.util.Optional;
  * @version $Id: LocalIpUtils.java $
  */
 @Slf4j
-public class LocalIpUtil {
+public class LocalIpHelp {
 
     public static final String DEFAULT_IP = "127.0.0.1";
 
@@ -73,7 +73,7 @@ public class LocalIpUtil {
         try {
             String xIp = request.getHeader("X-Real-IP");
             String xFor = request.getHeader("X-Forwarded-For");
-            if (KdlaStringUtil.isNotEmpty(xFor) && !UNKNOWN.equalsIgnoreCase(xFor)) {
+            if (KdlaStringHelp.isNotEmpty(xFor) && !UNKNOWN.equalsIgnoreCase(xFor)) {
                 //多次反向代理后会有多个ip值，第一个ip才是真实ip
                 int index = xFor.indexOf(",");
                 if (index != -1) {
@@ -83,22 +83,22 @@ public class LocalIpUtil {
                 }
             }
             xFor = xIp;
-            if (KdlaStringUtil.isNotEmpty(xFor) && !UNKNOWN.equalsIgnoreCase(xFor)) {
+            if (KdlaStringHelp.isNotEmpty(xFor) && !UNKNOWN.equalsIgnoreCase(xFor)) {
                 return xFor;
             }
-            if (KdlaStringUtil.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
+            if (KdlaStringHelp.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
                 xFor = request.getHeader("Proxy-Client-IP");
             }
-            if (KdlaStringUtil.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
+            if (KdlaStringHelp.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
                 xFor = request.getHeader("WL-Proxy-Client-IP");
             }
-            if (KdlaStringUtil.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
+            if (KdlaStringHelp.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
                 xFor = request.getHeader("HTTP_CLIENT_IP");
             }
-            if (KdlaStringUtil.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
+            if (KdlaStringHelp.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
                 xFor = request.getHeader("HTTP_X_FORWARDED_FOR");
             }
-            if (KdlaStringUtil.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
+            if (KdlaStringHelp.isBlank(xFor) || UNKNOWN.equalsIgnoreCase(xFor)) {
                 xFor = request.getRemoteAddr();
             }
 

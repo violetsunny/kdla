@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import top.kdla.framework.common.enums.ContentTypeEnum;
 import top.kdla.framework.common.enums.MsgTypeEnum;
-import top.kdla.framework.common.utils.DateUtil;
+import top.kdla.framework.common.help.DateHelp;
 import top.kdla.framework.supplement.dingding.config.DingAlertConfigure;
 import top.kdla.framework.supplement.dingding.enums.MsgSendRespEnum;
 import top.kdla.framework.supplement.dingding.model.req.DingDingMessage;
@@ -100,7 +100,7 @@ public class DingDingServiceImpl implements DingDingService {
         StringBuilder sb = new StringBuilder();
         sb.append(this.dingAlertConfigure.getDingAlertProperties().getDingKeywords());
         sb.append("【" + this.dingAlertConfigure.getDingAlertProperties().getAppName() + "】");
-        sb.append("【" + DateUtil.format(new Date()) + "】");
+        sb.append("【" + DateHelp.format(new Date()) + "】");
         sb.append("【" + this.dingAlertConfigure.getEnv() + "】");
         sb.append(msg);
         return sb;
