@@ -4,6 +4,7 @@
  */
 package top.kdla.framework.supplement.dingding.service.impl;
 
+import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -99,9 +100,9 @@ public class DingDingServiceImpl implements DingDingService {
     private StringBuilder initDingdingMessage(String msg) {
         StringBuilder sb = new StringBuilder();
         sb.append(this.dingAlertConfigure.getDingAlertProperties().getDingKeywords());
-        sb.append("【" + this.dingAlertConfigure.getDingAlertProperties().getAppName() + "】");
-        sb.append("【" + DateHelp.format(new Date()) + "】");
-        sb.append("【" + this.dingAlertConfigure.getEnv() + "】");
+        sb.append("【").append(this.dingAlertConfigure.getDingAlertProperties().getAppName()).append("】");
+        sb.append("【").append(DateUtil.formatDateTime(new Date())).append("】");
+        sb.append("【").append(this.dingAlertConfigure.getEnv()).append("】");
         sb.append(msg);
         return sb;
     }

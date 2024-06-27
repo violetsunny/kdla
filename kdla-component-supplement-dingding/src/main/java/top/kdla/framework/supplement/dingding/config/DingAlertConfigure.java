@@ -30,14 +30,14 @@ public class DingAlertConfigure {
     private String baseDingUrl = "https://oapi.dingtalk.com/robot/send?access_token=%s";
 
     public String getDingUrl() {
-        return String.format(this.baseDingUrl, this.getDingAlertProperties().getAccessToken());
+        return String.format(baseDingUrl, dingAlertProperties.getAccessToken());
     }
 
     public boolean isDingAlertEnable() {
-        return this.dingAlertProperties.isEnable();
+        return dingAlertProperties.isEnable();
     }
 
     public String getEnv() {
-        return this.dingAlertProperties.getEnv();
+        return dingAlertProperties.getEnv();
     }
 }
