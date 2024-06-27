@@ -6,11 +6,11 @@ package top.kdla.framework.supplement.dingding.service.impl;
 
 import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson.JSON;
+import io.vertx.core.http.HttpMethod;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import top.kdla.framework.common.enums.ContentTypeEnum;
 import top.kdla.framework.common.enums.MsgTypeEnum;
-import top.kdla.framework.common.help.DateHelp;
 import top.kdla.framework.supplement.dingding.config.DingAlertConfigure;
 import top.kdla.framework.supplement.dingding.enums.MsgSendRespEnum;
 import top.kdla.framework.supplement.dingding.model.req.DingDingMessage;
@@ -20,11 +20,13 @@ import top.kdla.framework.supplement.dingding.model.req.TextMessage;
 import top.kdla.framework.supplement.dingding.model.res.DingDingAlertResult;
 import top.kdla.framework.supplement.dingding.service.DingDingService;
 import top.kdla.framework.supplement.dingding.utils.DingDingHttpUtil;
+import top.kdla.framework.supplement.http.VertxHttpClient;
 
 import javax.annotation.Resource;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author kanglele
@@ -36,6 +38,8 @@ public class DingDingServiceImpl implements DingDingService {
 
     @Resource
     private DingAlertConfigure dingAlertConfigure;
+    @Resource
+    private VertxHttpClient vertxHttpClient;
 
     @Override
     public String sendTextMessage(String msg) {
@@ -49,11 +53,13 @@ public class DingDingServiceImpl implements DingDingService {
 
             StringBuilder sb = this.initDingdingMessage(msg);
             DingDingMessage dingDingMessage = new DingDingMessage(MsgTypeEnum.TEXT.getCode(), new TextMessage(sb.toString()), new DingMessageAt(null, true));
-            String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
-            DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
+            CompletableFuture<DingDingAlertResult> futureRes = vertxHttpClient.sendRequest(HttpMethod.POST, this.dingAlertConfigure.getDingUrl(), null, dingDingMessage, DingDingAlertResult.class);
+            DingDingAlertResult result = futureRes.get();
+//            String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
+//            DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
                 if (log.isInfoEnabled()) {
-                    log.info("DingDingServiceImpl.sendMessage failed#msg:{}, rest:{}", msg, rest);
+                    log.info("DingDingServiceImpl.sendMessage failed#msg:{}, rest:{}", msg, JSON.toJSONString(result));
                 }
                 return MsgSendRespEnum.FAIL.getCode();
             }
@@ -79,11 +85,13 @@ public class DingDingServiceImpl implements DingDingService {
 
             StringBuilder sb = this.initDingdingMessage(msg);
             DingDingMessage dingDingMessage = new DingDingMessage(MsgTypeEnum.TEXT.getCode(), new TextMessage(sb.toString()), new DingMessageAt(atMobiles, false));
-            String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
-            DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
+            CompletableFuture<DingDingAlertResult> futureRes = vertxHttpClient.sendRequest(HttpMethod.POST, this.dingAlertConfigure.getDingUrl(), null, dingDingMessage, DingDingAlertResult.class);
+            DingDingAlertResult result = futureRes.get();
+//            String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
+//            DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
                 if (log.isInfoEnabled()) {
-                    log.info("DingDingServiceImpl.sendMessage failed#msg:{},atMobiles:{}, rest:{}", msg, atMobiles, rest);
+                    log.info("DingDingServiceImpl.sendMessage failed#msg:{},atMobiles:{}, rest:{}", msg, atMobiles, JSON.toJSONString(result));
                 }
                 return MsgSendRespEnum.FAIL.getCode();
             }
@@ -118,12 +126,14 @@ public class DingDingServiceImpl implements DingDingService {
             }
 
             StringBuilder content = this.initDingdingMessage(msg);
-            DingDingMessage dingDingMessage = new DingDingMessage(MsgTypeEnum.MARKDOWN.getCode(), new MarkdownMessage(title, content.toString()), new DingMessageAt((List)null, true));
-            String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
-            DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
+            DingDingMessage dingDingMessage = new DingDingMessage(MsgTypeEnum.MARKDOWN.getCode(), new MarkdownMessage(title, content.toString()), new DingMessageAt((List) null, true));
+            CompletableFuture<DingDingAlertResult> futureRes = vertxHttpClient.sendRequest(HttpMethod.POST, this.dingAlertConfigure.getDingUrl(), null, dingDingMessage, DingDingAlertResult.class);
+            DingDingAlertResult result = futureRes.get();
+            //            String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
+//            DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
                 if (log.isInfoEnabled()) {
-                    log.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{}, rest:{}", title, msg, rest);
+                    log.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{}, rest:{}", title, msg, JSON.toJSONString(result));
                 }
                 return MsgSendRespEnum.FAIL.getCode();
             }
@@ -149,11 +159,13 @@ public class DingDingServiceImpl implements DingDingService {
 
             StringBuilder content = this.initDingdingMessage(msg);
             DingDingMessage dingDingMessage = new DingDingMessage(MsgTypeEnum.MARKDOWN.getCode(), new MarkdownMessage(title, content.toString()), new DingMessageAt(atMobiles, false));
-            String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
-            DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
+            CompletableFuture<DingDingAlertResult> futureRes = vertxHttpClient.sendRequest(HttpMethod.POST, this.dingAlertConfigure.getDingUrl(), null, dingDingMessage, DingDingAlertResult.class);
+            DingDingAlertResult result = futureRes.get();
+//            String rest = DingDingHttpUtil.doPost(this.dingAlertConfigure.getDingUrl(), JSON.toJSONString(dingDingMessage), ContentTypeEnum.APPLICATION_JSON, 3000);
+//            DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
                 if (log.isInfoEnabled()) {
-                    log.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{},atMobiles:{}, rest:{}", title, msg, atMobiles, rest);
+                    log.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{},atMobiles:{}, rest:{}", title, msg, atMobiles, JSON.toJSONString(result));
                 }
                 return MsgSendRespEnum.FAIL.getCode();
             }
