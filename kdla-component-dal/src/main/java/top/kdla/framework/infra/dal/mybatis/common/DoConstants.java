@@ -6,7 +6,7 @@ package top.kdla.framework.infra.dal.mybatis.common;
  * @author haoxin
  * @date 2021-01-25
  **/
-public interface CommonConstant {
+public interface DoConstants {
 
     /**
      * 多租户 请求头
