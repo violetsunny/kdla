@@ -35,10 +35,6 @@
             <groupId>top.kdla.framework</groupId>
             <artifactId>kdla-component-exception</artifactId>
         </dependency>
-        <dependency>
-            <groupId>top.kdla.framework</groupId>
-            <artifactId>kdla-component-dal</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
