@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.commons.lang3.StringUtils;
-import top.kdla.framework.infra.dal.mybatis.common.CommonConstant;
+import top.kdla.framework.infra.dal.mybatis.common.DoConstants;
 
 import java.util.Map;
 
@@ -25,27 +25,27 @@ public class IPageQuery<T> {
         long curPage = 1;
         long limit = 10;
 
-        if (params.get(CommonConstant.PAGE) != null) {
-            curPage = Long.parseLong((String)params.get(CommonConstant.PAGE));
+        if (params.get(DoConstants.PAGE) != null) {
+            curPage = Long.parseLong((String)params.get(DoConstants.PAGE));
         }
-        if (params.get(CommonConstant.LIMIT) != null) {
-            limit = Long.parseLong((String)params.get(CommonConstant.LIMIT));
+        if (params.get(DoConstants.LIMIT) != null) {
+            limit = Long.parseLong((String)params.get(DoConstants.LIMIT));
         }
 
         //分页对象
         Page<T> page = new Page<>(curPage, limit);
 
         //分页参数
-        params.put(CommonConstant.PAGE, page);
+        params.put(DoConstants.PAGE, page);
 
         //排序字段
         //防止SQL注入（因为sidx、order是通过拼接SQL实现排序的，会有SQL注入风险）
-        String orderField = SqlFilter.sqlInject((String)params.get(CommonConstant.ORDER_FIELD));
-        String order = (String)params.get(CommonConstant.ORDER);
+        String orderField = SqlFilter.sqlInject((String)params.get(DoConstants.ORDER_FIELD));
+        String order = (String)params.get(DoConstants.ORDER);
 
         //前端字段排序
         if (StringUtils.isNotEmpty(orderField) && StringUtils.isNotEmpty(order)) {
-            if (CommonConstant.ASC.equalsIgnoreCase(order)) {
+            if (DoConstants.ASC.equalsIgnoreCase(order)) {
                 return page.addOrder(OrderItem.asc(orderField));
             } else {
                 return page.addOrder(OrderItem.desc(orderField));

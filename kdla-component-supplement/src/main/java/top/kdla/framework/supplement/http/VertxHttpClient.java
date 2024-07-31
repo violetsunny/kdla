@@ -5,6 +5,7 @@
 package top.kdla.framework.supplement.http;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
@@ -20,18 +21,15 @@ import io.vertx.ext.web.multipart.MultipartForm;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.http.MediaType;
-import top.kdla.framework.common.utils.ObjectUtil;
 import top.kdla.framework.common.help.RegexHelp;
+import top.kdla.framework.common.utils.ObjectUtil;
 import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.BizException;
 
 import javax.annotation.PreDestroy;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -211,7 +209,36 @@ public class VertxHttpClient {
 
                 //request.sendForm(form); //sendForm实际请求用的是MultipartForm，有些服务不认识这个实体，会导致无法解析。
             } else if (contentType.equalsIgnoreCase(HttpHeaderValues.MULTIPART_FORM_DATA.toString())) {
-                responseFuture = request.sendMultipartForm((MultipartForm) req);//文件上传下载 req必须是MultipartForm对象
+                MultipartForm requestBody;
+                if (req instanceof JSONObject) {
+                    // 创建MultipartForm实例
+                    requestBody = MultipartForm.create();
+                    ((JSONObject) req).forEach((key, value) -> {
+                        // 根据值的类型添加到MultipartForm
+                        if (value instanceof Map || value instanceof JSONObject) {
+                            requestBody.attribute(key, JSONObject.toJSONString(value));
+                        } else if (value instanceof List || value instanceof JSONArray) {
+                            requestBody.attribute(key, JSONArray.toJSONString(value));
+                        } else {
+                            requestBody.attribute(key, String.valueOf(value));
+                        }
+                    });
+                } else if (req instanceof Map) {
+                    requestBody = MultipartForm.create();
+                    ((Map) req).forEach((key, value) -> {
+                        // 根据值的类型添加到MultipartForm
+                        if (value instanceof Map || value instanceof JSONObject) {
+                            requestBody.attribute(String.valueOf(key), JSONObject.toJSONString(value));
+                        } else if (value instanceof List || value instanceof JSONArray) {
+                            requestBody.attribute(String.valueOf(key), JSONArray.toJSONString(value));
+                        } else {
+                            requestBody.attribute(String.valueOf(key), String.valueOf(value));
+                        }
+                    });
+                } else {
+                    requestBody = (MultipartForm) req;
+                }
+                responseFuture = request.sendMultipartForm(requestBody);//文件上传下载 req必须是MultipartForm对象
             } else {
                 byte[] data = ObjectUtil.ObjectToByte(req);
                 responseFuture = request.sendBuffer(Buffer.buffer(data));

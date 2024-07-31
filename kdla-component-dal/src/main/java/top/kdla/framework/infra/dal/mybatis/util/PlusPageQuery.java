@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import top.kdla.framework.dto.PageQuery;
-import top.kdla.framework.infra.dal.mybatis.common.CommonConstant;
+import top.kdla.framework.infra.dal.mybatis.common.DoConstants;
 
 import java.util.Map;
 import java.util.Objects;
@@ -78,7 +78,7 @@ public class PlusPageQuery<T> {
         Page<T> page = new Page<>(curPage, limit);
 
         //分页参数
-        params.put(CommonConstant.PAGE, page);
+        params.put(DoConstants.PAGE, page);
 
         //排序字段
         //防止SQL注入（因为sidx、order是通过拼接SQL实现排序的，会有SQL注入风险）
@@ -87,7 +87,7 @@ public class PlusPageQuery<T> {
 
         //前端字段排序
         if (StringUtils.isNotEmpty(orderByColumn) && StringUtils.isNotEmpty(order)) {
-            if (CommonConstant.ASC.equalsIgnoreCase(order)) {
+            if (DoConstants.ASC.equalsIgnoreCase(order)) {
                 return page.addOrder(OrderItem.asc(orderByColumn));
             } else {
                 return page.addOrder(OrderItem.desc(orderByColumn));
@@ -131,7 +131,7 @@ public class PlusPageQuery<T> {
 
         //前端字段排序
         if (StringUtils.isNotEmpty(orderByColumn) && StringUtils.isNotEmpty(order)) {
-            if (CommonConstant.ASC.equalsIgnoreCase(order)) {
+            if (DoConstants.ASC.equalsIgnoreCase(order)) {
                 return page.addOrder(OrderItem.asc(orderByColumn));
             } else {
                 return page.addOrder(OrderItem.desc(orderByColumn));

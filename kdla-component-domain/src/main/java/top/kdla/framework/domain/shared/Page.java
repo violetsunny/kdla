@@ -89,11 +89,13 @@ public class Page<T> implements ValueObject<Page<T>>, Serializable {
         this.list = list;
     }
 
-    @Override public boolean sameValueAs(Page other) {
+    @Override
+    public boolean sameValueAs(Page other) {
         return false;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
         return "Page {" + "totalCount=" + totalCount + ", pageSize=" + pageSize + ", totalPage=" + totalPage
             + ", currPage=" + currPage + ", list=" + list + '}';
     }

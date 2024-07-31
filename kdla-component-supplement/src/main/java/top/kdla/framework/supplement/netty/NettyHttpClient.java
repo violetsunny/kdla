@@ -25,6 +25,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import top.kdla.framework.common.help.ThreadPoolHelp;
 import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.BizException;
@@ -48,6 +49,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class NettyHttpClient {
 
+    @Value("${http.connectTimeout:3000}")
+    private int connectTimeout;
+
     private boolean keepAlive = false;
     private boolean ssl = false;
     private File client;
@@ -65,7 +69,7 @@ public class NettyHttpClient {
         bootstrap.group(workerGroup)
                 .remoteAddress(getInetAddress(url))
                 .channel(NioSocketChannel.class)
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 30000)
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
                 .option(ChannelOption.SO_KEEPALIVE, keepAlive)
                 .handler(new HttpClientInitializer(this.ssl, this.client, this.clienttruststore, this.keyStorePassword));
     }
