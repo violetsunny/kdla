@@ -1,15 +1,15 @@
 package top.kdla.framework.supplement.http;
 
 
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.socket.PlainConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
+import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.core5.http.config.Registry;
+import org.apache.hc.core5.http.config.RegistryBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +19,7 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 
@@ -71,14 +72,28 @@ public class RestHttpConfigure {
         //路由是对maxTotal的细分
         connectionManager.setDefaultMaxPerRoute(100);
         RequestConfig requestConfig = RequestConfig.custom()
-                .setSocketTimeout(socketTimeout) //服务器返回数据(response)的时间，超过该时间抛出read timeout
-                .setConnectTimeout(connectTimeout)//连接上服务器(握手成功)的时间，超出该时间抛出connect timeout
-                .setConnectionRequestTimeout(connectReqTimeout)//从连接池中获取连接的超时时间，超过该时间未拿到可用连接，会抛出org.apache.http.conn.ConnectionPoolTimeoutException: Timeout waiting for connection from pool
+                .setConnectTimeout(connectTimeout,TimeUnit.MILLISECONDS)//连接上服务器(握手成功)的时间，超出该时间抛出connect timeout
+                .setConnectionRequestTimeout(connectReqTimeout,TimeUnit.MILLISECONDS)//从连接池中获取连接的超时时间，超过该时间未拿到可用连接，会抛出org.apache.http.conn.ConnectionPoolTimeoutException: Timeout waiting for connection from pool
+                .setResponseTimeout(socketTimeout,TimeUnit.MILLISECONDS) //服务器返回数据(response)的时间，超过该时间抛出read timeout
                 .build();
         return HttpClientBuilder.create()
                 .setDefaultRequestConfig(requestConfig)
                 .setConnectionManager(connectionManager)
-                .setConnectionTimeToLive(60, TimeUnit.SECONDS)
                 .build();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(java.net.http.HttpClient.class)
+    public java.net.http.HttpClient protoClient() {
+        return java.net.http.HttpClient.newBuilder()
+                .version(java.net.http.HttpClient.Version.HTTP_2)
+                .connectTimeout(Duration.ofMillis(connectTimeout))
+                .build();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(ProtoHttpClient.class)
+    public ProtoHttpClient protoHttpClient(java.net.http.HttpClient protoClient) {
+        return new ProtoHttpClient(protoClient);
     }
 }

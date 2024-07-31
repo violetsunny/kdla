@@ -12,8 +12,8 @@ import top.kdla.framework.common.help.SelfSnowflakeGeneratorHelp;
 import top.kdla.framework.common.utils.JacksonUtil;
 import top.kdla.framework.log.webfilter.KdlaHttpServletRequestWrapper;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * 日志拦截器

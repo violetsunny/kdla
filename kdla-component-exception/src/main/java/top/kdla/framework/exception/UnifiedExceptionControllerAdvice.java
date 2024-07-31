@@ -1,5 +1,8 @@
 package top.kdla.framework.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -13,7 +16,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.yaml.snakeyaml.constructor.DuplicateKeyException;
@@ -21,9 +23,6 @@ import top.kdla.framework.dto.Response;
 import top.kdla.framework.dto.exception.ErrorCode;
 
 import javax.security.sasl.AuthenticationException;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
 import java.nio.file.AccessDeniedException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;

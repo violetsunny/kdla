@@ -1,9 +1,9 @@
 package top.kdla.framework.common.help;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
-import javax.servlet.http.HttpServletRequest;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Enumeration;

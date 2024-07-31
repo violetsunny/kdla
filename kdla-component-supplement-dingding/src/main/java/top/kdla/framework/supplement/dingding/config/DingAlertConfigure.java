@@ -12,7 +12,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration;
 import top.kdla.framework.supplement.dingding.properties.DingAlertProperties;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 /**
  * @author kanglele

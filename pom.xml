@@ -6,7 +6,7 @@
 
     <groupId>top.kdla.framework</groupId>
     <artifactId>kdla-components</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <modules>
         <module>kdla-component-common</module>
         <module>kdla-component-dal</module>
@@ -32,8 +32,8 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-        <java.version>1.8</java.version>
-        <kdla.framework.version>1.0.1-SNAPSHOT</kdla.framework.version>
+        <java.version>17</java.version>
+        <kdla.framework.version>2.0.0-SNAPSHOT</kdla.framework.version>
         <!--基础配置 -->
         <!--架构配置 -->
         <!--spring.boot3.0.0以上是Spring-6,jdk版本要求至少jdk17以上,对maven版本的要求是3.6以上;-->
@@ -45,16 +45,16 @@
             "2022.0.4":"Spring Boot &gt;=3.0.0 and &lt;3.2.0-M1"
         }
         -->
-        <spring.boot.version>2.7.18</spring.boot.version>
-        <spring.cloud.version>2021.0.9</spring.cloud.version>
+        <spring.boot.version>3.3.1</spring.boot.version>
+        <spring.cloud.version>2023.0.3</spring.cloud.version>
         <!-- mybatis-spring-boot-starter的版本需要和spring-boot-starter匹配 -->
-        <mybatis-spring-boot.version>2.3.1</mybatis-spring-boot.version>
-        <mybatis-plus-boot.version>3.5.3.2</mybatis-plus-boot.version>
+        <mybatis-spring-boot.version>3.0.3</mybatis-spring-boot.version>
+        <mybatis-plus-boot.version>3.5.7</mybatis-plus-boot.version>
         <!--架构配置 -->
         <!--项目工具配置 -->
-        <snakeyaml.version>1.33</snakeyaml.version><!--spring-boot的2.7.14 有bug -->
         <logback.version>1.2.12</logback.version>
-        <commons-lang.version>2.6</commons-lang.version>
+        <snakeyaml.version>2.2</snakeyaml.version>
+        <commons-lang3.version>3.15.0</commons-lang3.version>
         <commons-io.version>2.11.0</commons-io.version>
         <commons-configuration.version>1.10</commons-configuration.version>
         <commons-fileupload.version>1.5</commons-fileupload.version>
@@ -66,7 +66,7 @@
         <guava.version>32.1.2-jre</guava.version>
         <fastjson.version>2.0.38</fastjson.version>
         <jsqlparser.version>3.2</jsqlparser.version>
-        <hutool-all.version>5.8.21</hutool-all.version>
+        <hutool-all.version>5.8.29</hutool-all.version>
         <redisson-spring-boot.version>3.17.7</redisson-spring-boot.version>
         <easyexcel.version>3.1.5</easyexcel.version>
         <transmittable.version>2.11.5</transmittable.version>
@@ -86,9 +86,9 @@
         <aviator.version>5.3.3</aviator.version>
         <jython.version>2.7.3</jython.version>
         <luaj.version>3.0.1</luaj.version>
-        <spring-kafka.version>2.9.12</spring-kafka.version><!--spring-boot的2.7.14 有bug -->
         <bcprov.version>1.78</bcprov.version>
-        <camel.version>3.22.2</camel.version>
+        <camel.version>4.7.0</camel.version>
+        <fluent-validator-spring.version>1.0.9</fluent-validator-spring.version>
         <!--项目工具配置 -->
     </properties>
     <distributionManagement>
@@ -123,7 +123,6 @@
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>${snakeyaml.version}</version>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 
@@ -227,12 +226,6 @@
             <!-- spring-boot-starter -->
 
             <dependency>
-                <groupId>org.springframework.kafka</groupId>
-                <artifactId>spring-kafka</artifactId>
-                <version>${spring-kafka.version}</version>
-            </dependency>
-
-            <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-junit-jupiter</artifactId>
                 <version>${mockito-junit-jupiter.version}</version>
@@ -294,9 +287,9 @@
             </dependency>
 
             <dependency>
-                <groupId>commons-lang</groupId>
-                <artifactId>commons-lang</artifactId>
-                <version>${commons-lang.version}</version>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
             </dependency>
 
             <dependency>
@@ -503,6 +496,12 @@
                 <groupId>org.apache.camel.springboot</groupId>
                 <artifactId>camel-spring-boot-starter</artifactId>
                 <version>${camel.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.baidu.unbiz</groupId>
+                <artifactId>fluent-validator-spring</artifactId>
+                <version>${fluent-validator-spring.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

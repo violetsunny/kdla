@@ -16,7 +16,7 @@ import org.redisson.config.TransportMode;
 import org.springframework.util.ClassUtils;
 import top.kdla.framework.supplement.cache.lock.properties.RedissonConfigProperties;
 
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;

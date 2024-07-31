@@ -12,7 +12,7 @@ import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.SignalType;
 import reactor.util.context.Context;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.function.BiConsumer;

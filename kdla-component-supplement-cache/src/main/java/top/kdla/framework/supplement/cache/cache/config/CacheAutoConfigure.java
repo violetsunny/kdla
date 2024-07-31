@@ -21,7 +21,7 @@ import top.kdla.framework.supplement.cache.cache.KdlaCafCache;
 import top.kdla.framework.supplement.cache.cache.MachineIdHelp;
 import top.kdla.framework.supplement.cache.cache.SpringRedisHelp;
 
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
 

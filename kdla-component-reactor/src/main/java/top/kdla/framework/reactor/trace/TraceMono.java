@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoOperator;
 import reactor.util.context.ContextView;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 

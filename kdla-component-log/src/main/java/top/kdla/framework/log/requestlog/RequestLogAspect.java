@@ -25,8 +25,8 @@ import org.springframework.web.multipart.MultipartFile;
 import top.kdla.framework.common.utils.JacksonUtil;
 import top.kdla.framework.common.help.KdlaStringHelp;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.*;

@@ -4,7 +4,7 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import reactor.util.context.ContextView;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
