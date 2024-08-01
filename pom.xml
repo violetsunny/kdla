@@ -6,7 +6,7 @@
 
     <groupId>top.kdla.framework</groupId>
     <artifactId>kdla-components</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <modules>
         <module>kdla-component-common</module>
         <module>kdla-component-dal</module>
@@ -33,7 +33,7 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <java.version>1.8</java.version>
-        <kdla.framework.version>1.0.1-SNAPSHOT</kdla.framework.version>
+        <kdla.framework.version>1.0.0-SNAPSHOT</kdla.framework.version>
         <!--基础配置 -->
         <!--架构配置 -->
         <!--spring.boot3.0.0以上是Spring-6,jdk版本要求至少jdk17以上,对maven版本的要求是3.6以上;-->
