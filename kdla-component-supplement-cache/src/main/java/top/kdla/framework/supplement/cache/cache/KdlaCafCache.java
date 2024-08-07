@@ -66,9 +66,9 @@ public class KdlaCafCache<T, E> {
      * @param maximumSize 最大容量，超过则移除
      */
     private void setCafCache(Long duration, Integer initialCapacity, Integer maximumSize) {
-        this.duration = duration != null && duration != 0 ? this.duration = duration : this.duration;
-        this.initialCapacity = initialCapacity != null && initialCapacity != 0 ? this.initialCapacity = initialCapacity : this.initialCapacity;
-        this.maximumSize = maximumSize != null && maximumSize != 0 ? this.maximumSize = maximumSize : this.maximumSize;
+        this.duration = duration != null && duration != 0 ? duration : this.duration;
+        this.initialCapacity = initialCapacity != null && initialCapacity != 0 ? initialCapacity : this.initialCapacity;
+        this.maximumSize = maximumSize != null && maximumSize != 0 ? maximumSize : this.maximumSize;
     }
 
     private void init() {
@@ -130,7 +130,7 @@ public class KdlaCafCache<T, E> {
      *
      * @param key
      * @param value
-     * @param duration 分
+     * @param duration 秒
      */
     public synchronized void put(T key, E value, long duration) {
         // 使用Cache.policy().expireVariably()设置单个键的过期时间

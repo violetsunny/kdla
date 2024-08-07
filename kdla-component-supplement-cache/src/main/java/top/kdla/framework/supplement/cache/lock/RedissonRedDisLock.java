@@ -64,7 +64,7 @@ public class RedissonRedDisLock implements DistributeLock {
 
     @Override
     public boolean tryLock(String lockKey, TimeUnit unit, long waitTime, long leaseTime) {
-        throw new UnsupportedOperationException("Red lock not support the try lock method.");
+        throw new LockFailException("Red lock not support the try lock method.");
     }
 
     @Override

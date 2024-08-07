@@ -11,11 +11,13 @@ import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.Codec;
 import org.redisson.config.Config;
+import org.redisson.config.ConfigSupport;
 import org.redisson.config.ReadMode;
 import org.redisson.config.TransportMode;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.ClassUtils;
+import top.kdla.framework.common.help.KdlaStringHelp;
 import top.kdla.framework.supplement.cache.lock.RedisClusterType;
 
 import java.io.IOException;
@@ -38,70 +40,72 @@ public class RedissonConfigProperties {
      */
     //format: 127.0.0.1:7000,127.0.0.1:7001;
     private String address;
-    //multi nodes, password split by comma(,)
-    private String password = null;
-    private String clientName = null;
-    private RedisClusterType type;
-    private ReadMode readMode;
-    private int scanInterval;
-    private String codec;
-    /**
-     * 选填
-     */
+
     //single node properties
     private int connectionMinimumIdleSize = 10;
-    private int idleConnectionTimeout = 10000;
-    private int connectTimeout = 10000;
-    private int timeout = 3000;
-    private int retryAttempts = 3;
-    private int retryInterval = 1500;
-    private int reconnectionTimeout = 3000;
-    private int failedAttempts = 3;
-    private int subscriptionsPerConnection = 5;
+    private int idleConnectionTimeout=10000;
+    private int pingTimeout=1000;
+    private int connectTimeout=10000;
+    private int timeout=3000;
+    private int retryAttempts=3;
+    private int retryInterval=1500;
+    private int reconnectionTimeout=3000;
+    private int failedAttempts=3;
+    //multi nodes, password split by comma(,)
+    private String password = null;
+    private int subscriptionsPerConnection=5;
+    private String clientName=null;
     private int subscriptionConnectionMinimumIdleSize = 1;
     private int subscriptionConnectionPoolSize = 50;
     private int connectionPoolSize = 64;
     private int database = 0;
     private boolean dnsMonitoring = false;
     private int dnsMonitoringInterval = 5000;
+
+    //master slave properties
+    private ReadMode readMode = ReadMode.MASTER;
+
+    //cluster properties
+    private int scanInterval = 1000;
     //unlock失败重试次数
     private int unlockRetry = 3;
+
+    private RedisClusterType type = RedisClusterType.REPLICATE;
+
     private int thread; //当前处理核数量 * 2
+
+    private String codec="org.redisson.codec.JsonJacksonCodec";
+
     private int pingConnectionInterval = 5000;
 
 
-    public RedissonConfigProperties() {
-        this.readMode = ReadMode.MASTER;
-        this.scanInterval = 1000;
-        this.type = RedisClusterType.REPLICATE;
-        this.codec = "org.redisson.codec.JsonJacksonCodec";
-    }
+    private int nettyThreads = 32;
 
-    public List<RedissonClient> redissons() {
+    public List<RedissonClient> redissons(){
         List<RedissonClient> clients = new ArrayList<>();
 
-        if (RedisClusterType.SINGLE.equals(this.type)) {
-            clients.add(Redisson.create(configSingleNode(this.address, this.password)));
-        } else if (RedisClusterType.MASTERSLAVE.equals(this.type)) {
+        if(RedisClusterType.SINGLE.equals(type)){
+            clients.add(Redisson.create(configSingleNode(address, password)));
+        }else if(RedisClusterType.MASTERSLAVE.equals(type)){
             //TODO 3.2 master slave not support dns configure
             clients.add(Redisson.create(configMasterSlave()));
-        } else if (RedisClusterType.CLUSTER.equals(this.type)) {
+        }else if(RedisClusterType.CLUSTER.equals(type)){
             clients.add(Redisson.create(configCluster()));
-        } else if (RedisClusterType.REPLICATE.equals(this.type)) {
-            String[] nodes = this.address.split(",");
-            if (this.password != null) {
-                String[] passwords = this.password.split(",");
+        }else if(RedisClusterType.REPLICATE.equals(type)){
+            String[] nodes = address.split(",");
+            if(password!=null){
+                String[] passwords = password.split(",");
                 int index = 0;
-                for (String node : nodes) {
+                for(String node : nodes){
                     clients.add(Redisson.create(configSingleNode(node, passwords[index])));
                     index++;
                 }
-            } else {
-                for (String node : nodes) {
+            }else{
+                for(String node : nodes){
                     clients.add(Redisson.create(configSingleNode(node, null)));
                 }
             }
-        } else if (RedisClusterType.SENTINEL.equals(this.type)) {
+        }else if(RedisClusterType.SENTINEL.equals(type)){
             //TODO
         }
 
@@ -111,87 +115,100 @@ public class RedissonConfigProperties {
     private Config configSingleNode(String address, String password) {
         Config config = new Config();
         config.useSingleServer().setAddress(address)
-                .setConnectionMinimumIdleSize(this.connectionMinimumIdleSize)
-                .setConnectionPoolSize(this.connectionPoolSize)
-                .setDatabase(this.database)
+                .setConnectionMinimumIdleSize(connectionMinimumIdleSize)
+                .setConnectionPoolSize(connectionPoolSize)
+                .setDatabase(database)
 //                .setDnsMonitoring(dnsMonitoring)
-                .setDnsMonitoringInterval(this.dnsMonitoringInterval)
-                .setSubscriptionConnectionMinimumIdleSize(this.subscriptionConnectionMinimumIdleSize)
-                .setSubscriptionConnectionPoolSize(this.subscriptionConnectionPoolSize)
-                .setSubscriptionsPerConnection(this.subscriptionsPerConnection)
-                .setClientName(this.clientName)
+                .setDnsMonitoringInterval(dnsMonitoringInterval)
+                .setSubscriptionConnectionMinimumIdleSize(subscriptionConnectionMinimumIdleSize)
+                .setSubscriptionConnectionPoolSize(subscriptionConnectionPoolSize)
+                .setSubscriptionsPerConnection(subscriptionsPerConnection)
+                .setClientName(clientName)
 //                .setFailedAttempts(failedAttempts)
-                .setRetryAttempts(this.retryAttempts)
-                .setRetryInterval(this.retryInterval)
+                .setRetryAttempts(retryAttempts)
+                .setRetryInterval(retryInterval)
 //                .setReconnectionTimeout(reconnectionTimeout)
-                .setTimeout(this.timeout)
-                .setConnectTimeout(this.connectTimeout)
-                .setIdleConnectionTimeout(this.idleConnectionTimeout)
-                .setPassword(password)
-                .setPingConnectionInterval(this.pingConnectionInterval);
+                .setTimeout(timeout)
+                .setConnectTimeout(connectTimeout)
+                .setIdleConnectionTimeout(idleConnectionTimeout)
+//                .setPingTimeout(pingTimeout)
+//                .setPassword(password)
+                .setPingConnectionInterval(pingConnectionInterval);
+        if(KdlaStringHelp.isNotEmpty(password)){
+            config.useSingleServer().setPassword(password);
+        }
         Codec codec = getCodecInstance();
         config.setCodec(codec);
-        config.setThreads(this.thread);
+        config.setThreads(thread);
+        config.setNettyThreads(nettyThreads);
         config.setEventLoopGroup(new NioEventLoopGroup());
         config.setTransportMode(TransportMode.NIO);
         try {
-            if (log.isInfoEnabled()) {
-                log.info("inti the redisson client with config: {}", config.toYAML());
-            }
-        } catch (IOException ex) {
-            log.error("parse json error:", ex);
+            ConfigSupport support = new ConfigSupport();
+            log.info("init the redisson client with config: {}",  support.toJSON(config));
+        }
+        catch (IOException ex){
+            log.error("parse json error:",ex);
         }
         return config;
     }
 
-    private Config configMasterSlave() {
+    private Config configMasterSlave(){
         Config config = new Config();
-        config.useMasterSlaveServers().setMasterAddress(this.address)
-                .addSlaveAddress(this.address)
-                .setMasterConnectionMinimumIdleSize(this.connectionMinimumIdleSize)
-                .setMasterConnectionPoolSize(this.connectionPoolSize)
-                .setSlaveConnectionMinimumIdleSize(this.connectionMinimumIdleSize)
-                .setSlaveConnectionPoolSize(this.connectionPoolSize)
-                .setReadMode(this.readMode)
-                .setDatabase(this.database)
-                .setSubscriptionsPerConnection(this.subscriptionsPerConnection)
-                .setClientName(this.clientName)
-                .setFailedSlaveCheckInterval(this.failedAttempts)
-                .setRetryAttempts(this.retryAttempts)
-                .setRetryInterval(this.retryInterval)
-                .setFailedSlaveCheckInterval(this.reconnectionTimeout)
-                .setTimeout(this.timeout)
-                .setConnectTimeout(this.connectTimeout)
-                .setIdleConnectionTimeout(this.idleConnectionTimeout)
-                .setPassword(this.password)
-                .setPingConnectionInterval(this.pingConnectionInterval);
+        config.useMasterSlaveServers().setMasterAddress(address)
+                .addSlaveAddress(address)
+                .setMasterConnectionMinimumIdleSize(connectionMinimumIdleSize)
+                .setMasterConnectionPoolSize(connectionPoolSize)
+                .setSlaveConnectionMinimumIdleSize(connectionMinimumIdleSize)
+                .setSlaveConnectionPoolSize(connectionPoolSize)
+                .setReadMode(readMode)
+                .setDatabase(database)
+                .setSubscriptionsPerConnection(subscriptionsPerConnection)
+                .setClientName(clientName)
+                .setFailedSlaveCheckInterval(failedAttempts)
+                .setRetryAttempts(retryAttempts)
+                .setRetryInterval(retryInterval)
+                .setFailedSlaveCheckInterval(reconnectionTimeout)
+                .setTimeout(timeout)
+                .setConnectTimeout(connectTimeout)
+                .setIdleConnectionTimeout(idleConnectionTimeout)
+//                .setPingTimeout(pingTimeout)
+//                .setPassword(password)
+                .setPingConnectionInterval(pingConnectionInterval);
+        if(KdlaStringHelp.isNotEmpty(password)){
+            config.useSingleServer().setPassword(password);
+        }
         Codec codec = getCodecInstance();
         config.setCodec(codec);
-        config.setThreads(this.thread);
+        config.setThreads(thread);
         config.setEventLoopGroup(new NioEventLoopGroup());
         config.setTransportMode(TransportMode.NIO);
         return config;
     }
 
-    private Config configCluster() {
+    private Config configCluster(){
         Config config = new Config();
         config.useClusterServers()
-                .addNodeAddress(this.address)
-                .setScanInterval(this.scanInterval)
-                .setSubscriptionsPerConnection(this.subscriptionsPerConnection)
-                .setClientName(this.clientName)
-                .setFailedSlaveCheckInterval(this.failedAttempts)
-                .setRetryAttempts(this.retryAttempts)
-                .setRetryInterval(this.retryInterval)
-                .setFailedSlaveCheckInterval(this.reconnectionTimeout)
-                .setTimeout(this.timeout)
-                .setConnectTimeout(this.connectTimeout)
-                .setIdleConnectionTimeout(this.idleConnectionTimeout)
-                .setPassword(this.password)
-                .setPingConnectionInterval(this.pingConnectionInterval);
+                .addNodeAddress(address)
+                .setScanInterval(scanInterval)
+                .setSubscriptionsPerConnection(subscriptionsPerConnection)
+                .setClientName(clientName)
+                .setFailedSlaveCheckInterval(failedAttempts)
+                .setRetryAttempts(retryAttempts)
+                .setRetryInterval(retryInterval)
+                .setFailedSlaveCheckInterval(reconnectionTimeout)
+                .setTimeout(timeout)
+                .setConnectTimeout(connectTimeout)
+                .setIdleConnectionTimeout(idleConnectionTimeout)
+//                .setPingTimeout(pingTimeout)
+//                .setPassword(password)
+                .setPingConnectionInterval(pingConnectionInterval);
+        if(KdlaStringHelp.isNotEmpty(password)){
+            config.useSingleServer().setPassword(password);
+        }
         Codec codec = getCodecInstance();
         config.setCodec(codec);
-        config.setThreads(this.thread);
+        config.setThreads(thread);
         config.setEventLoopGroup(new NioEventLoopGroup());
         config.setTransportMode(TransportMode.NIO);
         return config;

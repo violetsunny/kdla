@@ -152,7 +152,7 @@ public class UnifiedExceptionControllerAdvice {
         if (log.isWarnEnabled()) {
             log.warn("DuplicateKeyException:{}", ExceptionUtils.getStackTrace(ex));
         }
-        return Response.buildFailure(ErrorCode.DUPLICATE_KEY);
+        return Response.buildFailure(ErrorCode.DUPLICATE_KEY.getCode(), ex.getMessage());
     }
 
     @ResponseBody

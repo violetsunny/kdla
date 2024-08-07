@@ -11,8 +11,7 @@ import top.kdla.framework.domain.shared.Page;
  **/
 public class PageConvertor {
 
-    public static Page toPage(IPage iPage) {
-        Page page = new Page(iPage.getRecords(), iPage.getTotal(), iPage.getSize(), iPage.getCurrent());
-        return page;
+    public static <T> Page<T> toPage(IPage<T> iPage) {
+        return new Page<>(iPage.getRecords(), iPage.getTotal(), iPage.getSize(), iPage.getCurrent());
     }
 }

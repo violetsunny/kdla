@@ -118,7 +118,7 @@ public class RedissonLockFactory implements DistributeLockFactory {
 
     @PreDestroy
     public void destroy() {
-        redissionClientList.stream().forEach(client -> {
+        redissionClientList.forEach(client -> {
             try {
                 client.shutdown();
             } catch (Exception e) {

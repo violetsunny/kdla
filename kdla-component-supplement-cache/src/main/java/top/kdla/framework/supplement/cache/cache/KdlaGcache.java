@@ -65,10 +65,10 @@ public class KdlaGcache<T, E> {
      * @param maximumSize 最大容量，超过则移除
      */
     private void setGCache(Long duration, Integer initialCapacity, Integer maximumSize, Integer concurrencyLevel) {
-        this.duration = duration != null && duration != 0 ? this.duration = duration : this.duration;
-        this.initialCapacity = initialCapacity != null && initialCapacity != 0 ? this.initialCapacity = initialCapacity : this.initialCapacity;
-        this.maximumSize = maximumSize != null && maximumSize != 0 ? this.maximumSize = maximumSize : this.maximumSize;
-        this.concurrencyLevel = concurrencyLevel != null && concurrencyLevel != 0 ? this.concurrencyLevel = concurrencyLevel : this.concurrencyLevel;
+        this.duration = duration != null && duration != 0 ? duration : this.duration;
+        this.initialCapacity = initialCapacity != null && initialCapacity != 0 ? initialCapacity : this.initialCapacity;
+        this.maximumSize = maximumSize != null && maximumSize != 0 ? maximumSize : this.maximumSize;
+        this.concurrencyLevel = concurrencyLevel != null && concurrencyLevel != 0 ? concurrencyLevel : this.concurrencyLevel;
     }
 
     /**
