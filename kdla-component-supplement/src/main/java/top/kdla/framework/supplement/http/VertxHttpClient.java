@@ -236,9 +236,9 @@ public class VertxHttpClient {
                         }
                     });
                 } else {
-                    requestBody = (MultipartForm) req;
+                    requestBody = (MultipartForm) req;//文件上传下载 req必须是MultipartForm对象
                 }
-                responseFuture = request.sendMultipartForm(requestBody);//文件上传下载 req必须是MultipartForm对象
+                responseFuture = request.sendMultipartForm(requestBody);
             } else {
                 byte[] data = ObjectUtil.ObjectToByte(req);
                 responseFuture = request.sendBuffer(Buffer.buffer(data));

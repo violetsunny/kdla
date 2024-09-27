@@ -27,42 +27,25 @@ import java.util.function.Supplier;
 @Slf4j
 public class ExcelReadListener<T, R> extends AnalysisEventListener<T> {
 
-//    public static final ConcurrentHashMap<String, SoftReference<Future<?>>> ERROR_REPORT_FUTURES = new ConcurrentHashMap<>();
+//    public static final ConcurrentHashMap<String, SoftReference<Future>> ERROR_REPORT_FUTURES = new ConcurrentHashMap<>();
 
     private static final int DEFAULT_MAX_ROW = 1000_0;
-
     private final List<R> validatedRecord = new ArrayList<>();
-
     private final List<String> errorMessageList = new ArrayList<>();
-
     private final ExcelImportResult importResult = new ExcelImportResult();
-
     private final ExcelImportError importError = new ExcelImportError<>();
-
     private int maxRow = DEFAULT_MAX_ROW;
-
     private Function<List<R>, ExcelImportError> recordFunction;
-
     private Consumer<ExcelImportResult> resultConsumer;
-
     private ExcelRowConverter<T> converter;
-
     private ExcelRowConverter<T> errorConverter;
-
     private int totalCount = 0;
-
     private int processCount = 500;
-
     private boolean needGenerateReport = false;
-
     private Executor executorService;
-
     private String reportFilePrefix = "excel-import-report";
-
     private String reportFileSuffix = ".xlsx";
-
     private Integer column;
-
     private MultipartFile multipartFile;
 
     public ExcelReadListener<T, R> generateReportFile(boolean flag) {
@@ -124,6 +107,12 @@ public class ExcelReadListener<T, R> extends AnalysisEventListener<T> {
         return this;
     }
 
+    /**
+     * 错误数据转换，转成需要生成excel的对象
+     *
+     * @param errorConverter 转换函数
+     * @return
+     */
     public ExcelReadListener<T, R> errorConverter(ExcelRowConverter<T> errorConverter) {
         this.errorConverter = errorConverter;
         return this;
@@ -210,7 +199,7 @@ public class ExcelReadListener<T, R> extends AnalysisEventListener<T> {
 
         if (errors.stream().anyMatch(ExcelImportError::hasError) || importError.hasError()) {
             log.warn("导入数据有误");
-            errors.forEach(importError::merge);//合并数据
+            errors.forEach(error -> importError.merge(error));//合并数据
             importResult.setErrorCount(importError.getErrors().size());
             importResult.setSuccess(false);
             importResult.setErrorMessage(errorMessageList);
