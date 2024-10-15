@@ -92,12 +92,12 @@ public class VertxMqttConfigure {
             }
             return;
         }
+        retry = true;
         //重试调度
         vertx.setTimer(delay, id -> {
             if (connected) {
                 return;
             }
-            retry = true;
             if (log.isInfoEnabled()) {
                 log.info("connect mqtt [{}] retry", clientId);
             }
