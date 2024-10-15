@@ -154,6 +154,8 @@ final class MqttClientImpl implements MqttClient {
                     pendingPublishes.clear();
                     pendingSubscribeTopics.clear();
                     handlerToSubscription.clear();
+
+                    connected = false;
                     scheduleConnectIfRequired(host, port, true);
                 });
             } else {

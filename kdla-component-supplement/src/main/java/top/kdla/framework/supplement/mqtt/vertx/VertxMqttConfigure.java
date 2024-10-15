@@ -126,6 +126,7 @@ public class VertxMqttConfigure {
                     if (log.isInfoEnabled()) {
                         log.info("connect mqtt [{}] close", clientId);
                     }
+                    connected = false;
                     retryConnect(vertx, mqttClient);
                 });
             }
