@@ -58,7 +58,10 @@ public class VertxMqttConfigure {
     private int acktimeout;
 
     @Value("${kdla.mqtt.ack.retry:1000}")
-    private long retry;
+    private long delay;
+
+    private volatile boolean connected = false;
+    private volatile boolean retry = false;
 
     @Bean
     public VertxMqttClient vertxMqttClient(MqttClient mqttClient) {
@@ -76,47 +79,56 @@ public class VertxMqttConfigure {
                 .setAckTimeout(acktimeout)
                 .setAutoKeepAlive(true));
 
+        //连接
+        connect(vertx, mqttClient);
+
+        return mqttClient;
+    }
+
+    private void retryConnect(Vertx vertx, MqttClient mqttClient) {
+        if (retry) {
+            if (log.isInfoEnabled()) {
+                log.info("connect mqtt [{}] retry timer now", clientId);
+            }
+            return;
+        }
+        //重试调度
+        vertx.setTimer(delay, id -> {
+            if (connected) {
+                return;
+            }
+            retry = true;
+            if (log.isInfoEnabled()) {
+                log.info("connect mqtt [{}] retry", clientId);
+            }
+            //连接
+            connect(vertx, mqttClient);
+        });
+    }
+
+    private void connect(Vertx vertx, MqttClient mqttClient) {
         mqttClient.connect(port, host, res -> {
             if (!res.succeeded()) {
+                connected = false;
                 if (log.isWarnEnabled()) {
                     log.warn("connect mqtt [{}] error", clientId, res.cause());
                 }
+                retryConnect(vertx, mqttClient);
             } else {
+                connected = true;
+                retry = false;
                 if (log.isInfoEnabled()) {
                     log.info("connect mqtt [{}] success", clientId);
                 }
+                subscribe(mqttClient);
+
                 mqttClient.closeHandler(v -> {
                     if (log.isInfoEnabled()) {
                         log.info("connect mqtt [{}] close", clientId);
                     }
                     retryConnect(vertx, mqttClient);
                 });
-
-                subscribe(mqttClient);
             }
-        });
-
-        return mqttClient;
-    }
-
-    private void retryConnect(Vertx vertx, MqttClient mqttClient) {
-        vertx.setTimer(retry, id -> {
-            if (log.isInfoEnabled()) {
-                log.info("connect mqtt [{}] retry", clientId);
-            }
-            mqttClient.connect(port, host, res -> {
-                if (!res.succeeded()) {
-                    if (log.isWarnEnabled()) {
-                        log.warn("connect mqtt [{}] error", clientId, res.cause());
-                    }
-                    retryConnect(vertx, mqttClient);
-                } else {
-                    if (log.isInfoEnabled()) {
-                        log.info("connect mqtt [{}] success", clientId);
-                    }
-                    subscribe(mqttClient);
-                }
-            });
         });
     }
 
@@ -145,7 +157,7 @@ public class VertxMqttConfigure {
             // 可以添加更多的业务逻辑处理
             if (MapUtils.isNotEmpty(mqttHandlers)) {
                 MqttHandler mqttHandlerImpl = null;
-                if(mqttHandlers.size()==1){
+                if (mqttHandlers.size() == 1) {
                     mqttHandlerImpl = mqttHandlers.values().stream().findFirst().orElse(null);
                 } else {
                     mqttHandlerImpl = mqttHandlers.values().stream().filter(mqttHandler -> mqttHandler.topicPattern().matcher(topicName).matches()).findFirst().orElse(null);

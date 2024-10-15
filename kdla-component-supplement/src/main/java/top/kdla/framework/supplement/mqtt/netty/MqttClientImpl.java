@@ -63,7 +63,9 @@ final class MqttClientImpl implements MqttClient {
     private volatile Channel channel;
 
     private volatile boolean disconnected = false;
+    private volatile boolean connected = false;
     private volatile boolean reconnect = false;
+    private volatile boolean retry = false;
     private String host;
     private int port;
     private MqttClientCallback callback;
@@ -129,6 +131,9 @@ final class MqttClientImpl implements MqttClient {
 
         future.addListener((ChannelFutureListener) f -> {
             if (f.isSuccess()) {
+                log.info("mqtt broker {}:{} connected, client: {}", host, port, clientConfig.getClientId());
+                connected = true;
+                retry = false;
                 MqttClientImpl.this.channel = f.channel();
                 MqttClientImpl.this.channel.closeFuture().addListener((ChannelFutureListener) channelFuture -> {
                     if (isConnected()) {
@@ -152,6 +157,8 @@ final class MqttClientImpl implements MqttClient {
                     scheduleConnectIfRequired(host, port, true);
                 });
             } else {
+                log.error("mqtt broker {}:{} connect failed, client: {}, reason: ", host, port, clientConfig.getClientId(), f.cause());
+                connected = false;
                 scheduleConnectIfRequired(host, port, reconnect);
             }
         });
@@ -163,14 +170,27 @@ final class MqttClientImpl implements MqttClient {
             if (reconnect) {
                 this.reconnect = true;
             }
+            if (retry) {
+                log.info("mqtt broker {}:{} reconnected now, client: {}", host, port, clientConfig.getClientId());
+                return;
+            }
             eventLoop.schedule((Runnable) () -> {
+                if (connected) {
+                    return;
+                }
+                retry = true;
+                //重连
                 connect(host, port, reconnect)
                         .addListener(cf -> {
                             MqttConnectResult result = (MqttConnectResult) cf.get();
                             if (result.isSuccess()) {
+                                //connected = true; connect已经变更
+                                //retry = false;
                                 log.info("mqtt broker {}:{} reconnected, client: {}", host, port, clientConfig.getClientId());
-                                reSubscribe();//重连时重新进行订阅
+                                //重连时一定要重新订阅topic
+                                reSubscribe();
                             } else {
+                                //connected = false;
                                 log.error("mqtt broker {}:{} reconnect failed, client: {}, reason: {}", host, port, clientConfig.getClientId(), result.getReturnCode());
                             }
                         });
