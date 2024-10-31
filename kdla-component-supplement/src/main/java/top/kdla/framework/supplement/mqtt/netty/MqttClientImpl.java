@@ -131,7 +131,9 @@ final class MqttClientImpl implements MqttClient {
 
         future.addListener((ChannelFutureListener) f -> {
             if (f.isSuccess()) {
-                log.info("mqtt broker {}:{} connected, client: {}", host, port, clientConfig.getClientId());
+                if(log.isInfoEnabled()){
+                    log.info("mqtt broker {}:{} connected, client: {}", host, port, clientConfig.getClientId());
+                }
                 connected = true;
                 retry = false;
                 MqttClientImpl.this.channel = f.channel();
@@ -188,7 +190,9 @@ final class MqttClientImpl implements MqttClient {
                             if (result.isSuccess()) {
                                 //connected = true; connect已经变更
                                 //retry = false;
-                                log.info("mqtt broker {}:{} reconnected, client: {}", host, port, clientConfig.getClientId());
+                                if(log.isInfoEnabled()){
+                                    log.info("mqtt broker {}:{} reconnected, client: {}", host, port, clientConfig.getClientId());
+                                }
                                 //重连时一定要重新订阅topic
                                 reSubscribe();
                             } else {
@@ -588,7 +592,9 @@ final class MqttClientImpl implements MqttClient {
 
     private void reSubscribe() {
         for (String topic : this.subscriptionBackups.keySet()) {
-            log.info("{} {} reSubscribe", clientConfig.getClientId(), topic);
+            if(log.isInfoEnabled()){
+                log.info("{} {} reSubscribe", clientConfig.getClientId(), topic);
+            }
             MqttHandler handler = this.subscriptionBackups.get(topic);
             createSubscription(topic, handler, false, MqttQoS.AT_MOST_ONCE);
         }
