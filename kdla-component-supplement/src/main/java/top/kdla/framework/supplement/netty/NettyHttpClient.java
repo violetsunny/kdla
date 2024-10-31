@@ -85,9 +85,10 @@ public class NettyHttpClient {
     public String sendRequestPromise(String url, Object reqMsg, String method, Map<String, String> headers) throws Exception {
         AtomicBoolean close = new AtomicBoolean(false);
         DefaultPromise<String> respPromise = new DefaultPromise<>(workerGroup.next());
+        ChannelFuture f = null;
         try {
             // Start the client.
-            ChannelFuture f = bootstrap.connect();
+            f = bootstrap.connect();
             OutputResultHandlerPromise outputResultHandler = new OutputResultHandlerPromise();
             outputResultHandler.setResponse(respPromise);
             // 获取返回
@@ -99,10 +100,11 @@ public class NettyHttpClient {
             f.channel().closeFuture().addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
+                    future.channel().close();
                     workerGroup.shutdownGracefully();
                     close.set(true);
                     if (log.isInfoEnabled()) {
-                        log.info(future.channel().toString() + "链路关闭");
+                        log.info("{} 链路关闭", future.channel().toString());
                     }
                 }
             });
@@ -111,6 +113,9 @@ public class NettyHttpClient {
             respPromise.setFailure(e);
         } finally {
             if (!close.get()) {
+                if (f != null) {
+                    f.channel().close();
+                }
                 workerGroup.shutdownGracefully();
             }
         }
@@ -122,9 +127,10 @@ public class NettyHttpClient {
     public String sendRequestCompletable(String url, Object reqMsg, String method, Map<String, String> headers) throws Exception {
         AtomicBoolean close = new AtomicBoolean(false);
         CompletableFuture<String> future = new CompletableFuture<>();
+        ChannelFuture f = null;
         try {
             // Start the client.
-            ChannelFuture f = bootstrap.connect();
+            f = bootstrap.connect();
             OutputResultHandlerCompletable outputResultHandler = new OutputResultHandlerCompletable();
             outputResultHandler.setResponse(future);
             // 获取返回
@@ -136,10 +142,11 @@ public class NettyHttpClient {
             f.channel().closeFuture().addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
+                    future.channel().close();
                     workerGroup.shutdownGracefully();
                     close.set(true);
                     if (log.isInfoEnabled()) {
-                        log.info(future.channel().toString() + "链路关闭");
+                        log.info("{} 链路关闭", future.channel().toString());
                     }
                 }
             });
@@ -148,6 +155,9 @@ public class NettyHttpClient {
             future.completeExceptionally(e);
         } finally {
             if (!close.get()) {
+                if (f != null) {
+                    f.channel().close();
+                }
                 workerGroup.shutdownGracefully();
             }
         }
@@ -165,9 +175,10 @@ public class NettyHttpClient {
 
     public void sendRequestAsync(String url, Object reqMsg, String method, Map<String, String> headers) throws Exception {
         AtomicBoolean close = new AtomicBoolean(false);
+        ChannelFuture f = null;
         try {
             // Start the client.
-            ChannelFuture f = bootstrap.connect();
+            f = bootstrap.connect();
             // 获取返回
             f.channel().pipeline().addLast(new OutputResultHandlerAsync(this.responseCallback));
             // 发送http请求
@@ -189,6 +200,9 @@ public class NettyHttpClient {
             this.responseCallback.onError(e);
         } finally {
             if (!close.get()) {
+                if (f != null) {
+                    f.channel().close();
+                }
                 workerGroup.shutdownGracefully();
             }
         }
@@ -340,7 +354,7 @@ public class NettyHttpClient {
                 for (String name : msg.headers().names()) {
                     for (String value : msg.headers().getAll(name)) {
                         if (log.isInfoEnabled()) {
-                            log.info("HEADER: " + name + " = " + value);
+                            log.info("HEADER: {} = {}", name, value);
                         }
                     }
                 }
@@ -379,7 +393,7 @@ public class NettyHttpClient {
                 for (String name : msg.headers().names()) {
                     for (String value : msg.headers().getAll(name)) {
                         if (log.isInfoEnabled()) {
-                            log.info("HEADER: " + name + " = " + value);
+                            log.info("HEADER: {} = {}", name, value);
                         }
                     }
                 }
@@ -425,7 +439,7 @@ public class NettyHttpClient {
                 for (String name : msg.headers().names()) {
                     for (String value : msg.headers().getAll(name)) {
                         if (log.isInfoEnabled()) {
-                            log.info("HEADER: " + name + " = " + value);
+                            log.info("HEADER: {} = {}", name, value);
                         }
                     }
                 }

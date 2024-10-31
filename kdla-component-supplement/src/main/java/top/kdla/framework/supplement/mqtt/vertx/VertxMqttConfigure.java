@@ -86,14 +86,8 @@ public class VertxMqttConfigure {
     }
 
     private void retryConnect(Vertx vertx, MqttClient mqttClient) {
-        if (retry) {
-            if (log.isInfoEnabled()) {
-                log.info("connect mqtt [{}] retry timer now", clientId);
-            }
-            return;
-        }
         retry = true;
-        //重试调度
+        //重试调度 setTimer只调度一次 setPeriodic周期调度
         vertx.setTimer(delay, id -> {
             if (connected) {
                 return;

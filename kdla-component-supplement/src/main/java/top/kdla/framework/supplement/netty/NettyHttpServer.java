@@ -74,19 +74,20 @@ public class NettyHttpServer {
 
     public void start(int port) throws Exception {
         AtomicBoolean close = new AtomicBoolean(false);
+        ChannelFuture f = null;
         try {
             this.serverBootstrap.group(this.bossGroup, this.workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .option(ChannelOption.SO_BACKLOG, 1024)
                     .childOption(ChannelOption.SO_KEEPALIVE, this.keepAlive)
                     .childHandler(new HttpServerInitializer(this.ssl, this.server, this.servertruststore, keyStorePassword, this.dispatcherServer));
-            ChannelFuture f = serverBootstrap.bind(port);
+            f = serverBootstrap.bind(port);
             f.addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if (future.isSuccess()) {
                         if (log.isInfoEnabled()) {
-                            log.info("服务端口" + port + "绑定成功!");
+                            log.info("服务端口{}绑定成功!", port);
                         }
                     }
                 }
@@ -95,16 +96,21 @@ public class NettyHttpServer {
             f.channel().closeFuture().addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
+                    future.channel().close();
                     workerGroup.shutdownGracefully();
                     bossGroup.shutdownGracefully();
                     close.set(true);
                     if (log.isInfoEnabled()) {
-                        log.info(future.channel().toString() + "链路关闭");
+                        log.info("{} 链路关闭", future.channel().toString());
                     }
                 }
             });
         } finally {
+            //TODO 应是一直开着的
             if (!close.get()) {
+                if (f != null) {
+                    f.channel().close();
+                }
                 workerGroup.shutdownGracefully();
                 bossGroup.shutdownGracefully();
             }

@@ -172,10 +172,10 @@ final class MqttClientImpl implements MqttClient {
             if (reconnect) {
                 this.reconnect = true;
             }
-            if (retry) {
-                log.info("mqtt broker {}:{} reconnected schedule now, client: {}", host, port, clientConfig.getClientId());
-                return;
-            }
+//            if (retry) {
+//                log.info("mqtt broker {}:{} reconnected schedule now, client: {}", host, port, clientConfig.getClientId());
+//                return;
+//            }
             retry = true;
             eventLoop.schedule((Runnable) () -> {
                 if (connected) {
