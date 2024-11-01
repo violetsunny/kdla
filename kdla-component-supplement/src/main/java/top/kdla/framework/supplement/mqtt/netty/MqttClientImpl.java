@@ -28,6 +28,7 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.Promise;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import top.kdla.framework.supplement.mqtt.MqttHandler;
 
@@ -62,9 +63,13 @@ final class MqttClientImpl implements MqttClient {
 
     private volatile Channel channel;
 
+    @Getter
     private volatile boolean disconnected = false;
+    @Getter
     private volatile boolean connected = false;
+    @Getter
     private volatile boolean reconnect = false;
+    @Getter
     private volatile boolean retry = false;
     private String host;
     private int port;
@@ -442,10 +447,6 @@ final class MqttClientImpl implements MqttClient {
 
 
     ///////////////////////////////////////////// PRIVATE API /////////////////////////////////////////////
-
-    public boolean isReconnect() {
-        return reconnect;
-    }
 
     public void onSuccessfulReconnect() {
         if (callback != null) {
