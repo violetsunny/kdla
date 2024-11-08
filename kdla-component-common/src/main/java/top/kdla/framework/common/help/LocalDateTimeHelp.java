@@ -82,13 +82,14 @@ public class LocalDateTimeHelp {
 
     /**
      * time --> LocalDate
+     *
      * @param time
      * @return
      */
     public static LocalDate asLocalDate(long time) {
-        if(String.valueOf(time).length() == 10){
+        if (String.valueOf(time).length() == 10) {
             return Instant.ofEpochSecond(time).atZone(ZoneId.systemDefault()).toLocalDate();
-        } else if(String.valueOf(time).length() == 13){
+        } else if (String.valueOf(time).length() == 13) {
             return Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDate();
         }
         return null;
@@ -96,13 +97,14 @@ public class LocalDateTimeHelp {
 
     /**
      * time --> LocalDateTime
+     *
      * @param time
      * @return
      */
     public static LocalDateTime asLocalDateTime(long time) {
-        if(String.valueOf(time).length() == 10){
+        if (String.valueOf(time).length() == 10) {
             return Instant.ofEpochSecond(time).atZone(ZoneId.systemDefault()).toLocalDateTime();
-        } else if(String.valueOf(time).length() == 13){
+        } else if (String.valueOf(time).length() == 13) {
             return Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDateTime();
         }
         return null;
@@ -146,6 +148,26 @@ public class LocalDateTimeHelp {
      */
     public static String toString(LocalDateTime localDateTime) {
         return localDateTime.format(DateTimeFormat.DATETIME_FORMATTER);
+    }
+
+    /**
+     * timestamp  atStartOfDay
+     *
+     * @param localDate
+     * @return
+     */
+    public static long timestamp(LocalDate localDate) {
+        return localDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+
+    /**
+     * timestamp
+     *
+     * @param localDateTime
+     * @return
+     */
+    public static long timestamp(LocalDateTime localDateTime) {
+        return localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
 
     /**
@@ -321,6 +343,7 @@ public class LocalDateTimeHelp {
 
     /**
      * 昨天
+     *
      * @return
      */
     public static LocalDateTime yesterday() {
@@ -329,6 +352,7 @@ public class LocalDateTimeHelp {
 
     /**
      * 明天
+     *
      * @return
      */
     public static LocalDateTime tomorrow() {

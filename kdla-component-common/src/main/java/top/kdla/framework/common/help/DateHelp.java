@@ -33,8 +33,10 @@ public class DateHelp {
     public final static String DATE_TIME_PATTERN_1 = "yyyy/MM/dd HH:mm:ss";
     /** 时间格式(yyyy-MM-dd HH:mm:ss.SSS) */
     public final static String DATE_TIME_PATTERN_2 = "yyyy-MM-dd HH:mm:ss.SSS";
-    /** 时间格式(yyyy-MM-dd HH:mm:ss.SSS) */
+    /** 时间格式(yyyy-MM-ddTHH:mm:ss.SSS) */
     public final static String DATE_TIME_PATTERN_3 = "yyyy-MM-ddTHH:mm:ss.SSS";
+    /** 时间格式(yyyyMMddHHmmss) */
+    public final static String DATE_TIME_PATTERN_4 = "yyyyMMddHHmmss";
 
     public final static int MILLION_SECOND_UNIT = 1000;
 
@@ -88,9 +90,30 @@ public class DateHelp {
         if (KdlaStringHelp.isBlank(strDate)){
             return null;
         }
-
         DateTimeFormatter fmt = DateTimeFormat.forPattern(pattern);
         return fmt.parseLocalDateTime(strDate).toDate();
+    }
+
+    /**
+     * 字符串转换成日期 DATE_PATTERN
+     * @param strDate 日期字符串
+     */
+    public static Date toDate(String strDate) {
+        if (KdlaStringHelp.isBlank(strDate)){
+            return null;
+        }
+        return stringToDate(strDate, DATE_PATTERN);
+    }
+
+    /**
+     * 字符串转换成日期 DATE_TIME_PATTERN
+     * @param strDate 日期字符串
+     */
+    public static Date toTime(String strDate) {
+        if (KdlaStringHelp.isBlank(strDate)){
+            return null;
+        }
+        return stringToDate(strDate, DATE_TIME_PATTERN);
     }
 
     /**
