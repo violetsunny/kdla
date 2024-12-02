@@ -342,6 +342,17 @@ public class LocalDateTimeHelp {
     }
 
     /**
+     * 相差多少天
+     *
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    public static Long betweenDay(LocalDateTime startTime, LocalDateTime endTime) {
+        return TemporalUtil.between(startTime, endTime, ChronoUnit.DAYS);
+    }
+
+    /**
      * 昨天
      *
      * @return

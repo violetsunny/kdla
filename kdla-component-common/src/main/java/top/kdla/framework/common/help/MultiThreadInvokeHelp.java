@@ -150,6 +150,18 @@ public class MultiThreadInvokeHelp {
     }
 
     /**
+     * 真正多线程任务执行 --> 无返回值，不等待
+     *
+     * @param consumer task
+     * @param executor  线程池
+     * @return
+     */
+    public static <T> CompletableFuture<Void> executeC(Consumer<T> consumer, T t, Executor executor) {
+        // runAsync无返回
+        return CompletableFuture.runAsync(() -> consumer.accept(t), executor);
+    }
+
+    /**
      * 真正多线程任务执行 --> 无返回值，同步等待
      *
      * @param consumers tasks
@@ -177,6 +189,18 @@ public class MultiThreadInvokeHelp {
     }
 
     /**
+     * 真正多线程任务执行 --> 无返回值，不等待
+     *
+     * @param consumer task
+     *                 ForkJoinPool线程池
+     * @return
+     */
+    public static <T> CompletableFuture<Void> executeC(Consumer<T> consumer, T t) {
+        // runAsync无返回
+        return CompletableFuture.runAsync(() -> consumer.accept(t));
+    }
+
+    /**
      * 真正多线程任务执行 --> 无返回值，同步等待
      *
      * @param consumers tasks
@@ -185,7 +209,7 @@ public class MultiThreadInvokeHelp {
      */
     public static <T> List<CompletableFuture<Void>> executeCJoin(List<Consumer<T>> consumers, T t) {
         List<CompletableFuture<Void>> tasks = executeC(consumers, t);
-        // 等待执行完成
+        // 等待执行完成,join会合并等待完成
         CompletableFuture.allOf(tasks.toArray(new CompletableFuture[tasks.size()])).join();
         return tasks;
     }
