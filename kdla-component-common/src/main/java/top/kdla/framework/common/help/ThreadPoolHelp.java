@@ -71,7 +71,7 @@ public class ThreadPoolHelp {
     //服务器的cpu核数
     private static final Integer CPUS = Runtime.getRuntime().availableProcessors();
     //默认阻塞队列
-    private static final BlockingQueue<Runnable> DEFAULT_WORK_QUEUE = new LinkedBlockingQueue<Runnable>();
+    private static final BlockingQueue<Runnable> DEFAULT_WORK_QUEUE = new LinkedBlockingQueue<>(2000);
     //默认直接抛异常
     private static final RejectedExecutionHandler DEFAULT_HANDLER = new ThreadPoolExecutor.AbortPolicy();
     //默认工厂
@@ -88,6 +88,26 @@ public class ThreadPoolHelp {
                           BlockingQueue<Runnable> workQueue,
                           RejectedExecutionHandler handler,
                           String factoryName) {
+
+        if (corePoolSize == null || corePoolSize < 0) {
+            throw new IllegalArgumentException("corePoolSize 不能为 null 或负数");
+        }
+        if (maximumPoolSize == null || maximumPoolSize < corePoolSize) {
+            throw new IllegalArgumentException("maximumPoolSize 不能为 null 且必须大于等于 corePoolSize");
+        }
+        if (keepAliveTime == null || keepAliveTime < 0) {
+            throw new IllegalArgumentException("keepAliveTime 不能为 null 或负数");
+        }
+        if (unit == null) {
+            throw new IllegalArgumentException("unit 不能为 null");
+        }
+        if (workQueue == null) {
+            throw new IllegalArgumentException("workQueue 不能为 null");
+        }
+        if (handler == null) {
+            throw new IllegalArgumentException("handler 不能为 null");
+        }
+
         this.corePoolSize = corePoolSize;
         this.maximumPoolSize = maximumPoolSize;
         this.keepAliveTime = keepAliveTime;
@@ -126,7 +146,7 @@ public class ThreadPoolHelp {
                 this.unit,
                 this.workQueue,
                 this.handler,
-                this.factoryName==null?"kdlaThreadPool":this.factoryName);
+                this.factoryName == null ? "kdlaThreadPool" : this.factoryName);
     }
 
     /**
@@ -267,6 +287,19 @@ public class ThreadPoolHelp {
     }
 
     /**
+     * IO密集型，根据阻塞系数计算最大线程池大小
+     *
+     * @param blockingCoefficient 阻塞系数，取值范围 (0, 1)
+     * @return 最大线程池大小
+     */
+    public Integer initIOMaxPoolSize(double blockingCoefficient) {
+        if (blockingCoefficient <= 0 || blockingCoefficient >= 1) {
+            throw new IllegalArgumentException("阻塞系数必须在 (0, 1) 范围内");
+        }
+        return (int) (CPUS / (1 - blockingCoefficient));
+    }
+
+    /**
      * IO密集型
      * cpu的20倍
      *
@@ -293,12 +326,31 @@ public class ThreadPoolHelp {
         private final AtomicInteger threadNumber = new AtomicInteger(1);
 
         public SimpleThreadFactory(String namePrefix) {
-            this.namePrefix = namePrefix;
+            this.namePrefix = namePrefix == null ? "defaultThreadPool" : namePrefix;
         }
 
         @Override
         public Thread newThread(Runnable r) {
             return new Thread(r, namePrefix + "_" + threadNumber.getAndIncrement());
+        }
+    }
+
+    /**
+     * 优雅关闭线程池
+     *
+     * @param pool    线程池
+     * @param timeout 超时时间
+     * @param unit    时间单位
+     * @return 线程池是否成功关闭
+     */
+    public static boolean shutdownGracefully(ExecutorService pool, long timeout, TimeUnit unit) {
+        pool.shutdown();
+        try {
+            return pool.awaitTermination(timeout, unit);
+        } catch (InterruptedException e) {
+            pool.shutdownNow();
+            Thread.currentThread().interrupt();
+            return false;
         }
     }
 }

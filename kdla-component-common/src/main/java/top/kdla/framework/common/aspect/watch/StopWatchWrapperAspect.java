@@ -61,15 +61,15 @@ public class StopWatchWrapperAspect {
             //不同的级别打印日志不同
             if (sw.elapsed(TimeUnit.MILLISECONDS) > errorTimeOut) {
                 if (log.isWarnEnabled()) {
-                    log.warn(logTitle + " " + "接口超过" + errorTimeOut + "ms 运行:{}", sw.toString());
+                    log.warn("{} 接口超过{}ms 运行:{}", logTitle, errorTimeOut, sw.toString());
                 }
             } else if (sw.elapsed(TimeUnit.MILLISECONDS) > warnTimeOut) {
                 if (log.isWarnEnabled()) {
-                    log.warn(logTitle + " " + "接口超过" + warnTimeOut + "ms 运行:{}", sw.toString());
+                    log.warn("{} 接口超过{}ms 运行:{}", logTitle, warnTimeOut, sw.toString());
                 }
             } else {
                 if (log.isInfoEnabled()) {
-                    log.info(logTitle + " " + "运行:{}", sw.toString());
+                    log.info("{} 运行:{}", logTitle, sw.toString());
                 }
             }
         }

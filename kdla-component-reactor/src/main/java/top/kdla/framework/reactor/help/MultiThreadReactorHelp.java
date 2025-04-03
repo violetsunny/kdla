@@ -34,7 +34,7 @@ public class MultiThreadReactorHelp<T, R> {
                 .doOnComplete(MultiThreadReactorHelp::doOnComplete)
                 .doFinally(signalType -> {
                     if (log.isInfoEnabled()) {
-                        log.info("并发执行的时间: " + (System.currentTimeMillis() - startTime));
+                        log.info("并发执行的时间: {}", System.currentTimeMillis() - startTime);
                     }
                 })
                 .subscribe(responseData -> res.set(responseData), e -> log.error("error", e));

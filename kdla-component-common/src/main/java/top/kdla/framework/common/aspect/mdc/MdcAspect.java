@@ -28,8 +28,8 @@ import java.lang.reflect.Method;
 @Slf4j
 @Aspect
 public class MdcAspect implements ApplicationContextAware {
-    private ExpressionParser parser = new SpelExpressionParser();
-    private ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
+    private final ExpressionParser parser = new SpelExpressionParser();
+    private final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
 
     @Pointcut("@annotation(MdcDot) || @within(MdcDot)")
     public void getLogAnnotation() {

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -24,7 +25,7 @@ public class MultiThreadInvokeHelp {
      *
      * @param suppliers tasks
      * @param executor  线程池
-     * @return
+     * @return 包含任务执行结果的 CompletableFuture 列表
      */
     public static <T> List<CompletableFuture<T>> invokeS(List<Supplier<T>> suppliers, Executor executor) {
         return executeS(suppliers, executor);
@@ -34,7 +35,7 @@ public class MultiThreadInvokeHelp {
      * ForkJoinPool线程池
      *
      * @param suppliers tasks
-     * @return
+     * @return 包含任务执行结果的 CompletableFuture 列表
      */
     public static <T> List<CompletableFuture<T>> invokeS(List<Supplier<T>> suppliers) {
         return executeS(suppliers);
@@ -46,7 +47,7 @@ public class MultiThreadInvokeHelp {
      * @param suppliers tasks
      * @param executor  线程池
      * @param <T>
-     * @return
+     * @return 包含任务执行结果的列表
      * @throws Exception
      */
     public static <T> List<T> invokeGetS(List<Supplier<T>> suppliers, Executor executor) throws Exception {
@@ -61,12 +62,33 @@ public class MultiThreadInvokeHelp {
     }
 
     /**
+     * 执行并获取结果
+     *
+     * @param suppliers tasks
+     * @param executor  线程池
+     * @param timeout   超时时间 单位秒
+     * @param <T>
+     * @return 包含任务执行结果的列表
+     * @throws Exception
+     */
+    public static <T> List<T> invokeGetS(List<Supplier<T>> suppliers, Executor executor, long timeout) throws Exception {
+        List<T> results = new ArrayList<>();
+        // 转换
+        List<CompletableFuture<T>> completableFutures = executeS(suppliers, executor);
+        for (CompletableFuture<T> completableFuture : completableFutures) {
+            // 等待获取结果,get会抛出检查异常
+            results.add(completableFuture.get(timeout, TimeUnit.SECONDS));
+        }
+        return results;
+    }
+
+    /**
      * 简写，性能结果一样
      *
      * @param suppliers tasks
      * @param executor  线程池
      * @param <T>
-     * @return
+     * @return 包含任务执行结果的列表
      */
     public static <T> List<T> invokeGetS2(List<Supplier<T>> suppliers, Executor executor) {
         List<CompletableFuture<T>> tasks = suppliers.stream().map(supplier -> CompletableFuture.supplyAsync(supplier, executor)).collect(Collectors.toList());
@@ -78,8 +100,29 @@ public class MultiThreadInvokeHelp {
      *
      * @param suppliers tasks
      *                  ForkJoinPool线程池
+     * @param timeout   超时时间 单位秒
      * @param <T>
-     * @return
+     * @return 包含任务执行结果的列表
+     * @throws Exception
+     */
+    public static <T> List<T> invokeGetS(List<Supplier<T>> suppliers, long timeout) throws Exception {
+        List<T> results = new ArrayList<>();
+        // 转换
+        List<CompletableFuture<T>> completableFutures = executeS(suppliers);
+        for (CompletableFuture<T> completableFuture : completableFutures) {
+            // 等待获取结果  get会抛出检查异常  join是运行时异常
+            results.add(completableFuture.get(timeout, TimeUnit.SECONDS));
+        }
+        return results;
+    }
+
+    /**
+     * 执行并获取结果
+     *
+     * @param suppliers tasks
+     *                  ForkJoinPool线程池
+     * @param <T>
+     * @return 包含任务执行结果的列表
      * @throws Exception
      */
     public static <T> List<T> invokeGetS(List<Supplier<T>> suppliers) throws Exception {
@@ -99,7 +142,7 @@ public class MultiThreadInvokeHelp {
      * @param suppliers tasks
      *                  ForkJoinPool线程池
      * @param <T>
-     * @return
+     * @return 包含任务执行结果的列表
      */
     public static <T> List<T> invokeGetS2(List<Supplier<T>> suppliers) {
         List<CompletableFuture<T>> tasks = suppliers.stream().map(CompletableFuture::supplyAsync).collect(Collectors.toList());
@@ -111,7 +154,7 @@ public class MultiThreadInvokeHelp {
      *
      * @param suppliers tasks
      * @param executor  线程池
-     * @return
+     * @return 包含任务执行结果的 CompletableFuture 列表
      */
     private static <T> List<CompletableFuture<T>> executeS(List<Supplier<T>> suppliers, Executor executor) {
         //supplyAsync有返回
@@ -126,7 +169,7 @@ public class MultiThreadInvokeHelp {
      *
      * @param suppliers tasks
      *                  ForkJoinPool线程池
-     * @return
+     * @return 包含任务执行结果的 CompletableFuture 列表
      */
     private static <T> List<CompletableFuture<T>> executeS(List<Supplier<T>> suppliers) {
         // supplyAsync有返回
@@ -141,7 +184,7 @@ public class MultiThreadInvokeHelp {
      *
      * @param consumers tasks
      * @param executor  线程池
-     * @return
+     * @return 包含任务执行结果的 CompletableFuture 列表
      */
     public static <T> List<CompletableFuture<Void>> executeC(List<Consumer<T>> consumers, T t, Executor executor) {
         // runAsync无返回
@@ -153,8 +196,8 @@ public class MultiThreadInvokeHelp {
      * 真正多线程任务执行 --> 无返回值，不等待
      *
      * @param consumer task
-     * @param executor  线程池
-     * @return
+     * @param executor 线程池
+     * @return 包含任务执行结果的 CompletableFuture 列表
      */
     public static <T> CompletableFuture<Void> executeC(Consumer<T> consumer, T t, Executor executor) {
         // runAsync无返回
@@ -166,7 +209,7 @@ public class MultiThreadInvokeHelp {
      *
      * @param consumers tasks
      * @param executor  线程池
-     * @return
+     * @return 包含任务执行结果的 CompletableFuture 列表
      */
     public static <T> List<CompletableFuture<Void>> executeCJoin(List<Consumer<T>> consumers, T t, Executor executor) {
         List<CompletableFuture<Void>> tasks = executeC(consumers, t, executor);
@@ -180,7 +223,7 @@ public class MultiThreadInvokeHelp {
      *
      * @param consumers tasks
      *                  ForkJoinPool线程池
-     * @return
+     * @return 包含任务执行结果的 CompletableFuture 列表
      */
     public static <T> List<CompletableFuture<Void>> executeC(List<Consumer<T>> consumers, T t) {
         // runAsync无返回
@@ -193,7 +236,7 @@ public class MultiThreadInvokeHelp {
      *
      * @param consumer task
      *                 ForkJoinPool线程池
-     * @return
+     * @return 包含任务执行结果的 CompletableFuture 列表
      */
     public static <T> CompletableFuture<Void> executeC(Consumer<T> consumer, T t) {
         // runAsync无返回
@@ -205,7 +248,7 @@ public class MultiThreadInvokeHelp {
      *
      * @param consumers tasks
      *                  ForkJoinPool线程池
-     * @return
+     * @return 包含任务执行结果的 CompletableFuture 列表
      */
     public static <T> List<CompletableFuture<Void>> executeCJoin(List<Consumer<T>> consumers, T t) {
         List<CompletableFuture<Void>> tasks = executeC(consumers, t);
