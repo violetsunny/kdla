@@ -13,7 +13,7 @@ import java.util.concurrent.locks.Lock;
  * @author kll
  * @version $Id: DistributeLock, v 0.1 2021/7/13 9:42 Exp $
  */
-public interface DistributeLock {
+public interface KDistributeLock {
     /**
      * try lock on lock key until the lock is available, and won't release the lock until call unlock()
      * @param lockKey lock name

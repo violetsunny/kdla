@@ -12,9 +12,9 @@ import java.util.function.Supplier;
 @Slf4j
 public class KdlaBizDisLockService {
 
-    private final RedissonRedDisLock redDisLock;
+    private final KRedissonRedDisLock redDisLock;
 
-    public KdlaBizDisLockService(RedissonRedDisLock redDisLock) {
+    public KdlaBizDisLockService(KRedissonRedDisLock redDisLock) {
         this.redDisLock = redDisLock;
     }
 

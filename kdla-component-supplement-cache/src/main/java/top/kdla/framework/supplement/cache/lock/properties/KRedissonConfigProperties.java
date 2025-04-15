@@ -34,7 +34,7 @@ import java.util.List;
 )
 @Data
 @Slf4j
-public class RedissonConfigProperties {
+public class KRedissonConfigProperties {
     /**
      * 必填
      */
@@ -86,7 +86,7 @@ public class RedissonConfigProperties {
 
         if(RedisClusterType.SINGLE.equals(type)){
             clients.add(Redisson.create(configSingleNode(address, password)));
-        }else if(RedisClusterType.MASTERSLAVE.equals(type)){
+        }else if(RedisClusterType.MASTER_SLAVE.equals(type)){
             //TODO 3.2 master slave not support dns configure
             clients.add(Redisson.create(configMasterSlave()));
         }else if(RedisClusterType.CLUSTER.equals(type)){

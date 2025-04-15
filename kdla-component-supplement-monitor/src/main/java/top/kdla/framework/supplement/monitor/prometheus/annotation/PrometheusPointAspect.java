@@ -36,27 +36,26 @@ public class PrometheusPointAspect {
         this.pushGatewayManager = pushGatewayManager;
     }
 
-    @Pointcut("@annotation(top.kdla.framework.supplement.monitor.prometheus.annotation.PrometheusCounter) && execution(public * *(..))")
-    public void pointcut() {
+    @Pointcut("@annotation(prometheusCounter) && execution(public * *(..))")
+    public void pointcut(PrometheusCounter prometheusCounter) {
         if (log.isDebugEnabled()) {
             log.debug("--- PrometheusPointAspect start ---");
         }
     }
 
-    @Around("pointcut()")
-    public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
+    @Around(value = "pointcut(prometheusCounter)",argNames = "joinPoint,prometheusCounter")
+    public Object around(ProceedingJoinPoint joinPoint,PrometheusCounter prometheusCounter) throws Throwable {
         //先执行
         Object obj = joinPoint.proceed();
 
         //后置统计
         //String className = joinPoint.getTarget().getClass().getSimpleName();
-        Class<?> classTarget = joinPoint.getTarget().getClass();
-        String methodName = joinPoint.getSignature().getName();
-        Class<?>[] par = ((MethodSignature) joinPoint.getSignature()).getParameterTypes();
+        //Class<?> classTarget = joinPoint.getTarget().getClass();
+        //String methodName = joinPoint.getSignature().getName();
+        //Class<?>[] par = ((MethodSignature) joinPoint.getSignature()).getParameterTypes();
 
-        Method objMethod = classTarget.getMethod(methodName, par);
-
-        PrometheusCounter prometheusCounter = objMethod.getAnnotation(PrometheusCounter.class);
+        //Method objMethod = classTarget.getMethod(methodName, par);
+        //PrometheusCounter prometheusCounter = objMethod.getAnnotation(PrometheusCounter.class);
         CollectorRegistry registry = pushGatewayManager.getRegistry();
         //通过collector类下的register方法可以把测点注册到上端口中
         //Collector是测点集合，也可以同时有Counter等单独测点

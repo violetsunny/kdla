@@ -17,10 +17,10 @@ import java.util.concurrent.locks.Lock;
  * @version $Id: RedissonRedDisLock, v 0.1 2021/7/13 9:41 Exp $
  */
 @Slf4j
-public class RedissonRedDisLock implements DistributeLock {
-    private final DistributeLockFactory factory;
+public class KRedissonRedDisLock implements KDistributeLock {
+    private final KDistributeLockFactory factory;
 
-    public RedissonRedDisLock(DistributeLockFactory factory) {
+    public KRedissonRedDisLock(KDistributeLockFactory factory) {
         this.factory = factory;
     }
 

@@ -41,7 +41,7 @@
     </update>
 
     <select id="selectByCode" resultMap="BaseResultMap">
-        select <include refid="Base_Column_List" /> from code_generator_cfg where code=#{code}
+        select <include refid="Base_Column_List" /> from code_generator_cfg where code = #{code}
         /*CodeGeneratorCfgMapper.selectOne*/
     </select>
 

@@ -102,30 +102,30 @@ public class CatchLogAspect {
         Method method = ms.getMethod();
         String clazzMethodInfo = method.getDeclaringClass().getName().concat(".").concat(method.getName());
         if (log.isWarnEnabled()) {
-            log.warn(clazzMethodInfo + " invoke failed,exception is:", e);
+            log.warn("{} invoke failed,exception is:", clazzMethodInfo, e);
         }
         Class returnType = ms.getReturnType();
         if (e instanceof BizException) {
             if (log.isWarnEnabled()) {
                 if (log.isWarnEnabled()) {
-                    log.warn(clazzMethodInfo + ",BIZ EXCEPTION : {}", e.getMessage());
+                    log.warn("{},BIZ EXCEPTION : {}", clazzMethodInfo, e.getMessage());
                 }
             }
             return ResponseHandler.handle(returnType, (BaseException) e);
         }
         if (e instanceof SysException) {
             if (log.isWarnEnabled()) {
-                log.warn(clazzMethodInfo + ",SYS EXCEPTION :", e);
+                log.warn("{},SYS EXCEPTION :", clazzMethodInfo, e);
             }
             return ResponseHandler.handle(returnType, (BaseException) e);
         }
         if (e instanceof LockFailException) {
             if (log.isWarnEnabled()) {
-                log.warn(clazzMethodInfo + ",LockFail EXCEPTION :", e);
+                log.warn("{},LockFail EXCEPTION :", clazzMethodInfo, e);
             }
             return ResponseHandler.handle(returnType, (BaseException) e);
         }
-        log.error(clazzMethodInfo + ",UNKNOWN EXCEPTION :", e);
+        log.error("{},UNKNOWN EXCEPTION :", clazzMethodInfo, e);
         return ResponseHandler.handle(returnType, ErrorCode.UNKNOWN_ERROR.getCode(), e.getMessage());
     }
 

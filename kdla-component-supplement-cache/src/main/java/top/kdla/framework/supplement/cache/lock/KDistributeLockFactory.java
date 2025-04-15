@@ -10,7 +10,7 @@ import org.redisson.api.RLock;
  * @author kanglele
  * @version $Id: DistributeLockFactory, v 0.1 2023/2/28 14:36 kanglele Exp $
  */
-public interface DistributeLockFactory {
+public interface KDistributeLockFactory {
 
     /**
      * 获取锁

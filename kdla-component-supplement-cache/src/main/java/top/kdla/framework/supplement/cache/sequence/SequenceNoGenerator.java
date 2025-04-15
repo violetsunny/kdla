@@ -9,8 +9,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StopWatch;
 import top.kdla.framework.exception.BizException;
-import top.kdla.framework.supplement.cache.lock.RedissonLockFactory;
-import top.kdla.framework.supplement.cache.lock.RedissonRedDisLock;
+import top.kdla.framework.supplement.cache.lock.KRedissonRedDisLock;
 import top.kdla.framework.supplement.cache.sequence.mapper.CodeGeneratorCfgMapper;
 import top.kdla.framework.supplement.cache.sequence.model.entity.CodeGeneratorCfg;
 
@@ -29,7 +28,7 @@ public class SequenceNoGenerator {
 
     private CodeGeneratorCfgMapper codeGeneratorCfgMapper;
 
-    private RedissonRedDisLock redissonRedDisLock;
+    private KRedissonRedDisLock redissonRedDisLock;
 
     private String sequenceNoLockKey;
 
@@ -37,7 +36,7 @@ public class SequenceNoGenerator {
         this.codeGeneratorCfgMapper = codeGeneratorCfgMapper;
     }
 
-    public void setRedissonClient(RedissonRedDisLock redissonRedDisLock) {
+    public void setRedissonClient(KRedissonRedDisLock redissonRedDisLock) {
         this.redissonRedDisLock = redissonRedDisLock;
     }
 
