@@ -71,7 +71,7 @@ public class RegexHelp {
     /**
      * 小数的正则表达式
      */
-    public static Pattern DOUBLE = Pattern.compile("[+-]?[0-9]+(\\.[0-9]+)?");
+    public static Pattern DOUBLE = Pattern.compile("^[-+]?\\d*(\\.\\d+)?$");
 
     /**
      * 整数的正则表达式
@@ -81,7 +81,7 @@ public class RegexHelp {
     /**
      * 数字的正则表达式
      */
-    public static Pattern NUMBER = Pattern.compile("[0-9]*");
+    public static Pattern NUMBER = Pattern.compile("^\\d+$");
 
     /**
      * 科学计数法的正则表达式
