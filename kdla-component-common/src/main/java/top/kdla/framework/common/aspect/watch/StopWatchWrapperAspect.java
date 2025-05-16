@@ -32,23 +32,23 @@ public class StopWatchWrapperAspect {
     @Value("${kdla.stop.watch.warn.timeout:200}")
     private Integer warnTimeOut;
 
-    @Pointcut("@annotation(top.kdla.framework.common.aspect.watch.StopWatchWrapper) && execution(public * *(..))")
-    public void pointcut() {
+    @Pointcut("@annotation(stopWatchWrapper) && execution(public * *(..))")
+    public void pointcut(StopWatchWrapper stopWatchWrapper) {
         if (log.isDebugEnabled()) {
             log.debug("--- StopWatchWrapperAspect start ---");
         }
     }
 
-    @Around("pointcut()")
-    public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
+    @Around(value = "pointcut(stopWatchWrapper)",argNames = "joinPoint,stopWatchWrapper")
+    public Object around(ProceedingJoinPoint joinPoint,StopWatchWrapper stopWatchWrapper) throws Throwable {
         String className = joinPoint.getTarget().getClass().getSimpleName();
-        Class<?> classTarget = joinPoint.getTarget().getClass();
         String methodName = joinPoint.getSignature().getName();
-        Class<?>[] par = ((MethodSignature) joinPoint.getSignature()).getParameterTypes();
+        //Class<?> classTarget = joinPoint.getTarget().getClass();
+        //Class<?>[] par = ((MethodSignature) joinPoint.getSignature()).getParameterTypes();
         //Object[] args = joinPoint.getArgs();
-        Method objMethod = classTarget.getMethod(methodName, par);
+        //Method objMethod = classTarget.getMethod(methodName, par);
 
-        StopWatchWrapper stopWatchWrapper = objMethod.getAnnotation(StopWatchWrapper.class);
+        //StopWatchWrapper stopWatchWrapper = objMethod.getAnnotation(StopWatchWrapper.class);
         //StopWatchWrapper stopWatchWrapper =  ((MethodSignature) joinPoint.getSignature()).getMethod().getAnnotation(StopWatchWrapper.class);
         String logTitle = stopWatchWrapper.logHead() + " " + className + " " + methodName + " " + stopWatchWrapper.msg();
 
@@ -59,17 +59,13 @@ public class StopWatchWrapperAspect {
         } finally {
             sw.stop();
             //不同的级别打印日志不同
-            if (sw.elapsed(TimeUnit.MILLISECONDS) > errorTimeOut) {
+            if (sw.elapsed(TimeUnit.MILLISECONDS) > errorTimeOut || sw.elapsed(TimeUnit.MILLISECONDS) > warnTimeOut) {
                 if (log.isWarnEnabled()) {
-                    log.warn(logTitle + " " + "接口超过" + errorTimeOut + "ms 运行:{}", sw.toString());
-                }
-            } else if (sw.elapsed(TimeUnit.MILLISECONDS) > warnTimeOut) {
-                if (log.isWarnEnabled()) {
-                    log.warn(logTitle + " " + "接口超过" + warnTimeOut + "ms 运行:{}", sw.toString());
+                    log.warn("{} 接口超过{}ms 运行:{}", logTitle, errorTimeOut, sw.toString());
                 }
             } else {
                 if (log.isInfoEnabled()) {
-                    log.info(logTitle + " " + "运行:{}", sw.toString());
+                    log.info("{} 运行:{}", logTitle, sw.toString());
                 }
             }
         }

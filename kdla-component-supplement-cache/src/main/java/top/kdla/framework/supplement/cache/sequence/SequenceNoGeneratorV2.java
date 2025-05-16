@@ -6,8 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
 import top.kdla.framework.common.utils.JacksonUtil;
 import top.kdla.framework.exception.BizException;
-import top.kdla.framework.supplement.cache.lock.RedissonLockFactory;
-import top.kdla.framework.supplement.cache.lock.RedissonRedDisLock;
+import top.kdla.framework.supplement.cache.lock.KRedissonRedDisLock;
 import top.kdla.framework.supplement.cache.sequence.mapper.CodeGeneratorCfgV2Mapper;
 import top.kdla.framework.supplement.cache.sequence.model.entity.CodeGeneratorCfgV2;
 import top.kdla.framework.supplement.cache.sequence.model.rules.*;
@@ -33,7 +32,7 @@ public class SequenceNoGeneratorV2 {
 
     private CodeGeneratorCfgV2Mapper codeGeneratorCfgMapper;
 
-    private RedissonRedDisLock redissonRedDisLock;
+    private KRedissonRedDisLock redissonRedDisLock;
 
     private String sequenceNoLockKey;
 
@@ -41,7 +40,7 @@ public class SequenceNoGeneratorV2 {
         this.codeGeneratorCfgMapper = codeGeneratorCfgMapper;
     }
 
-    public void setRedissonClient(RedissonRedDisLock redissonRedDisLock) {
+    public void setRedissonClient(KRedissonRedDisLock redissonRedDisLock) {
         this.redissonRedDisLock = redissonRedDisLock;
     }
 

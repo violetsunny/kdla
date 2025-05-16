@@ -19,6 +19,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -30,45 +32,42 @@ import java.util.function.Supplier;
  * @author kanglele
  * @version $Id: KdlaExcelWrite, v 0.1 2022/5/12 19:24 kanglele Exp $
  */
-public class KdlaExcelWrite<T extends BaseExcel> {
+public class KdlaExcelWriteHelp<T extends BaseExcel> {
 
-    public KdlaExcelWrite() {
-    }
-
-    public void writeWeb(HttpServletResponse response, List<T> list, String fileName) throws IOException {
-        if (list == null || list.size() == 0) {
+    public static <T> void writeWeb(HttpServletResponse response, Collection<T> list, String fileName) throws IOException {
+        if (list == null || list.isEmpty()) {
             return;
         }
-        T t = list.get(0);
+        T t = list.stream().findFirst().get();
         //设置Header并且输出文件
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        response.setCharacterEncoding("utf-8");
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         // 这里URLEncoder.encode可以防止中文乱码
-        fileName = URLEncoder.encode(fileName, "UTF-8").replaceAll("\\+", "%20");
+        fileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.name()).replaceAll("\\+", "%20");
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName);
         response.setHeader("Access-Control-Expose-Headers", "Content-disposition");
         ServletOutputStream out = response.getOutputStream();
         EasyExcel.write(out, t.getClass()).sheet("sheet1").doWrite(list);
     }
 
-    public void writeFile(File file, List<T> list) {
-        if (list == null || list.size() == 0) {
+    public static <T> void writeFile(File file, Collection<T> list) {
+        if (list == null || list.isEmpty()) {
             return;
         }
-        T t = list.get(0);
+        T t = list.stream().findFirst().get();
         EasyExcel.write(file, t.getClass()).sheet("sheet1").doWrite(list);
     }
 
-    public <E> void writeSheet(File file, Map<Class<E>, List<E>> lists) {
+    public static <T> void writeSheet(File file, Map<Class<T>, Collection<T>> lists) {
         ExcelWriter writer = EasyExcel.write(file).build();
-        for (Map.Entry<Class<E>, List<E>> classMap : lists.entrySet()) {
+        for (Map.Entry<Class<T>, Collection<T>> classMap : lists.entrySet()) {
             WriteSheet sheet = EasyExcel.writerSheet("sheet1").head(classMap.getKey()).build();
             writer.write(classMap.getValue(), sheet);
         }
     }
 
-    public File writeDataFile(List<T> list, String fileUrl) {
-        if (list == null || list.size() == 0) {
+    public static <T> File writeDataFile(Collection<T> list, String fileUrl) {
+        if (list == null || list.isEmpty()) {
             return null;
         }
         //fileUrl文件全路径
@@ -78,42 +77,42 @@ public class KdlaExcelWrite<T extends BaseExcel> {
         return file;
     }
 
-    public File getExcelFile(Supplier<List<T>> supplier, String fileUrl) {
+    public static <T> File getExcelFile(Supplier<Collection<T>> supplier, String fileUrl) {
         //获取数据
-        List<T> tList = supplier.get();
+        Collection<T> tList = supplier.get();
         //转成文件
         return writeDataFile(tList, fileUrl);
     }
 
-    public byte[] writeDataByte(List<T> list, String fileUrl) throws IOException {
+    public static <T> byte[] writeDataByte(Collection<T> list, String fileUrl) throws IOException {
         File file = writeDataFile(list, fileUrl);
         //转成byte
         return FileUtils.readFileToByteArray(file);
     }
 
-    public byte[] getExcelByte(Supplier<List<T>> supplier, String fileUrl) throws IOException {
+    public static <T> byte[] getExcelByte(Supplier<Collection<T>> supplier, String fileUrl) throws IOException {
         //获取数据
-        List<T> tList = supplier.get();
+        Collection<T> tList = supplier.get();
         //转成byte
         return writeDataByte(tList, fileUrl);
     }
 
-    public Map<String, File> multiGetExcelFile(Map<String, Supplier<List<T>>> supplierMap, Executor executor) throws Exception {
+    public static <T> Map<String, File> multiGetExcelFile(Map<String, Supplier<Collection<T>>> supplierMap, Executor executor) throws Exception {
         //将每个key对应的请求转换成每个key对应生成的excel文件
         Map<String, File> fileMap = Maps.newHashMap();
         //先将supplierMap转换成k,v的suppliers
-        List<Supplier<Map<String, List<T>>>> suppliers = Lists.newArrayList();
+        List<Supplier<Map<String, Collection<T>>>> suppliers = Lists.newArrayList();
         supplierMap.forEach((k, v) -> {
-            Supplier<Map<String, List<T>>> supplier = () -> {
+            Supplier<Map<String, Collection<T>>> supplier = () -> {
                 //这样map就只有一个数据，每个key对应一个请求
-                Map<String, List<T>> map = Maps.newHashMap();
+                Map<String, Collection<T>> map = Maps.newHashMap();
                 map.put(k, v.get());
                 return map;
             };
             suppliers.add(supplier);
         });
         //CompletableFuture异步执行，同步等待suppliers结果数据
-        List<Map<String, List<T>>> resultList = MultiThreadInvokeHelp.invokeGetS(suppliers, executor);
+        List<Map<String, Collection<T>>> resultList = MultiThreadInvokeHelp.invokeGetS(suppliers, executor);
         resultList.forEach(listMap -> {
             if (MapUtils.isEmpty(listMap)) {
                 return;

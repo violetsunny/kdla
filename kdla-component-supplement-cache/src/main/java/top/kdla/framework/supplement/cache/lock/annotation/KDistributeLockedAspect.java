@@ -6,7 +6,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.aspectj.lang.reflect.MethodSignature;
 import org.redisson.api.RLock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.expression.EvaluationContext;
@@ -15,9 +14,7 @@ import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Component;
-import top.kdla.framework.supplement.cache.lock.RedissonLockFactory;
-
-import java.lang.reflect.Method;
+import top.kdla.framework.supplement.cache.lock.KRedissonLockFactory;
 
 /**
  * @date 2021-05-17
@@ -25,17 +22,17 @@ import java.lang.reflect.Method;
 @Component
 @Aspect
 @Slf4j
-public class DistributeLockedAspect {
+public class KDistributeLockedAspect {
 
     @Autowired
-    private RedissonLockFactory redissonLockFactory;
+    private KRedissonLockFactory redissonLockFactory;
 
-    private static final String LOCK_KEY_PREFIX = "UnblockDistributeLock:";
+    private static final String LOCK_KEY_PREFIX = "KUnblockDistributeLock:";
 
-    @Pointcut(value = "@annotation(top.kdla.framework.supplement.cache.lock.annotation.UnblockDistributeLocked)")
-    public void pointCut() {
+    @Pointcut("@annotation(lockAction) && execution(public * *(..))")
+    public void pointcut(KUnblockDistributeLocked lockAction) {
         if (log.isDebugEnabled()) {
-            log.debug("--- DistributeLockedAspect start ---");
+            log.debug("--- KDistributeLockedAspect start ---");
         }
     }
 
@@ -46,21 +43,27 @@ public class DistributeLockedAspect {
      * @throws Exception 未获取到锁异常
      * @throws Throwable 业务方法抛出的异常
      */
-    @Around("pointCut()")
-    public Object lockAround(ProceedingJoinPoint jp) throws Exception, Throwable {
+    @Around(value = "pointcut(lockAction)", argNames = "jp,lockAction")
+    public Object lockAround(ProceedingJoinPoint jp, KUnblockDistributeLocked lockAction) throws Exception, Throwable {
         if (log.isInfoEnabled()) {
-            log.info("DistributeLockedAspect.lockAround");
+            log.info("KDistributeLockedAspect lockAround");
         }
         Object rvt = null;
 
-        MethodSignature signature = (MethodSignature) jp.getSignature();
-        Method method = jp.getTarget().getClass().getMethod(signature.getName(), signature.getParameterTypes());
-
-        UnblockDistributeLocked lockAction = method.getAnnotation(UnblockDistributeLocked.class);
+        //MethodSignature signature = (MethodSignature) jp.getSignature();
+        //Method method = jp.getTarget().getClass().getMethod(signature.getName(), signature.getParameterTypes());
+        //UnblockDistributeLocked lockAction = method.getAnnotation(UnblockDistributeLocked.class);
 
         String key = lockAction.key();
 
-        if (lockAction.isSpelKey()) {//如果是spel表达式,解析之
+        //如果key值为空,不加锁,放行
+        if (StringUtils.isBlank(key)) {
+            rvt = jp.proceed();
+            return rvt;
+        }
+
+        //如果是spel表达式,解析之
+        if (lockAction.isSpelKey()) {
             ExpressionParser spelExpressionParser = new SpelExpressionParser();
             Expression expression = spelExpressionParser.parseExpression(key);
             EvaluationContext evalContext = new StandardEvaluationContext(jp.getArgs());
@@ -69,32 +72,29 @@ public class DistributeLockedAspect {
             key = eval == null ? "" : String.valueOf(eval);
         }
 
-        if (StringUtils.isBlank(key)) {//如果key值为空,不加锁,放行
-            rvt = jp.proceed();
-            return rvt;
-        }
-
         RLock lock = null;
         try {
             key = LOCK_KEY_PREFIX + key;
             if (log.isInfoEnabled()) {
-                log.info("开始尝试上锁");
+                log.info("KDistributeLockedAspect 开始尝试上锁");
             }
-            lock = redissonLockFactory.getLock(key);//非阻塞方法,取不到锁抛出LockFailException异常
-            if (lock != null) {//获取到锁
+            //非阻塞方法,取不到锁抛出LockFailException异常
+            lock = redissonLockFactory.getLock(key);
+            //获取到锁
+            if (lock != null) {
                 if (log.isInfoEnabled()) {
-                    log.info("上锁成功,执行业务代码");
+                    log.info("KDistributeLockedAspect 上锁成功,执行业务代码");
                 }
                 rvt = jp.proceed();
             } else {
-                throw new Exception("lock为空,未获取到锁");
+                throw new Exception("KDistributeLockedAspect lock为空,未获取到锁");
             }
         } catch (Exception e) {
             if (lockAction.throwEx()) {
-                throw new Exception("未获取到锁,请重新尝试");
+                throw new Exception("KDistributeLockedAspect 未获取到锁,请重新尝试");
             } else {
                 if (log.isWarnEnabled()) {
-                    log.warn("未获取到锁");
+                    log.warn("KDistributeLockedAspect 未获取到锁");
                 }
             }
         } finally {

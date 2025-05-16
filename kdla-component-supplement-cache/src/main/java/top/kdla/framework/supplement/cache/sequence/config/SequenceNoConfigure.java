@@ -8,11 +8,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import top.kdla.framework.supplement.cache.lock.RedissonRedDisLock;
+import top.kdla.framework.supplement.cache.lock.KRedissonRedDisLock;
 import top.kdla.framework.supplement.cache.sequence.SequenceNoGenerator;
 import top.kdla.framework.supplement.cache.sequence.SequenceNoGeneratorV2;
 import top.kdla.framework.supplement.cache.sequence.mapper.CodeGeneratorCfgMapper;
 import top.kdla.framework.supplement.cache.sequence.mapper.CodeGeneratorCfgV2Mapper;
+
+import javax.annotation.Resource;
 
 /**
  * @author kll
@@ -22,14 +24,20 @@ import top.kdla.framework.supplement.cache.sequence.mapper.CodeGeneratorCfgV2Map
 @Configuration
 @MapperScan(basePackages = "top.kdla.framework.supplement.cache.sequence")
 @ConditionalOnProperty(name = "top.kdla.framework.supplement.cache.sequence.enable", havingValue = "true")
-@ConditionalOnClass({RedissonRedDisLock.class})
+@ConditionalOnClass({KRedissonRedDisLock.class})
 public class SequenceNoConfigure {
 
     @Value("${kdla.sequence.lock.key.prefix:top::sequenceNo::}")
     private String sequenceNoLockKey;
+    @Resource
+    private CodeGeneratorCfgMapper codeGeneratorCfgMapper;
+    @Resource
+    private CodeGeneratorCfgV2Mapper codeGeneratorCfgV2Mapper;
+    @Resource
+    private KRedissonRedDisLock redissonRedDisLock;
 
     @Bean
-    public SequenceNoGenerator sequenceNoGenerator(@Autowired CodeGeneratorCfgMapper codeGeneratorCfgMapper,@Autowired RedissonRedDisLock redissonRedDisLock) {
+    public SequenceNoGenerator sequenceNoGenerator() {
         SequenceNoGenerator sequenceNoGenerator = new SequenceNoGenerator();
         sequenceNoGenerator.setCodeGeneratorCfgMapper(codeGeneratorCfgMapper);
         sequenceNoGenerator.setRedissonClient(redissonRedDisLock);
@@ -38,12 +46,13 @@ public class SequenceNoConfigure {
     }
 
     @Bean
-    public SequenceNoGeneratorV2 sequenceNoGeneratorV2(@Autowired CodeGeneratorCfgV2Mapper codeGeneratorCfgMapper,@Autowired RedissonRedDisLock redissonRedDisLock) {
+    public SequenceNoGeneratorV2 sequenceNoGeneratorV2() {
         SequenceNoGeneratorV2 generatorV2 = new SequenceNoGeneratorV2();
-        generatorV2.setCodeGeneratorCfgMapper(codeGeneratorCfgMapper);
+        generatorV2.setCodeGeneratorCfgMapper(codeGeneratorCfgV2Mapper);
         generatorV2.setRedissonClient(redissonRedDisLock);
         generatorV2.setSequenceNoLockKey(sequenceNoLockKey);
         return generatorV2;
     }
+
 
 }

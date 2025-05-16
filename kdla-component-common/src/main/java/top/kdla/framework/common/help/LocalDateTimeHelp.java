@@ -22,6 +22,8 @@ import java.util.Date;
  */
 public class LocalDateTimeHelp {
 
+    public static final ZoneId DEFAULT_ZONE = ZoneId.of("Asia/Shanghai");
+
     /**
      * LocalDate --> Date
      *
@@ -29,6 +31,9 @@ public class LocalDateTimeHelp {
      * @return
      */
     public static Date asDate(LocalDate localDate) {
+        if (localDate == null) {
+            throw new IllegalArgumentException("localDate is null");
+        }
         return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
     }
 
@@ -39,6 +44,9 @@ public class LocalDateTimeHelp {
      * @return
      */
     public static Date asDate(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            throw new IllegalArgumentException("localDateTime is null");
+        }
         return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
     }
 
@@ -61,12 +69,28 @@ public class LocalDateTimeHelp {
     }
 
     /**
+     * LocalDate --> LocalDateTime
+     *
+     * @param localDateTime
+     * @return
+     */
+    public static LocalDate asLocalDate(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            throw new IllegalArgumentException("localDateTime is null");
+        }
+        return localDateTime.toLocalDate();
+    }
+
+    /**
      * Date --> LocalDate
      *
      * @param date
      * @return
      */
     public static LocalDate asLocalDate(Date date) {
+        if (date == null) {
+            throw new IllegalArgumentException("date is null");
+        }
         return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
@@ -77,35 +101,40 @@ public class LocalDateTimeHelp {
      * @return
      */
     public static LocalDateTime asLocalDateTime(Date date) {
+        if (date == null) {
+            throw new IllegalArgumentException("date is null");
+        }
         return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime();
     }
 
     /**
      * time --> LocalDate
+     *
      * @param time
      * @return
      */
     public static LocalDate asLocalDate(long time) {
-        if(String.valueOf(time).length() == 10){
+        if (String.valueOf(time).length() == 10) {
             return Instant.ofEpochSecond(time).atZone(ZoneId.systemDefault()).toLocalDate();
-        } else if(String.valueOf(time).length() == 13){
+        } else if (String.valueOf(time).length() == 13) {
             return Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDate();
         }
-        return null;
+        throw new IllegalArgumentException("不支持的时间戳格式: " + time);
     }
 
     /**
      * time --> LocalDateTime
+     *
      * @param time
      * @return
      */
     public static LocalDateTime asLocalDateTime(long time) {
-        if(String.valueOf(time).length() == 10){
+        if (String.valueOf(time).length() == 10) {
             return Instant.ofEpochSecond(time).atZone(ZoneId.systemDefault()).toLocalDateTime();
-        } else if(String.valueOf(time).length() == 13){
+        } else if (String.valueOf(time).length() == 13) {
             return Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDateTime();
         }
-        return null;
+        throw new IllegalArgumentException("不支持的时间戳格式: " + time);
     }
 
     /**
@@ -135,6 +164,9 @@ public class LocalDateTimeHelp {
      * @return
      */
     public static String toString(LocalDate localDate) {
+        if (localDate == null) {
+            throw new IllegalArgumentException("localDate is null");
+        }
         return localDate.format(DateTimeFormat.DATE_FORMATTER);
     }
 
@@ -145,27 +177,62 @@ public class LocalDateTimeHelp {
      * @return
      */
     public static String toString(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            throw new IllegalArgumentException("localDateTime is null");
+        }
         return localDateTime.format(DateTimeFormat.DATETIME_FORMATTER);
+    }
+
+    /**
+     * timestamp  atStartOfDay
+     *
+     * @param localDate
+     * @return
+     */
+    public static long timestamp(LocalDate localDate) {
+        if (localDate == null) {
+            throw new IllegalArgumentException("localDate is null");
+        }
+        return localDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+
+    /**
+     * timestamp
+     *
+     * @param localDateTime
+     * @return
+     */
+    public static long timestamp(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            throw new IllegalArgumentException("localDateTime is null");
+        }
+        return localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
 
     /**
      * 修改为一天的开始时间，例如：2020-02-02 00:00:00,000
      *
-     * @param time 日期时间
+     * @param localDateTime 日期时间
      * @return 一天的开始时间
      */
-    public static LocalDateTime beginOfDay(LocalDateTime time) {
-        return time.with(LocalTime.MIN);
+    public static LocalDateTime beginOfDay(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            throw new IllegalArgumentException("localDateTime is null");
+        }
+        return localDateTime.with(LocalTime.MIN);
     }
 
     /**
      * 修改为一天的结束时间，例如：2020-02-02 23:59:59,999
      *
-     * @param time 日期时间
+     * @param localDateTime 日期时间
      * @return 一天的结束时间
      */
-    public static LocalDateTime endOfDay(LocalDateTime time) {
-        return time.with(LocalTime.MAX);
+    public static LocalDateTime endOfDay(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            throw new IllegalArgumentException("localDateTime is null");
+        }
+        return localDateTime.with(LocalTime.MAX);
     }
 
     /**
@@ -175,6 +242,9 @@ public class LocalDateTimeHelp {
      * @return
      */
     public static LocalDateTime firstDayOfMonth(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            throw new IllegalArgumentException("localDateTime is null");
+        }
         return beginOfDay(localDateTime).with(TemporalAdjusters.firstDayOfMonth());
     }
 
@@ -185,6 +255,9 @@ public class LocalDateTimeHelp {
      * @return
      */
     public static LocalDateTime lastDayOfMonth(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            throw new IllegalArgumentException("localDateTime is null");
+        }
         return endOfDay(localDateTime).with(TemporalAdjusters.lastDayOfMonth());
     }
 
@@ -195,6 +268,9 @@ public class LocalDateTimeHelp {
      * @return
      */
     public static LocalDateTime firstDayOfYear(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            throw new IllegalArgumentException("localDateTime is null");
+        }
         return beginOfDay(localDateTime).with(TemporalAdjusters.firstDayOfYear());
     }
 
@@ -205,6 +281,9 @@ public class LocalDateTimeHelp {
      * @return
      */
     public static LocalDateTime lastDayOfYear(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            throw new IllegalArgumentException("localDateTime is null");
+        }
         return endOfDay(localDateTime).with(TemporalAdjusters.lastDayOfYear());
     }
 
@@ -240,6 +319,9 @@ public class LocalDateTimeHelp {
      * @return
      */
     public static Long secondToLastDayOfMonth(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            throw new IllegalArgumentException("localDateTime is null");
+        }
         return Duration
                 .between(
                         localDateTime,
@@ -254,6 +336,9 @@ public class LocalDateTimeHelp {
      * @return
      */
     public static Long daysToLastDayOfMonth(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            throw new IllegalArgumentException("localDateTime is null");
+        }
         return Duration
                 .between(
                         localDateTime,
@@ -268,7 +353,6 @@ public class LocalDateTimeHelp {
      * @param temporalAccessor Date对象
      * @return {@link Instant}对象
      * @see TemporalAccessorUtil#toEpochMilli(TemporalAccessor)
-     * @since 5.4.1
      */
     public static Long toEpochMilli(TemporalAccessor temporalAccessor) {
         return TemporalAccessorUtil.toEpochMilli(temporalAccessor);
@@ -279,9 +363,11 @@ public class LocalDateTimeHelp {
      *
      * @param localDateTime 判定的日期{@link LocalDateTime}
      * @return 是否为周末（周六或周日）
-     * @since 5.7.6
      */
     public static boolean isWeekend(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            throw new IllegalArgumentException("localDateTime is null");
+        }
         return isWeekend(localDateTime.toLocalDate());
     }
 
@@ -290,9 +376,11 @@ public class LocalDateTimeHelp {
      *
      * @param localDate 判定的日期{@link LocalDate}
      * @return 是否为周末（周六或周日）
-     * @since 5.7.6
      */
     public static boolean isWeekend(LocalDate localDate) {
+        if (localDate == null) {
+            throw new IllegalArgumentException("localDate is null");
+        }
         final DayOfWeek dayOfWeek = localDate.getDayOfWeek();
         return DayOfWeek.SATURDAY == dayOfWeek || DayOfWeek.SUNDAY == dayOfWeek;
     }
@@ -302,9 +390,11 @@ public class LocalDateTimeHelp {
      *
      * @param localDate 日期{@link LocalDate}
      * @return {@link Week}
-     * @since 5.7.14
      */
     public static Week dayOfWeek(LocalDate localDate) {
+        if (localDate == null) {
+            throw new IllegalArgumentException("localDate is null");
+        }
         return Week.of(localDate.getDayOfWeek());
     }
 
@@ -320,7 +410,19 @@ public class LocalDateTimeHelp {
     }
 
     /**
+     * 相差多少天
+     *
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    public static Long betweenDay(LocalDateTime startTime, LocalDateTime endTime) {
+        return TemporalUtil.between(startTime, endTime, ChronoUnit.DAYS);
+    }
+
+    /**
      * 昨天
+     *
      * @return
      */
     public static LocalDateTime yesterday() {
@@ -329,6 +431,7 @@ public class LocalDateTimeHelp {
 
     /**
      * 明天
+     *
      * @return
      */
     public static LocalDateTime tomorrow() {

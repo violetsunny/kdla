@@ -14,7 +14,7 @@ import org.redisson.client.codec.Codec;
 import org.redisson.config.Config;
 import org.redisson.config.TransportMode;
 import org.springframework.util.ClassUtils;
-import top.kdla.framework.supplement.cache.lock.properties.RedissonConfigProperties;
+import top.kdla.framework.supplement.cache.lock.properties.KRedissonConfigProperties;
 
 import jakarta.annotation.PreDestroy;
 import java.io.IOException;
@@ -27,17 +27,17 @@ import java.util.stream.Collectors;
  * @version $Id: RedissonLockFactory, v 0.1 2023/2/28 14:36 kanglele Exp $
  */
 @Slf4j
-public class RedissonLockFactory implements DistributeLockFactory {
+public class KRedissonLockFactory implements KDistributeLockFactory {
 
     private final static String LOCK_PATH = ":lock:";
 
-    private final RedissonConfigProperties redissonConfig;
+    private final KRedissonConfigProperties redissonConfig;
 
     private final List<RedissonClient> redissionClientList;
 
     private final String lockFullPath;
 
-    public RedissonLockFactory(RedissonConfigProperties redissonConfig, String appId) {
+    public KRedissonLockFactory(KRedissonConfigProperties redissonConfig, String appId) {
         this.redissonConfig = redissonConfig;
         this.redissionClientList = redissons();
         this.lockFullPath = appId + LOCK_PATH;
@@ -118,7 +118,7 @@ public class RedissonLockFactory implements DistributeLockFactory {
 
     @PreDestroy
     public void destroy() {
-        redissionClientList.stream().forEach(client -> {
+        redissionClientList.forEach(client -> {
             try {
                 client.shutdown();
             } catch (Exception e) {

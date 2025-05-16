@@ -69,11 +69,11 @@ public abstract class KdlaExcelReadListener<T extends BaseExcel, E extends BaseE
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-        if (dataList.size() > 0) {
+        if (!dataList.isEmpty()) {
             success = predicate.test(dataList);
             dataList.clear();
         }
-        if (resList.size() > 0 && predicateRes != null) {
+        if (!resList.isEmpty() && predicateRes != null) {
             predicateRes.test(resList);
             resList.clear();
         }

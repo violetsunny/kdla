@@ -11,7 +11,7 @@ import java.lang.annotation.*;
 @Target(value = {ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface UnblockDistributeLocked {
+public @interface KUnblockDistributeLocked {
     /**
      * 分布式锁key值
      *

@@ -23,18 +23,34 @@ import static java.lang.System.currentTimeMillis;
  **/
 @Slf4j
 public class DateHelp {
-	/** 时间格式(yyyy-MM-dd) */
-	public final static String DATE_PATTERN = "yyyy-MM-dd";
-    /** 时间格式(yyyy/MM/dd) */
+    /**
+     * 时间格式(yyyy-MM-dd)
+     */
+    public final static String DATE_PATTERN = "yyyy-MM-dd";
+    /**
+     * 时间格式(yyyy/MM/dd)
+     */
     public final static String DATE_PATTERN_1 = "yyyy/MM/dd";
-	/** 时间格式(yyyy-MM-dd HH:mm:ss) */
-	public final static String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
-    /** 时间格式(yyyy/MM/dd HH:mm:ss) */
+    /**
+     * 时间格式(yyyy-MM-dd HH:mm:ss)
+     */
+    public final static String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
+    /**
+     * 时间格式(yyyy/MM/dd HH:mm:ss)
+     */
     public final static String DATE_TIME_PATTERN_1 = "yyyy/MM/dd HH:mm:ss";
-    /** 时间格式(yyyy-MM-dd HH:mm:ss.SSS) */
+    /**
+     * 时间格式(yyyy-MM-dd HH:mm:ss.SSS)
+     */
     public final static String DATE_TIME_PATTERN_2 = "yyyy-MM-dd HH:mm:ss.SSS";
-    /** 时间格式(yyyy-MM-dd HH:mm:ss.SSS) */
+    /**
+     * 时间格式(yyyy-MM-ddTHH:mm:ss.SSS)
+     */
     public final static String DATE_TIME_PATTERN_3 = "yyyy-MM-ddTHH:mm:ss.SSS";
+    /**
+     * 时间格式(yyyyMMddHHmmss)
+     */
+    public final static String DATE_TIME_PATTERN_4 = "yyyyMMddHHmmss";
 
     public final static int MILLION_SECOND_UNIT = 1000;
 
@@ -42,17 +58,19 @@ public class DateHelp {
 
     /**
      * 日期格式化 日期格式为：yyyy-MM-dd
-     * @param date  日期
-     * @return  返回yyyy-MM-dd格式日期
+     *
+     * @param date 日期
+     * @return 返回yyyy-MM-dd格式日期
      */
-	public static String formatDate(Date date) {
+    public static String formatDate(Date date) {
         return format(date, DATE_PATTERN);
     }
 
     /**
      * 日期格式化 日期格式为：yyyy-MM-dd HH:mm:ss
-     * @param date  日期
-     * @return  返回yyyy-MM-dd HH:mm:ss格式日期
+     *
+     * @param date 日期
+     * @return 返回yyyy-MM-dd HH:mm:ss格式日期
      */
     public static String formatTime(Date date) {
         return format(date, DATE_TIME_PATTERN);
@@ -60,12 +78,13 @@ public class DateHelp {
 
     /**
      * 日期格式化 日期格式为：yyyy-MM-dd
-     * @param date  日期
-     * @param pattern  格式，如：DateUtils.DATE_TIME_PATTERN
-     * @return  返回yyyy-MM-dd格式日期
+     *
+     * @param date    日期
+     * @param pattern 格式，如：DateUtils.DATE_TIME_PATTERN
+     * @return 返回yyyy-MM-dd格式日期
      */
     public static String format(Date date, String pattern) {
-        if(null != date && KdlaStringHelp.isNotEmpty(pattern)) {
+        if (null != date && KdlaStringHelp.isNotEmpty(pattern)) {
             ThreadLocal<SimpleDateFormat> formatThreadLocal = ThreadLocal.withInitial(() -> new SimpleDateFormat(pattern));
             try {
                 return formatThreadLocal.get().format(date);
@@ -81,22 +100,47 @@ public class DateHelp {
 
     /**
      * 字符串转换成日期
+     *
      * @param strDate 日期字符串
      * @param pattern 日期的格式，如：DateUtils.DATE_TIME_PATTERN
      */
     public static Date stringToDate(String strDate, String pattern) {
-        if (KdlaStringHelp.isBlank(strDate)){
+        if (KdlaStringHelp.isBlank(strDate)) {
             return null;
         }
-
         DateTimeFormatter fmt = DateTimeFormat.forPattern(pattern);
         return fmt.parseLocalDateTime(strDate).toDate();
     }
 
     /**
+     * 字符串转换成日期 DATE_PATTERN
+     *
+     * @param strDate 日期字符串
+     */
+    public static Date toDate(String strDate) {
+        if (KdlaStringHelp.isBlank(strDate)) {
+            return null;
+        }
+        return stringToDate(strDate, DATE_PATTERN);
+    }
+
+    /**
+     * 字符串转换成日期 DATE_TIME_PATTERN
+     *
+     * @param strDate 日期字符串
+     */
+    public static Date toTime(String strDate) {
+        if (KdlaStringHelp.isBlank(strDate)) {
+            return null;
+        }
+        return stringToDate(strDate, DATE_TIME_PATTERN);
+    }
+
+    /**
      * 根据周数，获取开始日期、结束日期
-     * @param week  周期  0本周，-1上周，-2上上周，1下周，2下下周
-     * @return  返回date[0]开始日期、date[1]结束日期
+     *
+     * @param week 周期  0本周，-1上周，-2上上周，1下周，2下下周
+     * @return 返回date[0]开始日期、date[1]结束日期
      */
     public static Date[] getWeekStartAndEnd(int week) {
         DateTime dateTime = new DateTime();
@@ -111,7 +155,7 @@ public class DateHelp {
     /**
      * 对日期的【秒】进行加/减
      *
-     * @param date 日期
+     * @param date    日期
      * @param seconds 秒数，负数为减
      * @return 加/减几秒后的日期
      */
@@ -123,7 +167,7 @@ public class DateHelp {
     /**
      * 对日期的【分钟】进行加/减
      *
-     * @param date 日期
+     * @param date    日期
      * @param minutes 分钟数，负数为减
      * @return 加/减几分钟后的日期
      */
@@ -135,7 +179,7 @@ public class DateHelp {
     /**
      * 对日期的【小时】进行加/减
      *
-     * @param date 日期
+     * @param date  日期
      * @param hours 小时数，负数为减
      * @return 加/减几小时后的日期
      */
@@ -159,7 +203,7 @@ public class DateHelp {
     /**
      * 对日期的【周】进行加/减
      *
-     * @param date 日期
+     * @param date  日期
      * @param weeks 周数，负数为减
      * @return 加/减几周后的日期
      */
@@ -171,7 +215,7 @@ public class DateHelp {
     /**
      * 对日期的【月】进行加/减
      *
-     * @param date 日期
+     * @param date   日期
      * @param months 月数，负数为减
      * @return 加/减几月后的日期
      */
@@ -183,7 +227,7 @@ public class DateHelp {
     /**
      * 对日期的【年】进行加/减
      *
-     * @param date 日期
+     * @param date  日期
      * @param years 年数，负数为减
      * @return 加/减几年后的日期
      */
@@ -193,8 +237,10 @@ public class DateHelp {
     }
 
     //=======================================
+
     /**
-     *  秒转换成具体时间
+     * 秒转换成具体时间
+     *
      * @param time
      * @return
      */
@@ -206,10 +252,9 @@ public class DateHelp {
         Long hour = 0L;
         Long minute = 0L;
         Long second = 0L;
-        if (time <= 0){
+        if (time <= 0) {
             return "00分钟00秒";
-        }
-        else {
+        } else {
             minute = time / 60;
             if (minute < 60) {
                 second = time % 60;
@@ -232,10 +277,9 @@ public class DateHelp {
      */
     private static String unitFormat(Long i) {
         String retStr = null;
-        if (i >= 0 && i < 10){
+        if (i >= 0 && i < 10) {
             retStr = "0" + Long.toString(i);
-        }
-        else {
+        } else {
             retStr = "" + i;
         }
         return retStr;
@@ -243,6 +287,7 @@ public class DateHelp {
 
     /**
      * 获得当前时间的ms
+     *
      * @return long
      */
     public static long now() {
@@ -251,17 +296,19 @@ public class DateHelp {
 
     /**
      * time to date
+     *
      * @param time
      * @return
      */
-    public static Date date(long time){
+    public static Date date(long time) {
         return new Date(time);
     }
 
     /**
      * 获得某时间的几天之前的时间 ms
+     *
      * @param timestamp 时间
-     * @param days 天数
+     * @param days      天数
      * @return long
      */
     public static long getTimeWithFewDaysAgo(final long timestamp, final int days) {
@@ -271,10 +318,12 @@ public class DateHelp {
         }
         return fewDaysAgo;
     }
+
     /**
      * 获得某时间的几天之前的时间 ms
+     *
      * @param timestamp 时间
-     * @param minutes  分钟数
+     * @param minutes   分钟数
      * @return long
      */
     public static long getTimeWithFewMinutes(final long timestamp, final int minutes) {
@@ -287,8 +336,9 @@ public class DateHelp {
 
     /**
      * 获得两个时间的间隔分钟数
+     *
      * @param begin 开始时间ms
-     * @param end  结束时间ms
+     * @param end   结束时间ms
      * @return long
      */
     public static long getMinutesBetween(final Optional<Long> begin, final Optional<Long> end) {

@@ -14,42 +14,40 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import top.kdla.framework.common.help.SelfSnowflakeGeneratorHelp;
 import top.kdla.framework.supplement.cache.lock.KdlaBizDisLockService;
-import top.kdla.framework.supplement.cache.lock.DistributeLockFactory;
-import top.kdla.framework.supplement.cache.lock.RedissonLockFactory;
-import top.kdla.framework.supplement.cache.lock.RedissonRedDisLock;
-import top.kdla.framework.supplement.cache.lock.properties.RedissonConfigProperties;
-
-import java.util.UUID;
+import top.kdla.framework.supplement.cache.lock.KDistributeLockFactory;
+import top.kdla.framework.supplement.cache.lock.KRedissonLockFactory;
+import top.kdla.framework.supplement.cache.lock.KRedissonRedDisLock;
+import top.kdla.framework.supplement.cache.lock.properties.KRedissonConfigProperties;
 
 /**
  * @author kll
  * @version $Id: RedissonAutoConfigure, v 0.1 2021/7/13 9:55 Exp $
  */
 @Configuration
-@ConditionalOnClass({RedissonRedDisLock.class})
-@EnableConfigurationProperties({RedissonConfigProperties.class})
+@ConditionalOnClass({KRedissonRedDisLock.class})
+@EnableConfigurationProperties({KRedissonConfigProperties.class})
 @Order
-public class RedissonAutoConfigure {
+public class KRedissonAutoConfigure {
     @Autowired
-    private RedissonConfigProperties config;
+    private KRedissonConfigProperties config;
     @Value("${app.id:}")
     private String appId;
 
     @Bean("disLockService")
-    public KdlaBizDisLockService disLockService(RedissonRedDisLock redissonRedDisLock){
+    public KdlaBizDisLockService disLockService(KRedissonRedDisLock redissonRedDisLock){
         return new KdlaBizDisLockService(redissonRedDisLock);
     }
 
     @Bean("redissonRedDisLock")
     @ConditionalOnMissingBean
-    public RedissonRedDisLock redissonRedDisLock(DistributeLockFactory distributeLockFactory) {
-        return new RedissonRedDisLock(distributeLockFactory);
+    public KRedissonRedDisLock redissonRedDisLock(KDistributeLockFactory distributeLockFactory) {
+        return new KRedissonRedDisLock(distributeLockFactory);
     }
 
     @Bean("distributeLockFactory")
-    public DistributeLockFactory distributeLockFactory() {
+    public KDistributeLockFactory distributeLockFactory() {
         String prefix = this.appId == null || "".equals(this.appId) ? SelfSnowflakeGeneratorHelp.generate() : this.appId;
-        return new RedissonLockFactory(this.config, prefix);
+        return new KRedissonLockFactory(this.config, prefix);
     }
 
 }

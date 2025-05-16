@@ -111,10 +111,10 @@ public class FieldValueFindHelp {
             field.set(sourceObject, result);
             field.setAccessible(false);
         } catch (RuntimeException e) {
-            log.error("findAndInjectValue failed,dto is:" + JacksonUtil.toJson(dto) + ",exception is:", e);
+            log.error("findAndInjectValue failed,dto is:{},exception is:", JacksonUtil.toJson(dto), e);
             throw e;
         } catch (Exception e) {
-            log.error("findAndInjectValue failed,dto is:" + JacksonUtil.toJson(dto) + ",exception is:", e);
+            log.error("findAndInjectValue failed,dto is:{},exception is:", JacksonUtil.toJson(dto), e);
             throw new RuntimeException("FieldValueFindHelper process failed");
         }
     }
@@ -172,10 +172,10 @@ public class FieldValueFindHelp {
                 dto.getField().setAccessible(false);
             }
         } catch (RuntimeException e) {
-            log.error("findAndInjectValue failed,dtoList is:" + JacksonUtil.toJson(dtoList) + ",exception is:", e);
+            log.error("findAndInjectValue failed,dtoList is:{},exception is:", JacksonUtil.toJson(dtoList), e);
             throw e;
         } catch (Exception e) {
-            log.error("findAndInjectValue failed,dtoList is:" + JacksonUtil.toJson(dtoList) + ",exception is:", e);
+            log.error("findAndInjectValue failed,dtoList is:{},exception is:", JacksonUtil.toJson(dtoList), e);
             throw new RuntimeException("FieldValueFindHelper process failed");
         }
     }

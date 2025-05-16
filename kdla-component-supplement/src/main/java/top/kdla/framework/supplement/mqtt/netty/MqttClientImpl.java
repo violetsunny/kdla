@@ -28,6 +28,7 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.Promise;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import top.kdla.framework.supplement.mqtt.MqttHandler;
 
@@ -62,8 +63,14 @@ final class MqttClientImpl implements MqttClient {
 
     private volatile Channel channel;
 
+    @Getter
     private volatile boolean disconnected = false;
+    @Getter
+    private volatile boolean connected = false;
+    @Getter
     private volatile boolean reconnect = false;
+    @Getter
+    private volatile boolean retry = false;
     private String host;
     private int port;
     private MqttClientCallback callback;
@@ -129,6 +136,11 @@ final class MqttClientImpl implements MqttClient {
 
         future.addListener((ChannelFutureListener) f -> {
             if (f.isSuccess()) {
+                if(log.isInfoEnabled()){
+                    log.info("mqtt broker {}:{} connected, client: {}", host, port, clientConfig.getClientId());
+                }
+                connected = true;
+                retry = false;
                 MqttClientImpl.this.channel = f.channel();
                 MqttClientImpl.this.channel.closeFuture().addListener((ChannelFutureListener) channelFuture -> {
                     if (isConnected()) {
@@ -149,9 +161,13 @@ final class MqttClientImpl implements MqttClient {
                     pendingPublishes.clear();
                     pendingSubscribeTopics.clear();
                     handlerToSubscription.clear();
+
+                    connected = false;
                     scheduleConnectIfRequired(host, port, true);
                 });
             } else {
+                log.error("mqtt broker {}:{} connect failed, client: {}, reason: ", host, port, clientConfig.getClientId(), f.cause());
+                connected = false;
                 scheduleConnectIfRequired(host, port, reconnect);
             }
         });
@@ -163,14 +179,29 @@ final class MqttClientImpl implements MqttClient {
             if (reconnect) {
                 this.reconnect = true;
             }
+//            if (retry) {
+//                log.info("mqtt broker {}:{} reconnected schedule now, client: {}", host, port, clientConfig.getClientId());
+//                return;
+//            }
+            retry = true;
             eventLoop.schedule((Runnable) () -> {
+                if (connected) {
+                    return;
+                }
+                //重连
                 connect(host, port, reconnect)
                         .addListener(cf -> {
                             MqttConnectResult result = (MqttConnectResult) cf.get();
                             if (result.isSuccess()) {
-                                log.info("mqtt broker {}:{} reconnected, client: {}", host, port, clientConfig.getClientId());
-                                reSubscribe();//重连时重新进行订阅
+                                //connected = true; connect已经变更
+                                //retry = false;
+                                if(log.isInfoEnabled()){
+                                    log.info("mqtt broker {}:{} reconnected, client: {}", host, port, clientConfig.getClientId());
+                                }
+                                //重连时一定要重新订阅topic
+                                reSubscribe();
                             } else {
+                                //connected = false;
                                 log.error("mqtt broker {}:{} reconnect failed, client: {}, reason: {}", host, port, clientConfig.getClientId(), result.getReturnCode());
                             }
                         });
@@ -417,10 +448,6 @@ final class MqttClientImpl implements MqttClient {
 
     ///////////////////////////////////////////// PRIVATE API /////////////////////////////////////////////
 
-    public boolean isReconnect() {
-        return reconnect;
-    }
-
     public void onSuccessfulReconnect() {
         if (callback != null) {
             callback.onSuccessfulReconnect();
@@ -566,7 +593,9 @@ final class MqttClientImpl implements MqttClient {
 
     private void reSubscribe() {
         for (String topic : this.subscriptionBackups.keySet()) {
-            log.info("{} {} reSubscribe", clientConfig.getClientId(), topic);
+            if(log.isInfoEnabled()){
+                log.info("{} {} reSubscribe", clientConfig.getClientId(), topic);
+            }
             MqttHandler handler = this.subscriptionBackups.get(topic);
             createSubscription(topic, handler, false, MqttQoS.AT_MOST_ONCE);
         }

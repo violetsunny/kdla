@@ -17,10 +17,10 @@ import java.util.concurrent.locks.Lock;
  * @version $Id: RedissonRedDisLock, v 0.1 2021/7/13 9:41 Exp $
  */
 @Slf4j
-public class RedissonRedDisLock implements DistributeLock {
-    private final DistributeLockFactory factory;
+public class KRedissonRedDisLock implements KDistributeLock {
+    private final KDistributeLockFactory factory;
 
-    public RedissonRedDisLock(DistributeLockFactory factory) {
+    public KRedissonRedDisLock(KDistributeLockFactory factory) {
         this.factory = factory;
     }
 
@@ -64,7 +64,7 @@ public class RedissonRedDisLock implements DistributeLock {
 
     @Override
     public boolean tryLock(String lockKey, TimeUnit unit, long waitTime, long leaseTime) {
-        throw new UnsupportedOperationException("Red lock not support the try lock method.");
+        throw new LockFailException("Red lock not support the try lock method.");
     }
 
     @Override

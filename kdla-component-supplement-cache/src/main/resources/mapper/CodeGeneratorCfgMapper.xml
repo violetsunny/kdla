@@ -21,7 +21,7 @@
     </sql>
 
     <select id="selectOne" parameterType="top.kdla.framework.supplement.cache.sequence.model.entity.CodeGeneratorCfg" resultMap="BaseResultMap">
-        select <include refid="Base_Column_List" /> from code_generator_cfg where code=#{code}
+        select <include refid="Base_Column_List" /> from code_generator_cfg where code = #{code}
         /*CodeGeneratorCfgMapper.selectOne*/
     </select>
 
@@ -66,10 +66,8 @@
     <update id="update">
         update
             code_generator_cfg
-        set
-            remark = #{remark}
-        where
-            code= #{code}
+        set remark = #{remark}
+        where code = #{code}
     </update>
 
 </mapper>

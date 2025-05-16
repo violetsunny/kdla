@@ -13,7 +13,7 @@ import lombok.Getter;
 @Getter
 public enum RedisClusterType {
     SINGLE,
-    MASTERSLAVE,
+    MASTER_SLAVE,
     SENTINEL,
     CLUSTER,
     REPLICATE,
