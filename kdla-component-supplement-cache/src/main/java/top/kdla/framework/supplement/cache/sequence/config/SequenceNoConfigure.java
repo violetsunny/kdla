@@ -14,7 +14,7 @@ import top.kdla.framework.supplement.cache.sequence.SequenceNoGeneratorV2;
 import top.kdla.framework.supplement.cache.sequence.mapper.CodeGeneratorCfgMapper;
 import top.kdla.framework.supplement.cache.sequence.mapper.CodeGeneratorCfgV2Mapper;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 /**
  * @author kll
