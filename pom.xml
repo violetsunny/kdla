@@ -39,7 +39,7 @@
         <!--spring.boot3.2.0以上是Spring-6.2,jdk版本要求至少jdk21以上,对maven版本的要求是3.8.6以上;-->
         <!--spring.cloud2023.0.0以上是spring.boot3.2.0 -->
         <!--
-        https://start.spring.io/actuator/info
+        https://start.spring.io/actuator/infoc
         "spring-ai": {
           "1.0.0-RC1": "Spring Boot >=3.4.0 and < 3.6.0-M1"
         },
@@ -51,12 +51,16 @@
         -->
         <spring.boot.version>3.4.0</spring.boot.version> <!-- Spring Boot 3.2.0 及以上支持 JDK 21 -->
         <spring.cloud.version>2024.0.1</spring.cloud.version> <!-- Spring Cloud 2023.0.0 及以上支持 Spring Boot 3.2.0+ -->
-        <!-- mybatis-spring-boot-starter的版本需要和spring-boot-starter匹配 -->
+        <!-- mybatis-spring-boot-starter的版本需要和spring-boot-starter匹配
+        "mybatis": {
+          "3.0.4": "Spring Boot >=3.3.0 and < 3.5.0-M1"
+        }
+        -->
         <mybatis-spring-boot.version>3.0.4</mybatis-spring-boot.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <mybatis-plus-boot.version>3.5.12</mybatis-plus-boot.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <!--架构配置 -->
         <!--项目工具配置 -->
-        <logback.version>1.4.11</logback.version> <!-- 升级到兼容 JDK 21 的版本 -->
+        <logback.version>1.5.18</logback.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <snakeyaml.version>2.3</snakeyaml.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <commons-lang3.version>3.15.0</commons-lang3.version> <!-- 兼容 JDK 21 -->
         <commons-io.version>2.16.0</commons-io.version> <!-- 升级到兼容 JDK 21 的版本 -->
@@ -68,9 +72,9 @@
         <commons-cli.version>1.5.0</commons-cli.version> <!-- 兼容 JDK 21 -->
         <joda.time.version>2.12.5</joda.time.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <guava.version>33.4.8-jre</guava.version> <!-- 升级到兼容 JDK 21 的版本 -->
-        <fastjson.version>2.0.52</fastjson.version> <!-- 升级到兼容 JDK 21 的版本 -->
+        <fastjson.version>2.0.57</fastjson.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <jsqlparser.version>4.7</jsqlparser.version> <!-- 升级到兼容 JDK 21 的版本 -->
-        <hutool-all.version>5.8.30</hutool-all.version> <!-- 升级到兼容 JDK 21 的版本 -->
+        <hutool-all.version>5.8.36</hutool-all.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <redisson-spring-boot.version>3.20.1</redisson-spring-boot.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <easyexcel.version>3.3.2</easyexcel.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <transmittable.version>2.14.3</transmittable.version> <!-- 升级到兼容 JDK 21 的版本 -->
