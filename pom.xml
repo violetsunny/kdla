@@ -21,6 +21,8 @@
         <module>kdla-component-reactor</module>
         <module>kdla-component-log</module>
         <module>kdla-component-supplement-job</module>
+        <module>kdla-component-supplement-trdplatformcloud</module>
+        <module>kdla-component-supplement-job-web</module>
     </modules>
     <packaging>pom</packaging>
     <name>${project.artifactId}:${project.version}</name>
@@ -30,8 +32,8 @@
         <!--基础配置 -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
         <java.version>21</java.version>
         <kdla.framework.version>2.0.0-SNAPSHOT</kdla.framework.version>
         <!--基础配置 -->
@@ -70,6 +72,7 @@
         <commons-math3.version>3.6.1</commons-math3.version> <!-- 该库较旧，未明确支持 JDK 21，需测试 -->
         <commons-httpclient.version>3.1</commons-httpclient.version> <!-- 该库较旧，已停止维护，不支持 JDK 21，建议替换为 Apache HttpClient -->
         <commons-cli.version>1.5.0</commons-cli.version> <!-- 兼容 JDK 21 -->
+        <commons-beanutils.version>1.11.0</commons-beanutils.version>
         <joda.time.version>2.12.5</joda.time.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <guava.version>33.4.8-jre</guava.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <fastjson.version>2.0.57</fastjson.version> <!-- 升级到兼容 JDK 21 的版本 -->
@@ -98,6 +101,8 @@
         <camel.version>4.11.0</camel.version> <!-- 兼容 JDK 21 -->
         <fluent-validator-spring.version>1.0.9</fluent-validator-spring.version> <!-- 该库较旧，未明确支持 JDK 21，需测试 -->
         <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
+        <springdoc.version>2.7.0</springdoc.version>
+        <knife4j.version>4.4.0</knife4j.version>
         <!--项目工具配置 -->
     </properties>
     <distributionManagement>
@@ -305,6 +310,12 @@
                 <groupId>commons-configuration</groupId>
                 <artifactId>commons-configuration</artifactId>
                 <version>${commons-configuration.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-beanutils</groupId>
+                <artifactId>commons-beanutils</artifactId>
+                <version>${commons-beanutils.version}</version>
             </dependency>
 
             <dependency>
@@ -517,6 +528,18 @@
                 <groupId>jakarta.annotation</groupId>
                 <artifactId>jakarta.annotation-api</artifactId>
                 <version>${jakarta.annotation.version}</version>
+            </dependency>
+
+            <!--swagger -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+                <version>${knife4j.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
