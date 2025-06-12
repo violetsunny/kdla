@@ -32,9 +32,9 @@ import top.kdla.framework.supplement.trdcloud.bo.*;
 import top.kdla.framework.supplement.trdcloud.cloud.*;
 import top.kdla.framework.supplement.trdcloud.enums.TrdPlatformEnum;
 import top.kdla.framework.supplement.trdcloud.repository.*;
-import top.kdla.framework.supplement.trdcloud.timer.manager.TimeJobManagerService;
-import top.kdla.framework.supplement.trdcloud.timer.manager.impl.EnnIotXxlJobManager;
-import top.kdla.framework.supplement.trdcloud.timer.manager.impl.LocalJobManager;
+import top.kdla.framework.supplement.timer.manager.TimeJobManagerService;
+import top.kdla.framework.supplement.timer.manager.impl.EnnIotXxlJobManager;
+import top.kdla.framework.supplement.timer.manager.impl.LocalJobManager;
 import top.kdla.framework.supplement.trdcloud.utils.StringUtil;
 
 import javax.annotation.Resource;

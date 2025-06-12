@@ -10,6 +10,9 @@
     </parent>
 
     <artifactId>kdla-component-supplement-trdplatformcloud</artifactId>
+    <packaging>jar</packaging>
+    <name>${project.artifactId}:${project.version}</name>
+    <description>${project.artifactId}</description>
 
     <properties>
         <maven.compiler.source>${java.version}</maven.compiler.source>
