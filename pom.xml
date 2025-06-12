@@ -21,6 +21,7 @@
         <module>kdla-component-reactor</module>
         <module>kdla-component-log</module>
         <module>kdla-component-supplement-job</module>
+        <module>kdla-component-supplement-trdplatformcloud</module>
     </modules>
     <packaging>pom</packaging>
     <name>${project.artifactId}:${project.version}</name>
@@ -62,6 +63,7 @@
         <commons-math3.version>3.6.1</commons-math3.version>
         <commons-httpclient.version>3.1</commons-httpclient.version>
         <commons-cli.version>1.5.0</commons-cli.version>
+        <commons-beanutils.version>1.11.0</commons-beanutils.version>
         <joda.time.version>2.9.9</joda.time.version>
         <guava.version>32.1.2-jre</guava.version>
         <fastjson.version>2.0.38</fastjson.version>
@@ -303,6 +305,12 @@
                 <groupId>commons-configuration</groupId>
                 <artifactId>commons-configuration</artifactId>
                 <version>${commons-configuration.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-beanutils</groupId>
+                <artifactId>commons-beanutils</artifactId>
+                <version>${commons-beanutils.version}</version>
             </dependency>
 
             <dependency>
