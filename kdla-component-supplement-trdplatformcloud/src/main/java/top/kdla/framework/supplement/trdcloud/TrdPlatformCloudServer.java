@@ -2,7 +2,7 @@
  * llkang.com Inc.
  * Copyright (c) 2010-2024 All Rights Reserved.
  */
-package top.kdla.framework.supplement.trdcloud.server;
+package top.kdla.framework.supplement.trdcloud;
 
 import com.alibaba.fastjson.JSONObject;
 import top.kdla.framework.supplement.trdcloud.cloud.*;
@@ -26,7 +26,7 @@ public interface TrdPlatformCloudServer {
 
     TrdPlatformTask taskWork(String pCode, String taskCode);
 
-    void operateTaskWork(TrdPlatformTask task,Integer operate,String jobType);
+    void operateTaskWork(TrdPlatformTaskMessage task,Integer operate);
 
     TrdPlatformAuthToken authRefreshToken(String pCode, Long api, TrdPlatformBody body) throws Exception;
 

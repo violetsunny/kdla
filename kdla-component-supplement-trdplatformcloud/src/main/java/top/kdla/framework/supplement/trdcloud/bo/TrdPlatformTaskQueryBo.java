@@ -12,7 +12,7 @@ public class TrdPlatformTaskQueryBo implements Serializable {
     /**
      * 平台code
      */
-    private String pCode;
+    private String platformCode;
 
     /**
      * 任务名称

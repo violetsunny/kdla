@@ -10,7 +10,7 @@ public class TrdPlatformApiQueryBo implements Serializable {
     /**
      * 平台code
      */
-    private String pCode;
+    private String platformCode;
 
     /**
      * 配置类型 ：认证、数据、分页

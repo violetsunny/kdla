@@ -9,7 +9,7 @@ public class TrdPlatformTaskPageQueryBo extends PageQuery {
     /**
      * 平台code
      */
-    private String pCode;
+    private String platformCode;
 
     /**
      * 任务名称

@@ -27,8 +27,10 @@ import top.kdla.framework.dto.PageResponse;
 import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.BizException;
 import top.kdla.framework.supplement.http.VertxHttpClient;
+import top.kdla.framework.supplement.trdcloud.TrdPlatformCloudServer;
 import top.kdla.framework.supplement.trdcloud.bo.*;
 import top.kdla.framework.supplement.trdcloud.cloud.*;
+import top.kdla.framework.supplement.trdcloud.enums.TrdPlatformEnum;
 import top.kdla.framework.supplement.trdcloud.repository.*;
 import top.kdla.framework.supplement.trdcloud.timer.manager.TimeJobManagerService;
 import top.kdla.framework.supplement.trdcloud.timer.manager.impl.EnnIotXxlJobManager;
@@ -73,6 +75,8 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
     private Boolean reslog;
     @Value("${kdla.trdcloud.switch.datasize:100}")
     private Integer dataSize;
+    @Value("${kdla.trdcloud.job:local}")
+    private String jobType;
 
     private static final String TOKEN_PRE = "TrdPlatformCloudAuth:";
     private static final String TASK_JOB = "TrdPlatformCloudTask:";
@@ -150,7 +154,7 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
     }
 
     public TrdPlatformReq reqContext(TrdPlatformTaskBo taskBo) throws Exception {
-        TrdPlatformInfoBo infoBo = trdPlatformInfoRepository.queryByCode(taskBo.getPCode());
+        TrdPlatformInfoBo infoBo = trdPlatformInfoRepository.queryByCode(taskBo.getPlatformCode());
         if (infoBo == null) {
             return null;
         }
@@ -170,7 +174,7 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
 
         TrdPlatformAuthToken authToken = null;
         if (apiBo.getAuthType() == TrdPlatformEnum.AuthWayEnum.TOKEN.getCode()) {
-            authToken = this.authToken(taskBo.getPCode(), apiBo.getAuthApi());
+            authToken = this.authToken(taskBo.getPlatformCode(), apiBo.getAuthApi());
         }
 
         List<TrdPlatformApiParamBo> paramRes = null;
@@ -197,7 +201,7 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
         reqTask.setBodies(bodies);
         reqTasks.add(reqTask);
         return TrdPlatformReq.builder()
-                .pCode(taskBo.getPCode())
+                .platformCode(taskBo.getPlatformCode())
                 .productId(taskBo.getProductId())
                 .reqChildren(reqTasks)
                 .build();
@@ -305,13 +309,13 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
         if (apiBo == null) {
             return null;
         }
-        TrdPlatformInfoBo infoBo = trdPlatformInfoRepository.queryByCode(apiBo.getPCode());
+        TrdPlatformInfoBo infoBo = trdPlatformInfoRepository.queryByCode(apiBo.getPlatformCode());
         if (infoBo == null) {
             return null;
         }
         TrdPlatformAuthToken authToken = null;
         if (apiBo.getAuthType() == TrdPlatformEnum.AuthWayEnum.TOKEN.getCode()) {
-            authToken = this.authToken(apiBo.getPCode(), apiBo.getAuthApi());
+            authToken = this.authToken(apiBo.getPlatformCode(), apiBo.getAuthApi());
         }
         List<TrdPlatformApiParam> params = null;
         List<TrdPlatformApiParamBo> paramRes = null;
@@ -521,7 +525,7 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
     }
 
     @Override
-    public void operateTaskWork(TrdPlatformTask task, Integer operate, String jobType) {
+    public void operateTaskWork(TrdPlatformTaskMessage task, Integer operate) {
         TimeJobManagerService timeJobManagerService = null;
         if ("local".equalsIgnoreCase(jobType)) {
             timeJobManagerService = ApplicationContextHelp.getBean(LocalJobManager.class);
@@ -537,12 +541,12 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
             return;
         }
 
-        String jobKey = TASK_JOB + task.getPCode() + "-" + task.getTaskCode();
-        String taskId = (String) redisTemplate.opsForValue().get(TASK_JOB + task.getPCode() + "-" + task.getTaskCode());
+        String jobKey = TASK_JOB + task.getPlatformCode() + "-" + task.getTaskCode();
+        String taskId = (String) redisTemplate.opsForValue().get(TASK_JOB + task.getPlatformCode() + "-" + task.getTaskCode());
 
         if (TrdPlatformEnum.ADD.getCode() == operate) {
             if (StringUtils.isNotBlank(taskId)) {
-                log.info("{} {} {} {} 任务已经存在", task.getPCode(), task.getTaskCode(), task.getFrequency(), taskId);
+                log.info("{} {} {} {} 任务已经存在", task.getPlatformCode(), task.getTaskCode(), task.getFrequency(), taskId);
             } else {
                 addTask(timeJobManagerService, task, jobKey);
             }
@@ -559,21 +563,21 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
         }
     }
 
-    private void updateTaskStatus(TrdPlatformTask task) {
-        trdPlatformTaskRepository.updateTaskStatus(task.getPCode(), task.getProductId(), task.getTaskCode(), TrdPlatformEnum.TaskStatusEnum.START.getCode());
+    private void updateTaskStatus(TrdPlatformTaskMessage task) {
+        trdPlatformTaskRepository.updateTaskStatus(task.getPlatformCode(), task.getProductId(), task.getTaskCode(), TrdPlatformEnum.TaskStatusEnum.START.getCode());
     }
 
-    private synchronized void addTask(TimeJobManagerService timeJobManagerService, TrdPlatformTask task, String jobKey) {
-        String taskIdRe = timeJobManagerService.register(task.getTaskName(), task.getFrequency(), "CloudJob", task.getPCode() + "," + task.getTaskCode());
+    private synchronized void addTask(TimeJobManagerService timeJobManagerService, TrdPlatformTaskMessage task, String jobKey) {
+        String taskIdRe = timeJobManagerService.register(task.getTaskName(), task.getFrequency(), "CloudJob", task.getPlatformCode() + "," + task.getTaskCode());
         redisTemplate.opsForValue().set(jobKey, taskIdRe);
-        log.info("{} {} {} 启动成功", task.getPCode(), task.getTaskCode(), task.getFrequency());
+        log.info("{} {} {} 启动成功", task.getPlatformCode(), task.getTaskCode(), task.getFrequency());
         updateTaskStatus(task);
     }
 
-    private synchronized void removeTask(TimeJobManagerService timeJobManagerService, TrdPlatformTask task, String jobKey, String taskId) {
+    private synchronized void removeTask(TimeJobManagerService timeJobManagerService, TrdPlatformTaskMessage task, String jobKey, String taskId) {
         timeJobManagerService.unRegister(taskId);
         redisTemplate.delete(jobKey);
-        log.info("{} {} 删除成功", task.getPCode(), task.getTaskCode());
+        log.info("{} {} 删除成功", task.getPlatformCode(), task.getTaskCode());
     }
 
     public static boolean isValidCronExpression(String cronExpression) {

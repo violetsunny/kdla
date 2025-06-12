@@ -1,64 +1,84 @@
-package top.kdla.framework.supplement.trdcloud.entity;
+package top.kdla.framework.supplement.trdcloud.vo;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
 import java.util.Date;
 
-/**
- * @author ruanhong
- * @description trd_platform_task
- * @date 2024-03-13
- */
-
 @Data
-@TableName(value = "trd_platform_task", autoResultMap = true)
-public class TrdPlatformTaskEntity implements Serializable {
+@NoArgsConstructor
+@Schema(description = "三方云平台信息")
+public class TrdPlatformTaskVo implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * ID
      */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
+    @Schema(description = "ID")
     @JsonSerialize(using = ToStringSerializer.class)
     private Long id;
 
     /**
      * 任务code
      */
+    @Schema(description = "任务code")
     private String taskCode;
+
+    /**
+     * 平台Id
+     */
+    @Schema(description = "平台Id")
+    @JsonSerialize(using = ToStringSerializer.class)
+    private Long pId;
 
     /**
      * 平台code
      */
-    private String platformCode;
+    @Schema(description = "平台code")
+    private String pCode;
+
+    /**
+     * 平台名称
+     */
+    @Schema(description = "平台名称")
+    private String pName;
+
+    /**
+     * 平台类型
+     */
+    @Schema(description = "平台类型")
+    private Integer pType;
 
     /**
      * 任务名称
      */
+    @Schema(description = "任务名称")
     private String taskName;
 
     /**
      * 任务频率
      */
+    @Schema(description = "任务频率")
     private String frequency;
 
     /**
      * 接口ID
      */
+    @Schema(description = "接口ID")
     @JsonSerialize(using = ToStringSerializer.class)
     private Long apiId;
 
     /**
      * 产品ID
      */
+    @Schema(description = "产品ID")
     private String productId;
 
     /**
@@ -86,19 +106,8 @@ public class TrdPlatformTaskEntity implements Serializable {
     private Date updateTime;
 
     /**
-     * 状态
-     */
-    private Integer status;
-
-    /**
      * 备注
      */
     private String remark;
-
-    /**
-     * 是否删除[0:未删除，1:删除]
-     */
-    @TableLogic
-    private Integer isDelete;
 
 }

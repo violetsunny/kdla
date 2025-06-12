@@ -2,7 +2,7 @@
  * llkang.com Inc.
  * Copyright (c) 2010-2024 All Rights Reserved.
  */
-package top.kdla.framework.supplement.trdcloud.cloud;
+package top.kdla.framework.supplement.trdcloud.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

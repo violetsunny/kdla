@@ -34,13 +34,13 @@ public class TrdPlatformInfoRepository extends ServiceImpl<TrdPlatformInfoMapper
 
     public TrdPlatformInfoBo queryByCode(String code) {
         LambdaQueryChainWrapper<TrdPlatformInfoEntity> queryChainWrapper = this.lambdaQuery()
-                .eq(StringUtils.hasText(code), TrdPlatformInfoEntity::getPCode, code);
+                .eq(StringUtils.hasText(code), TrdPlatformInfoEntity::getPlatformCode, code);
         return trdPlatformInfoBoConverter.toTrdPlatformInfo(queryChainWrapper.one());
     }
 
     public List<TrdPlatformInfoBo> queryByType(Integer ptype) {
         LambdaQueryChainWrapper<TrdPlatformInfoEntity> queryChainWrapper = this.lambdaQuery()
-                .eq(ptype!=null, TrdPlatformInfoEntity::getPType, ptype);
+                .eq(ptype!=null, TrdPlatformInfoEntity::getPlatformType, ptype);
         return trdPlatformInfoBoConverter.toTrdPlatformInfos(queryChainWrapper.list());
     }
 

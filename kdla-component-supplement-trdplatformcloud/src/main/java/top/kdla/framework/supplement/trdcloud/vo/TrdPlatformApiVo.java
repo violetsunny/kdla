@@ -1,63 +1,64 @@
-package top.kdla.framework.supplement.trdcloud.entity;
+package top.kdla.framework.supplement.trdcloud.vo;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
 import java.util.Date;
 
-/**
- * @description trd_platform_info
- * @author ruanhong
- * @date 2024-03-13
- */
 @Data
-@TableName(value = "trd_platform_info", autoResultMap = true)
-public class TrdPlatformInfoEntity implements Serializable {
+@NoArgsConstructor
+@Schema(description = "Api基本信息")
+public class TrdPlatformApiVo implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * ID
      */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
     @JsonSerialize(using = ToStringSerializer.class)
     private Long id;
 
     /**
-     * 平台类别
-     */
-    private Integer platformType;
-
-    /**
      * 平台code
      */
-    private String platformCode;
+    @Schema(description = "平台code")
+    private String pCode;
 
     /**
-     * 平台名字
+     * 配置类型 ：认证、数据、分页
      */
-    private String platformName;
+    @Schema(description = "配置类型:认证、数据、分页")
+    private Integer apiType;
 
     /**
-     * 来源
+     * 接口名称
      */
-    private String platformSource;
+    @Schema(description = "接口名称")
+    private String apiName;
 
     /**
-     * 配置参数json(appkey、域名等)
+     * 接口URL
      */
-    private String configJson;
+    @Schema(description = "接口URL")
+    private String fullUrl;
 
     /**
-     * 协议Id
+     * 接口方法
      */
-    private String protocolId;
+    @Schema(description = "接口方法")
+    private String method;
+
+    /**
+     * 功能类型 1 上数 2 下控
+     */
+    @Schema(description = "功能类型[1:上数,2:下控]")
+    private Integer functionType;
 
     /**
      * 创建人
@@ -84,19 +85,8 @@ public class TrdPlatformInfoEntity implements Serializable {
     private Date updateTime;
 
     /**
-     * 0 无效、1有效
-     */
-    private Integer status;
-
-    /**
      * 备注
      */
     private String remark;
-
-    /**
-     * 是否删除[0:未删除，1:删除]
-     */
-    @TableLogic
-    private Integer isDelete;
 
 }

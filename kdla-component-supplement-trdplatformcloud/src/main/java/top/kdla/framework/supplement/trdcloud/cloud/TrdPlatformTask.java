@@ -4,7 +4,6 @@
  */
 package top.kdla.framework.supplement.trdcloud.cloud;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,8 +20,8 @@ import lombok.Setter;
 public class TrdPlatformTask {
 
     private Long id;
-    @JsonProperty("pcode")
-    private String pCode;
+
+    private String platformCode;
 
     private String taskCode;
 

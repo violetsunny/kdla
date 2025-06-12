@@ -21,7 +21,7 @@ public class TrdPlatformTaskMessage {
 
     private Long id;
 
-    private String PCode;
+    private String platformCode;
 
     private String taskCode;
 

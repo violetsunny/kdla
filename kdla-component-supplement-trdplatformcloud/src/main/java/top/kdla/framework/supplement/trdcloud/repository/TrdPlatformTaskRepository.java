@@ -35,13 +35,13 @@ public class TrdPlatformTaskRepository extends ServiceImpl<TrdPlatformTaskMapper
 
     public List<TrdPlatformTaskBo> queryByCode(String code) {
         LambdaQueryChainWrapper<TrdPlatformTaskEntity> queryChainWrapper = this.lambdaQuery()
-                .eq(StringUtils.hasText(code), TrdPlatformTaskEntity::getPCode, code);
+                .eq(StringUtils.hasText(code), TrdPlatformTaskEntity::getPlatformCode, code);
         return trdPlatformTaskBoConverter.toTrdPlatformTasks(queryChainWrapper.list());
     }
 
     public TrdPlatformTaskBo searchByCode(String code,String productId,String taskCode) {
         LambdaQueryChainWrapper<TrdPlatformTaskEntity> queryChainWrapper = this.lambdaQuery()
-                .eq(StringUtils.hasText(code), TrdPlatformTaskEntity::getPCode, code)
+                .eq(StringUtils.hasText(code), TrdPlatformTaskEntity::getPlatformCode, code)
                 .eq(StringUtils.hasText(productId), TrdPlatformTaskEntity::getProductId, productId)
                 .eq(StringUtils.hasText(taskCode), TrdPlatformTaskEntity::getTaskCode, taskCode);
         return trdPlatformTaskBoConverter.toTrdPlatformTask(queryChainWrapper.one());
@@ -50,7 +50,7 @@ public class TrdPlatformTaskRepository extends ServiceImpl<TrdPlatformTaskMapper
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateTaskStatus(String code, String productId, String taskCode,Integer status) {
         return lambdaUpdate().set(TrdPlatformTaskEntity::getStatus, status)
-                .eq(StringUtils.hasText(code), TrdPlatformTaskEntity::getPCode, code)
+                .eq(StringUtils.hasText(code), TrdPlatformTaskEntity::getPlatformCode, code)
                 .eq(StringUtils.hasText(productId), TrdPlatformTaskEntity::getProductId, productId)
                 .eq(StringUtils.hasText(taskCode), TrdPlatformTaskEntity::getTaskCode, taskCode)
                 .update();

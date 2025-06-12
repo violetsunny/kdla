@@ -20,8 +20,7 @@ import java.util.List;
 @ToString
 @Builder
 public class TrdPlatformReq {
-    @JsonProperty("pcode")
-    private String pCode;
+    private String platformCode;
 
     private List<TrdPlatformReqTask> reqChildren;
 
