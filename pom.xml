@@ -103,6 +103,9 @@
         <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
         <springdoc.version>2.7.0</springdoc.version>
         <knife4j.version>4.4.0</knife4j.version>
+        <javax.annotation.version>1.3.2</javax.annotation.version>
+        <javax.servlet.version>3.1.0</javax.servlet.version>
+        <javax.validation.version>2.0.1.Final</javax.validation.version>
         <!--项目工具配置 -->
     </properties>
     <distributionManagement>
@@ -540,6 +543,22 @@
                 <groupId>com.github.xiaoymin</groupId>
                 <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
                 <version>${knife4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.annotation</groupId>
+                <artifactId>javax.annotation-api</artifactId>
+                <version>${javax.annotation.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>${javax.servlet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.validation</groupId>
+                <artifactId>validation-api</artifactId>
+                <version>${javax.validation.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
