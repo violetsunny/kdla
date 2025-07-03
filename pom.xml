@@ -22,7 +22,7 @@
         <module>kdla-component-log</module>
         <module>kdla-component-supplement-job</module>
         <module>kdla-component-supplement-trdplatformcloud</module>
-        <module>kdla-component-supplement-job-web</module>
+        <module>kdla-component-supplement-job-application</module>
     </modules>
     <packaging>pom</packaging>
     <name>${project.artifactId}:${project.version}</name>

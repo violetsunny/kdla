@@ -48,8 +48,8 @@ public class SequenceNoGeneratorV2 {
         this.sequenceNoLockKey = sequenceNoLockKey;
     }
 
-    private static Map<String, Map<String, ConcurrentLinkedQueue<String>>> noCacheMap = new ConcurrentHashMap();
-    private static Map<String, GenerateNoRuleContainer> ruleContainerCacheMap = new ConcurrentHashMap();
+    private static final Map<String, Map<String, ConcurrentLinkedQueue<String>>> noCacheMap = new ConcurrentHashMap<>();
+    private static final Map<String, GenerateNoRuleContainer> ruleContainerCacheMap = new ConcurrentHashMap<>();
 
     private static final long WAITE_TIME = 1_000;
     private static final long LEASE_TIME = 10_000;
@@ -107,19 +107,17 @@ public class SequenceNoGeneratorV2 {
         ruleContainerCacheMap.put(code, ruleContainer);
         return ruleContainer;
     }
+
     private GenerateNoRuleContainer buildGenerateNoRuleContainer(CodeGeneratorCfgV2 cfg) {
         Map<String, Object> map = JacksonUtil.toMap(cfg.getRule(), String.class, Object.class);
         GenerateNoRuleContainer container = new GenerateNoRuleContainer();
         container.setEpochRule(JacksonUtil.toBean(JacksonUtil.toJson(map.get("epochRule")), EpochRule.class));
         container.setRules(new ArrayList<>());
-        List rules = JacksonUtil.toList(JacksonUtil.toJson(map.get("rules")),Object.class);
+        List rules = JacksonUtil.toList(JacksonUtil.toJson(map.get("rules")), Object.class);
         for (Object rule : rules) {
             Map ruleMap = JacksonUtil.toMap(JacksonUtil.toJson(rule), String.class, Object.class);
             String ruleType = (String) ruleMap.get("ruleType");
             RuleTypeEnum ruleTypeEnum = RuleTypeEnum.getByCode(ruleType);
-            if (ruleTypeEnum == null) {
-                throw new BizException("不合法的ruleType:"+ruleType);
-            }
             GenerateNoRule generateNoRule = new GenerateNoRule();
             generateNoRule.setRuleType(ruleTypeEnum);
             generateNoRule.setOrder((Integer) ruleMap.get("order"));
@@ -147,7 +145,8 @@ public class SequenceNoGeneratorV2 {
         }
         return sequenceNo;
     }
-    private String createNo(String code,Long epoch) throws Exception {
+
+    private String createNo(String code, Long epoch) throws Exception {
         synchronized (this) {
             //进入同步块后，再次尝试从缓存中获取编号
             String sequenceNo = getSequenceNoFromLocalCache(code, epoch);
@@ -155,14 +154,10 @@ public class SequenceNoGeneratorV2 {
                 return sequenceNo;
             }
 
-            RLock lock = redissonRedDisLock.lock(sequenceNoLockKey + code);
-            boolean isLocked = false;
+            RLock lock = null;
             try {
-                isLocked = lock.tryLock(WAITE_TIME, LEASE_TIME, TimeUnit.MILLISECONDS);
-                if (!isLocked) {
-                    log.warn("createNo failed,get lock failed");
-                    throw new BizException("生成流水号失败");
-                }
+                //isLocked = lock.tryLock(WAITE_TIME, LEASE_TIME, TimeUnit.MILLISECONDS);
+                lock = redissonRedDisLock.lock(sequenceNoLockKey + code, TimeUnit.MILLISECONDS, WAITE_TIME, LEASE_TIME);
                 //各种锁加上后，开始生成编号,这里开始会和数据库打交道，导致数据变更
                 sequenceNo = generateSequenceNo(code);
             } catch (Exception e) {
@@ -171,7 +166,9 @@ public class SequenceNoGeneratorV2 {
                 throw new BizException("获取流水号失败");
             } finally {
                 try {
-                    lock.unlock();
+                    if (lock != null) {
+                        lock.unlock();
+                    }
                 } catch (Exception e) {
                     if (log.isWarnEnabled()) {
                         log.warn("createNo,unlock failed,exception is:", e);
@@ -236,7 +233,6 @@ public class SequenceNoGeneratorV2 {
     }
 
     private String generateFromRule(GenerateNoInfoContext generateNoInfoContext, GenerateNoRule rule) {
-
         RuleTypeEnum ruleType = rule.getRuleType();
         String newSequenceNo = null;
         switch (ruleType) {
@@ -260,7 +256,7 @@ public class SequenceNoGeneratorV2 {
 
     private String generateFromSEQRule(GenerateNoInfoContext generateNoInfoContext, GenerateNoRule rule) {
         SequenceTypeRule sequenceTypeRule = (SequenceTypeRule) rule.getRuleContent();
-        Long newMaxValue = Long.valueOf(generateNoInfoContext.getCfg().getMaxValue(), ((SequenceTypeRule) rule.getRuleContent()).getRadix()) +1;
+        long newMaxValue = Long.valueOf(generateNoInfoContext.getCfg().getMaxValue(), ((SequenceTypeRule) rule.getRuleContent()).getRadix()) + 1;
         String newMaxValueStr = Long.toString(newMaxValue, sequenceTypeRule.getRadix());
         newMaxValueStr = StringUtils.leftPad(newMaxValueStr, sequenceTypeRule.getSize(), "0");
         generateNoInfoContext.getCfg().setMaxValue(newMaxValueStr);

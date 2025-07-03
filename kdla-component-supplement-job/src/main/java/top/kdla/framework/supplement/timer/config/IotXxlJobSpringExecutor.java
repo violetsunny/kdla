@@ -9,7 +9,7 @@ import org.springframework.context.ApplicationContextAware;
 import com.xxl.job.core.executor.XxlJobExecutor;
 import com.xxl.job.core.glue.GlueFactory;
 import com.xxl.job.core.handler.IJobHandler;
-import top.kdla.framework.supplement.timer.annotation.EnnIotXxlJob;
+import top.kdla.framework.supplement.timer.annotation.IotXxlJob;
 
 import java.util.Map;
 
@@ -20,7 +20,7 @@ import java.util.Map;
  * @author xuxueli 2018-11-01 09:24:52
  */
 @Slf4j
-public class EnnIotXxlJobSpringExecutor extends XxlJobExecutor implements ApplicationContextAware, SmartInitializingSingleton, DisposableBean {
+public class IotXxlJobSpringExecutor extends XxlJobExecutor implements ApplicationContextAware, SmartInitializingSingleton, DisposableBean {
 
 
     // start
@@ -78,12 +78,12 @@ public class EnnIotXxlJobSpringExecutor extends XxlJobExecutor implements Applic
             return;
         }
 
-        Map<String, Object> serviceBeanMap = applicationContext.getBeansWithAnnotation(EnnIotXxlJob.class);
-        if (serviceBeanMap.size() > 0) {
+        Map<String, Object> serviceBeanMap = applicationContext.getBeansWithAnnotation(IotXxlJob.class);
+        if (!serviceBeanMap.isEmpty()) {
 
             for (Object serviceBean : serviceBeanMap.values()) {
                 if (serviceBean instanceof IJobHandler) {
-                    String name = ((EnnIotXxlJob) serviceBean.getClass().getAnnotation(EnnIotXxlJob.class)).value();
+                    String name = ((IotXxlJob) serviceBean.getClass().getAnnotation(IotXxlJob.class)).value();
                     IJobHandler handler = (IJobHandler) serviceBean;
                     if (loadJobHandler(name) != null) {
                         throw new RuntimeException(String.format("EnnIotXxlJob jobhandler(%s) naming conflicts.", name));
@@ -101,7 +101,7 @@ public class EnnIotXxlJobSpringExecutor extends XxlJobExecutor implements Applic
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        EnnIotXxlJobSpringExecutor.applicationContext = applicationContext;
+        IotXxlJobSpringExecutor.applicationContext = applicationContext;
     }
 
     public static ApplicationContext getApplicationContext() {

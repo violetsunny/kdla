@@ -171,8 +171,8 @@ public class SpringRedisHelp {
     /**
      * 加锁
      *
-     * @param lockKey
-     * @param value
+     * @param lockKey 锁key
+     * @param value 请求id，当前持有锁的owner
      * @param expireTime 毫秒
      * @return
      */

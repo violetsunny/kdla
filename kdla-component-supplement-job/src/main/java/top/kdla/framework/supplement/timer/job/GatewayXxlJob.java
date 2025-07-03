@@ -4,11 +4,11 @@
  */
 package top.kdla.framework.supplement.timer.job;
 
+import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import com.xxl.job.core.context.XxlJobHelper;
-import top.kdla.framework.supplement.timer.annotation.EnnIotXxlJob;
-import top.kdla.framework.supplement.timer.handler.EnnIotXxlJobHandler;
+import top.kdla.framework.supplement.timer.annotation.IotXxlJob;
+import top.kdla.framework.supplement.timer.handler.IotXxlJobHandler;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -21,12 +21,11 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Component
-@EnnIotXxlJob("GatewayXxlJob")
-public class GatewayXxlJob extends EnnIotXxlJobHandler {
+@IotXxlJob("GatewayXxlJob")
+public class GatewayXxlJob extends IotXxlJobHandler {
 
     @Override
-    public   boolean doExecute(String jobParam) throws Exception {
-
+    public boolean doExecute(String jobParam) throws Exception {
         log.info("http poll job start,time:{},params:{}", new Date(), jobParam);
         for (int i = 0; i < 5; i++) {
             XxlJobHelper.log("beat at:" + i);
@@ -34,8 +33,6 @@ public class GatewayXxlJob extends EnnIotXxlJobHandler {
         }
         return true;
     }
-
-
 
 
     /**

@@ -50,9 +50,9 @@ public class XxlJobConfig {
 
     @Bean
     @ConditionalOnProperty(prefix = "xxl.enabled", name = "xxl", havingValue = "true")
-    public EnnIotXxlJobSpringExecutor xxlJobExecutor() {
+    public IotXxlJobSpringExecutor xxlJobExecutor() {
         logger.info(">>>>>>>>>>> xxl-job config init.");
-        EnnIotXxlJobSpringExecutor xxlJobSpringExecutor = new EnnIotXxlJobSpringExecutor();
+        IotXxlJobSpringExecutor xxlJobSpringExecutor = new IotXxlJobSpringExecutor();
         xxlJobSpringExecutor.setAdminAddresses(adminAddresses);
         xxlJobSpringExecutor.setAppname(appname);
         xxlJobSpringExecutor.setAddress(address);

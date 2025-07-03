@@ -6,6 +6,7 @@ import cn.hutool.cron.CronUtil;
 import cn.hutool.cron.pattern.CronPattern;
 import cn.hutool.cron.task.Task;
 import cn.hutool.json.JSONUtil;
+import com.xxl.job.core.handler.IJobHandler;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
@@ -17,9 +18,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-import com.xxl.job.core.handler.IJobHandler;
-import top.kdla.framework.supplement.timer.annotation.EnnIotXxlJob;
-import top.kdla.framework.supplement.timer.handler.EnnIotXxlJobHandler;
+import top.kdla.framework.supplement.timer.annotation.IotXxlJob;
+import top.kdla.framework.supplement.timer.handler.IotXxlJobHandler;
 import top.kdla.framework.supplement.timer.manager.TimeJobManagerService;
 import top.kdla.framework.supplement.timer.manager.model.XxlJobInfo;
 
@@ -38,13 +38,13 @@ public class LocalJobManager implements TimeJobManagerService, ApplicationContex
     private static final ConcurrentHashMap<String, String> TIME_TASK_MAP = new ConcurrentHashMap<>();
     private static final String TIME_TASK_CONSTANT = "ENN_IOT_LOCAL_JOB";
 
-    private static Map<String, EnnIotXxlJobHandler> SERVICE_BEAN_MAP = new HashMap<>();
+    private static final Map<String, IotXxlJobHandler> SERVICE_BEAN_MAP = new HashMap<>();
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
     @Override
-    public String register(String name,String cron, String handler, String param) {
-        String taskId = this.addJob(name,cron,handler,param);
+    public String register(String name, String cron, String handler, String param) {
+        String taskId = this.addJob(name, cron, handler, param);
         this.startJob(taskId);
         return taskId;
     }
@@ -57,7 +57,7 @@ public class LocalJobManager implements TimeJobManagerService, ApplicationContex
     }
 
     @Override
-    public String addJob(String name,String cron, String handler, String param) {
+    public String addJob(String name, String cron, String handler, String param) {
 
         XxlJobInfo xxlJobInfo = new XxlJobInfo(cron, handler, param).build();
         xxlJobInfo.setJobDesc(name);
@@ -82,14 +82,14 @@ public class LocalJobManager implements TimeJobManagerService, ApplicationContex
     public Boolean startJob(String taskId) {
 
         Object value = redisTemplate.opsForHash().get(TIME_TASK_CONSTANT, taskId);
-        if(value == null){
+        if (value == null) {
             return false;
         }
 
         XxlJobInfo xxlJobInfo = JSONUtil.toBean(String.valueOf(value), XxlJobInfo.class);
         xxlJobInfo.setTriggerStatus(1);
 
-        EnnIotXxlJobHandler iotXxlJobHandler = null;
+        IotXxlJobHandler iotXxlJobHandler = null;
         try {
             if (SERVICE_BEAN_MAP.containsKey(xxlJobInfo.getExecutorHandler())) {
                 iotXxlJobHandler = SERVICE_BEAN_MAP.get(xxlJobInfo.getExecutorHandler());
@@ -102,7 +102,7 @@ public class LocalJobManager implements TimeJobManagerService, ApplicationContex
             return false;
         }
 
-        EnnIotXxlJobHandler finalIotXxlJobHandler = iotXxlJobHandler;
+        IotXxlJobHandler finalIotXxlJobHandler = iotXxlJobHandler;
         String addTask = addTask(taskId, xxlJobInfo.getScheduleConf(), xxlJobInfo.getExecutorParam(), s -> {
             try {
                 finalIotXxlJobHandler.doExecute(s);
@@ -276,13 +276,13 @@ public class LocalJobManager implements TimeJobManagerService, ApplicationContex
     public void afterSingletonsInstantiated() {
         CronUtil.setMatchSecond(true);
         CronUtil.start();
-        Map<String, Object> serviceBeanMap = applicationContext.getBeansWithAnnotation(EnnIotXxlJob.class);
-        if (serviceBeanMap.size() > 0) {
+        Map<String, Object> serviceBeanMap = applicationContext.getBeansWithAnnotation(IotXxlJob.class);
+        if (!serviceBeanMap.isEmpty()) {
 
             for (Object serviceBean : serviceBeanMap.values()) {
                 if (serviceBean instanceof IJobHandler) {
-                    String name = ((EnnIotXxlJob) serviceBean.getClass().getAnnotation(EnnIotXxlJob.class)).value();
-                    EnnIotXxlJobHandler handler = (EnnIotXxlJobHandler) serviceBean;
+                    String name = ((IotXxlJob) serviceBean.getClass().getAnnotation(IotXxlJob.class)).value();
+                    IotXxlJobHandler handler = (IotXxlJobHandler) serviceBean;
                     if (SERVICE_BEAN_MAP.containsKey(name)) {
                         throw new RuntimeException(String.format("LocalIotXxlJob jobhandler(%s) naming conflicts.", name));
                     }

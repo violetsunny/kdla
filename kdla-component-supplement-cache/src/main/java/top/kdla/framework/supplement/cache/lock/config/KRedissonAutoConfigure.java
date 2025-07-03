@@ -17,6 +17,7 @@ import top.kdla.framework.supplement.cache.lock.KdlaBizDisLockService;
 import top.kdla.framework.supplement.cache.lock.KDistributeLockFactory;
 import top.kdla.framework.supplement.cache.lock.KRedissonLockFactory;
 import top.kdla.framework.supplement.cache.lock.KRedissonRedDisLock;
+import top.kdla.framework.supplement.cache.lock.annotation.KDistributeLockedAspect;
 import top.kdla.framework.supplement.cache.lock.properties.KRedissonConfigProperties;
 
 /**
@@ -33,7 +34,12 @@ public class KRedissonAutoConfigure {
     @Value("${app.id:}")
     private String appId;
 
-    @Bean("disLockService")
+    @Bean
+    public KDistributeLockedAspect distributeLockedAspect(KRedissonRedDisLock redissonRedDisLock) {
+        return new KDistributeLockedAspect(redissonRedDisLock);
+    }
+
+    @Bean
     public KdlaBizDisLockService disLockService(KRedissonRedDisLock redissonRedDisLock){
         return new KdlaBizDisLockService(redissonRedDisLock);
     }
