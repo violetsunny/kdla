@@ -14,6 +14,9 @@ public class FieldValueFindConfigure {
 
     @Bean
     public FieldValueFindHelp fieldValueFindHelper() {
+        if (log.isInfoEnabled()) {
+            log.info("FieldValueFindHelp init Bean");
+        }
         return new FieldValueFindHelp();
     }
 

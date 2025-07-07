@@ -20,6 +20,18 @@ public @interface KUnblockDistributeLocked {
     String key();
 
     /**
+     * 锁超时时间 毫秒
+     * @return
+     */
+    long timeout() default 5000;
+
+    /**
+     * 锁自动释放时间 毫秒
+     * @return
+     */
+    long leaseTime() default 30000;
+
+    /**
      * key值是否为spel表达式
      *
      * @return

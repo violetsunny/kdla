@@ -5,9 +5,9 @@ import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.IJobHandler;
 
 @Slf4j
-public abstract class EnnIotXxlJobHandler extends IJobHandler {
+public abstract class IotXxlJobHandler extends IJobHandler {
 
-    public EnnIotXxlJobHandler() {
+    public IotXxlJobHandler() {
     }
 
     public void execute() {

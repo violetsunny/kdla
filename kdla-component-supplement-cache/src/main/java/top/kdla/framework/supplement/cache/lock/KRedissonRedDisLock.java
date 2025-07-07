@@ -75,11 +75,16 @@ public class KRedissonRedDisLock implements KDistributeLock {
 
     @Override
     public void unlock(Lock lock) {
-        if (!(lock instanceof RedissonRedLock)) {
-            return;
+        synchronized (this) {
+            if (lock == null) {
+                return;
+            }
+            if (!(lock instanceof RedissonRedLock)) {
+                return;
+            }
+            RedissonRedLock rdfaRedLock = (RedissonRedLock) lock;
+            rdfaRedLock.unlock();
         }
-        RedissonRedLock rdfaRedLock = (RedissonRedLock) lock;
-        rdfaRedLock.unlock();
     }
 }
 

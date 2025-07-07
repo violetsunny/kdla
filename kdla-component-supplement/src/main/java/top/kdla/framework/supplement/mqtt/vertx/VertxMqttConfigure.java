@@ -65,6 +65,9 @@ public class VertxMqttConfigure {
 
     @Bean
     public VertxMqttClient vertxMqttClient(MqttClient mqttClient) {
+        if (log.isInfoEnabled()) {
+            log.info("VertxHttpClient init Bean");
+        }
         return new VertxMqttClient(mqttClient);
     }
 

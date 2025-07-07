@@ -44,8 +44,8 @@ public class SequenceNoGenerator {
         this.sequenceNoLockKey = sequenceNoLockKey;
     }
 
-    private static Map<String, Map<String, ConcurrentLinkedQueue<String>>> noCacheMap = new ConcurrentHashMap<>();
-    private static Map<String, String> cfgRuleCacheMap = new ConcurrentHashMap<>();
+    private static final Map<String, Map<String, ConcurrentLinkedQueue<String>>> noCacheMap = new ConcurrentHashMap<>();
+    private static final Map<String, String> cfgRuleCacheMap = new ConcurrentHashMap<>();
 
     private static final int DEFAULT_CACHE_NUM = 1000;
     private static final char DEFAULT_FILL_CHAR = '0';
@@ -99,26 +99,20 @@ public class SequenceNoGenerator {
         synchronized (this) {
             sequenceNo = getSequenceNoFromLocalCache(code, key);
             if (sequenceNo == null) {
-                RLock lock = redissonRedDisLock.lock(sequenceNoLockKey + code);
-                boolean isLocked = false;
+                RLock lock = null;
                 try {
-                    isLocked = lock.tryLock(WAITE_TIME, LEASE_TIME, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
+                    lock = redissonRedDisLock.lock(sequenceNoLockKey + code, TimeUnit.MILLISECONDS, WAITE_TIME, LEASE_TIME);
+                    //isLocked = lock.tryLock(WAITE_TIME, LEASE_TIME, TimeUnit.MILLISECONDS);
+                } catch (Exception e) {
                     log.error("createNo,tryLock exception:", e);
                 }
-                if (!isLocked) {
-                    if (log.isWarnEnabled()) {
-                        log.warn("createNo failed,get lock failed");
-                    }
-                    throw new BizException("生成流水号失败");
-                }
                 try {
-                    if (sequenceNo == null) {
-                        sequenceNo = generateSequenceNo(code);
-                    }
+                    sequenceNo = generateSequenceNo(code);
                 } finally {
                     try {
-                        lock.unlock();
+                        if (lock != null) {
+                            lock.unlock();
+                        }
                     } catch (Exception e) {
                         if (log.isWarnEnabled()) {
                             log.warn("createNo,unlock failed,exception is:", e);
@@ -233,7 +227,7 @@ public class SequenceNoGenerator {
                 ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<>();
                 this.generate(cfg.getCacheNum(), headStr, dbMaxSequenceNo, dbMaxKey, lengthStr, cfg, queue);
                 returnSequence = queue.poll();
-                ConcurrentHashMap<String,ConcurrentLinkedQueue<String>> queueMap = new ConcurrentHashMap<>();
+                ConcurrentHashMap<String, ConcurrentLinkedQueue<String>> queueMap = new ConcurrentHashMap<>();
                 queueMap.put(headStr, queue);
                 noCacheMap.put(cfg.getCode(), queueMap);
             } else {

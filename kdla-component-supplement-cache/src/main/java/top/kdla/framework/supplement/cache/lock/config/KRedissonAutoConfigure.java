@@ -4,6 +4,7 @@
  */
 package top.kdla.framework.supplement.cache.lock.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -13,10 +14,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import top.kdla.framework.common.help.SelfSnowflakeGeneratorHelp;
-import top.kdla.framework.supplement.cache.lock.KdlaBizDisLockService;
 import top.kdla.framework.supplement.cache.lock.KDistributeLockFactory;
 import top.kdla.framework.supplement.cache.lock.KRedissonLockFactory;
 import top.kdla.framework.supplement.cache.lock.KRedissonRedDisLock;
+import top.kdla.framework.supplement.cache.lock.KdlaBizDisLockService;
+import top.kdla.framework.supplement.cache.lock.annotation.KDistributeLockedAspect;
 import top.kdla.framework.supplement.cache.lock.properties.KRedissonConfigProperties;
 
 /**
@@ -27,25 +29,43 @@ import top.kdla.framework.supplement.cache.lock.properties.KRedissonConfigProper
 @ConditionalOnClass({KRedissonRedDisLock.class})
 @EnableConfigurationProperties({KRedissonConfigProperties.class})
 @Order
+@Slf4j
 public class KRedissonAutoConfigure {
     @Autowired
     private KRedissonConfigProperties config;
     @Value("${app.id:}")
     private String appId;
 
-    @Bean("disLockService")
-    public KdlaBizDisLockService disLockService(KRedissonRedDisLock redissonRedDisLock){
+    @Bean
+    public KDistributeLockedAspect distributeLockedAspect(KRedissonRedDisLock redissonRedDisLock) {
+        if (log.isInfoEnabled()) {
+            log.info("KDistributeLockedAspect init Bean");
+        }
+        return new KDistributeLockedAspect(redissonRedDisLock);
+    }
+
+    @Bean
+    public KdlaBizDisLockService disLockService(KRedissonRedDisLock redissonRedDisLock) {
+        if (log.isInfoEnabled()) {
+            log.info("KdlaBizDisLockService init Bean");
+        }
         return new KdlaBizDisLockService(redissonRedDisLock);
     }
 
     @Bean("redissonRedDisLock")
     @ConditionalOnMissingBean
     public KRedissonRedDisLock redissonRedDisLock(KDistributeLockFactory distributeLockFactory) {
+        if (log.isInfoEnabled()) {
+            log.info("KRedissonRedDisLock init Bean");
+        }
         return new KRedissonRedDisLock(distributeLockFactory);
     }
 
     @Bean("distributeLockFactory")
     public KDistributeLockFactory distributeLockFactory() {
+        if (log.isInfoEnabled()) {
+            log.info("KDistributeLockFactory init Bean");
+        }
         String prefix = this.appId == null || "".equals(this.appId) ? SelfSnowflakeGeneratorHelp.generate() : this.appId;
         return new KRedissonLockFactory(this.config, prefix);
     }

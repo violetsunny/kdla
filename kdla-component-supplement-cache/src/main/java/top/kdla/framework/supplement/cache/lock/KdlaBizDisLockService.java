@@ -12,10 +12,10 @@ import java.util.function.Supplier;
 @Slf4j
 public class KdlaBizDisLockService {
 
-    private final KRedissonRedDisLock redDisLock;
+    private final KRedissonRedDisLock redissonRedDisLock;
 
     public KdlaBizDisLockService(KRedissonRedDisLock redDisLock) {
-        this.redDisLock = redDisLock;
+        this.redissonRedDisLock = redDisLock;
     }
 
     /**
@@ -68,13 +68,13 @@ public class KdlaBizDisLockService {
      */
     public synchronized <T> T biz(String lockKey, Predicate<String> dbPredicate, Supplier<T> bizSupplier, ErrorCodeI errCode) {
         RLock lock = null;
-        boolean lockRst = false;
+        //boolean lockRst = false;
         // must use try catch finnaly to lock and unlock!
         try {
-            lock = redDisLock.lock(lockKey);
-            // lock.lock()
+            lock = redissonRedDisLock.lock(lockKey);
+            // lock.tryLock()
             // 数据库锁
-            if (lock.tryLock() && (dbPredicate == null || dbPredicate.test(lockKey))) {
+            if (dbPredicate == null || dbPredicate.test(lockKey)) {
                 if (log.isInfoEnabled()) {
                     log.info("lock {} success!", lockKey);
                 }
@@ -85,13 +85,13 @@ public class KdlaBizDisLockService {
                     log.info("lock {} failed!", lockKey);
                 }
                 if (Objects.nonNull(errCode)) {
-                    throw new LockFailException(errCode.getCode(),lockKey+"-重复请求");
+                    throw new LockFailException(errCode.getCode(), lockKey + "-重复请求");
                 } else {
-                    throw new LockFailException(lockKey+"-重复请求");
+                    throw new LockFailException(lockKey + "-重复请求");
                 }
             }
         } finally {
-            if(lock!=null){
+            if (lock != null) {
                 lock.unlock();
             }
         }

@@ -1,31 +1,33 @@
 package top.kdla.framework.supplement.cache.lock.annotation;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.redisson.api.RLock;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
-import org.springframework.stereotype.Component;
-import top.kdla.framework.supplement.cache.lock.KRedissonLockFactory;
+import top.kdla.framework.exception.LockFailException;
+import top.kdla.framework.supplement.cache.lock.KRedissonRedDisLock;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @date 2021-05-17
  */
-@Component
 @Aspect
 @Slf4j
 public class KDistributeLockedAspect {
 
-    @Autowired
-    private KRedissonLockFactory redissonLockFactory;
+    private KRedissonRedDisLock redissonRedDisLock;
+
+    public KDistributeLockedAspect(KRedissonRedDisLock redissonRedDisLock) {
+        this.redissonRedDisLock = redissonRedDisLock;
+    }
 
     private static final String LOCK_KEY_PREFIX = "KUnblockDistributeLock:";
 
@@ -54,10 +56,12 @@ public class KDistributeLockedAspect {
         //Method method = jp.getTarget().getClass().getMethod(signature.getName(), signature.getParameterTypes());
         //UnblockDistributeLocked lockAction = method.getAnnotation(UnblockDistributeLocked.class);
 
-        String key = lockAction.key();
+        String lockKey = lockAction.key();
+        long timeout = lockAction.timeout();
+        long leaseTime = lockAction.leaseTime();
 
         //如果key值为空,不加锁,放行
-        if (StringUtils.isBlank(key)) {
+        if (lockKey == null || lockKey.trim().isEmpty()) {
             rvt = jp.proceed();
             return rvt;
         }
@@ -65,36 +69,36 @@ public class KDistributeLockedAspect {
         //如果是spel表达式,解析之
         if (lockAction.isSpelKey()) {
             ExpressionParser spelExpressionParser = new SpelExpressionParser();
-            Expression expression = spelExpressionParser.parseExpression(key);
+            Expression expression = spelExpressionParser.parseExpression(lockKey);
             EvaluationContext evalContext = new StandardEvaluationContext(jp.getArgs());
             evalContext.setVariable("args", jp.getArgs());
             Object eval = expression.getValue(evalContext);
-            key = eval == null ? "" : String.valueOf(eval);
+            lockKey = eval == null ? "" : String.valueOf(eval);
         }
 
         RLock lock = null;
         try {
-            key = LOCK_KEY_PREFIX + key;
+            //key = LOCK_KEY_PREFIX + key;
             if (log.isInfoEnabled()) {
-                log.info("KDistributeLockedAspect 开始尝试上锁");
+                log.info("KDistributeLockedAspect {} 开始尝试上锁", lockKey);
             }
             //非阻塞方法,取不到锁抛出LockFailException异常
-            lock = redissonLockFactory.getLock(key);
+            lock = redissonRedDisLock.lock(lockKey, TimeUnit.MILLISECONDS, timeout, leaseTime);
             //获取到锁
             if (lock != null) {
                 if (log.isInfoEnabled()) {
-                    log.info("KDistributeLockedAspect 上锁成功,执行业务代码");
+                    log.info("KDistributeLockedAspect {} 上锁成功,执行业务代码", lockKey);
                 }
                 rvt = jp.proceed();
             } else {
-                throw new Exception("KDistributeLockedAspect lock为空,未获取到锁");
+                throw new LockFailException("KDistributeLockedAspect " + lockKey + " lock为空,未获取到锁");
             }
         } catch (Exception e) {
             if (lockAction.throwEx()) {
-                throw new Exception("KDistributeLockedAspect 未获取到锁,请重新尝试");
+                throw new Exception("KDistributeLockedAspect " + lockKey + " 未获取到锁,请重新尝试");
             } else {
                 if (log.isWarnEnabled()) {
-                    log.warn("KDistributeLockedAspect 未获取到锁");
+                    log.warn("KDistributeLockedAspect {} 未获取到锁", lockKey);
                 }
             }
         } finally {

@@ -6,7 +6,7 @@ import java.lang.annotation.*;
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-public @interface EnnIotXxlJob {
+public @interface IotXxlJob {
 
     String value();
 
