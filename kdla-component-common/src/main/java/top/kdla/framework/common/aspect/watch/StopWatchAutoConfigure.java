@@ -1,20 +1,22 @@
 package top.kdla.framework.common.aspect.watch;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 /**
  * @author kll
  * @since 2021/7/9 14:15
  */
 @Configuration
+@Slf4j
 public class StopWatchAutoConfigure {
 
     @Bean
-    @ConditionalOnMissingBean
     public StopWatchWrapperAspect stopWatchWrapperAspect() {
+        if (log.isInfoEnabled()) {
+            log.info("StopWatchWrapperAspect init Bean");
+        }
         return new StopWatchWrapperAspect();
     }
 }

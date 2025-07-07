@@ -1,6 +1,7 @@
 package top.kdla.framework.supplement.http;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.Registry;
@@ -23,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 
 @Configuration
+@Slf4j
 public class RestHttpConfigure {
 
     @Value("${http.connectionPoolSize:200}")
@@ -40,6 +42,9 @@ public class RestHttpConfigure {
     @Bean
     @ConditionalOnMissingBean(BaseHttpClient.class)
     public BaseHttpClient baseHttpClient(RestTemplate restTemplate) {
+        if (log.isInfoEnabled()) {
+            log.info("BaseHttpClient init Bean");
+        }
         return new BaseHttpClient(restTemplate);
     }
 

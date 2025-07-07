@@ -8,6 +8,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +19,7 @@ import org.springframework.context.annotation.Configuration;
  * @version $Id: VertxHttpConfig, v 0.1 2023/5/18 10:22 kanglele Exp $
  */
 @Configuration
+@Slf4j
 public class VertxHttpConfigure {
 
     @Value("${http.connectionPoolSize:1000}")
@@ -41,6 +43,9 @@ public class VertxHttpConfigure {
     @Bean
     @ConditionalOnMissingBean(name = "vertxHttpClient")
     public VertxHttpClient vertxHttpClient(WebClient webClient,WebClient webClientHttps) {
+        if (log.isInfoEnabled()) {
+            log.info("VertxHttpClient init Bean");
+        }
         return new VertxHttpClient(webClient,webClientHttps);
     }
 
