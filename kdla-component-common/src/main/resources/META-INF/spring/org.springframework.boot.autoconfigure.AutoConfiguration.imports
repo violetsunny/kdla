@@ -1,3 +1,2 @@
-top.kdla.framework.exception.UnifiedExceptionControllerAdvice
+top.kdla.framework.common.aspect.mdc.MdcAutoConfigure
 top.kdla.framework.common.aspect.watch.StopWatchAutoConfigure
-top.kdla.framework.log.catchlog.CatchLogAutoConfigure
