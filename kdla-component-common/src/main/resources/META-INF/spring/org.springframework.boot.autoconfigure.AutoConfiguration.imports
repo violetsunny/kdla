@@ -1,2 +1,2 @@
-top.kdla.framework.common.aspect.mdc.MdcAutoConfigure
-top.kdla.framework.common.aspect.watch.StopWatchAutoConfigure
+#top.kdla.framework.common.aspect.mdc.MdcAutoConfigure
+#top.kdla.framework.common.aspect.watch.StopWatchAutoConfigure
