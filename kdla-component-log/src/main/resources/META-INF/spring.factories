@@ -1,2 +1,2 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration = \
-top.kdla.framework.log.catchlog.CatchLogAutoConfigure
+#org.springframework.boot.autoconfigure.EnableAutoConfiguration = \
+#top.kdla.framework.log.catchlog.CatchLogAutoConfigure

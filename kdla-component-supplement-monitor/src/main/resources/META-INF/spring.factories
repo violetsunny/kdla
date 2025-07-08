@@ -1,2 +1,2 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration =\
-top.kdla.framework.supplement.monitor.prometheus.annotation.PrometheusAutoConfigure
+#org.springframework.boot.autoconfigure.EnableAutoConfiguration =\
+#top.kdla.framework.supplement.monitor.prometheus.annotation.PrometheusAutoConfigure

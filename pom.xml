@@ -68,6 +68,7 @@
         <joda.time.version>2.9.9</joda.time.version>
         <guava.version>32.1.2-jre</guava.version>
         <fastjson.version>2.0.38</fastjson.version>
+        <lombok.version>1.18.32</lombok.version>
         <jsqlparser.version>3.2</jsqlparser.version>
         <hutool-all.version>5.8.21</hutool-all.version>
         <redisson-spring-boot.version>3.17.7</redisson-spring-boot.version>
