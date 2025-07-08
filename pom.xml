@@ -76,6 +76,7 @@
         <joda.time.version>2.12.5</joda.time.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <guava.version>33.4.8-jre</guava.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <fastjson.version>2.0.57</fastjson.version> <!-- 升级到兼容 JDK 21 的版本 -->
+        <lombok.version>1.18.32</lombok.version>
         <jsqlparser.version>4.7</jsqlparser.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <hutool-all.version>5.8.36</hutool-all.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <redisson-spring-boot.version>3.20.1</redisson-spring-boot.version> <!-- 升级到兼容 JDK 21 的版本 -->
