@@ -95,6 +95,7 @@
         <camel.version>3.22.2</camel.version>
         <springdoc.version>2.7.0</springdoc.version>
         <knife4j.version>4.4.0</knife4j.version>
+        <jbcrypt.version>0.4</jbcrypt.version>
         <!--项目工具配置 -->
     </properties>
     <distributionManagement>
@@ -527,6 +528,12 @@
                 <groupId>com.github.xiaoymin</groupId>
                 <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
                 <version>${knife4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mindrot</groupId>
+                <artifactId>jbcrypt</artifactId>
+                <version>${jbcrypt.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -437,6 +437,12 @@
             <artifactId>camel-spring-boot-starter</artifactId>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
 </project>

@@ -180,11 +180,27 @@ public class UnifiedExceptionControllerAdvice {
     /**
      * 其他异常
      */
-    @ExceptionHandler(Throwable.class)
+//    @ExceptionHandler(Throwable.class)
+//    @ResponseBody
+//    public Response handleThrowable(HttpServletRequest req, Throwable exception) {
+//        log.error("handleThrowable,url:{},Throwable:{}", req.getRequestURI(), ExceptionUtils.getStackTrace(exception));
+//        String errorMessage = exception.getMessage();
+//        if (exception instanceof ConstraintViolationException) {
+//            return Response.buildFailure(ErrorCode.FAIL.getCode(), errorMessage);
+//        }
+//        if (exception instanceof BindException) {
+//            return Response.buildFailure(ErrorCode.FAIL.getCode(), errorMessage);
+//        }
+//        return Response.buildFailure(ErrorCode.SYS_ERROR.getCode(), errorMessage);
+//    }
+
+    @ExceptionHandler({Throwable.class})
     @ResponseBody
-    public Response handleThrowable(HttpServletRequest req, Throwable exception) {
-        log.error("handleThrowable,url:{},Throwable:{}", req.getRequestURI(), ExceptionUtils.getStackTrace(exception));
+    public Response handleThrowable(WebRequest request, Throwable exception) {
+        String uri = request.getDescription(false); // 获取请求URI
+        log.error("handleThrowable,url:{},Throwable:{}", uri, ExceptionUtils.getStackTrace(exception));
         String errorMessage = exception.getMessage();
+        // 剩余代码保持不变
         if (exception instanceof ConstraintViolationException) {
             return Response.buildFailure(ErrorCode.FAIL.getCode(), errorMessage);
         }
@@ -193,5 +209,4 @@ public class UnifiedExceptionControllerAdvice {
         }
         return Response.buildFailure(ErrorCode.SYS_ERROR.getCode(), errorMessage);
     }
-
 }
