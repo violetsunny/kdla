@@ -1,5 +1,6 @@
 # kdla
 K-DDD-Layed-Application&amp;Architect
+### 依赖JDK1.8
 
 ## kdla-component-model
 基础数据模型：实体类，枚举类，异常类
@@ -46,7 +47,6 @@ K-DDD-Layed-Application&amp;Architect
 spring.factories 
 ```
 org.springframework.boot.autoconfigure.EnableAutoConfiguration = \
-top.kdla.framework.common.aspect.mdc.MdcAutoConfigure,\
 top.kdla.framework.common.aspect.watch.StopWatchAutoConfigure
 ```
 
