@@ -38,7 +38,7 @@ public class TrdPlatformInfoServiceImpl extends ServiceImpl<TrdPlatformInfoMappe
     public boolean isExistName(String name) {
         LambdaQueryWrapper<TrdPlatformInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TrdPlatformInfoEntity::getPlatformName, name)
-                .eq(TrdPlatformInfoEntity::getIsDelete,0);
+                .eq(TrdPlatformInfoEntity::getIsDelete, 0);
         List<TrdPlatformInfoEntity> list = trdPlatformInfoRepository.list(queryWrapper);
         return !CollectionUtils.isEmpty(list);
     }
@@ -47,7 +47,7 @@ public class TrdPlatformInfoServiceImpl extends ServiceImpl<TrdPlatformInfoMappe
     public TrdPlatformInfoEntity getByPCode(String pCode) {
         LambdaQueryWrapper<TrdPlatformInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TrdPlatformInfoEntity::getPlatformCode, pCode)
-                .eq(TrdPlatformInfoEntity::getIsDelete,0);
+                .eq(TrdPlatformInfoEntity::getIsDelete, 0);
         return trdPlatformInfoRepository.getOne(queryWrapper, false);
     }
 
@@ -55,7 +55,7 @@ public class TrdPlatformInfoServiceImpl extends ServiceImpl<TrdPlatformInfoMappe
     public Map<String, TrdPlatformInfoEntity> getByPCodes(List<String> pCodes) {
         LambdaQueryWrapper<TrdPlatformInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(TrdPlatformInfoEntity::getPlatformCode, pCodes)
-                .eq(TrdPlatformInfoEntity::getIsDelete,0);
+                .eq(TrdPlatformInfoEntity::getIsDelete, 0);
         List<TrdPlatformInfoEntity> list = trdPlatformInfoRepository.list(queryWrapper);
         return list.stream().collect(Collectors.toMap(TrdPlatformInfoEntity::getPlatformCode, Function.identity()));
     }
@@ -64,7 +64,7 @@ public class TrdPlatformInfoServiceImpl extends ServiceImpl<TrdPlatformInfoMappe
     public boolean isExistCode(String code) {
         LambdaQueryWrapper<TrdPlatformInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TrdPlatformInfoEntity::getPlatformCode, code)
-                .eq(TrdPlatformInfoEntity::getIsDelete,0);
+                .eq(TrdPlatformInfoEntity::getIsDelete, 0);
         List<TrdPlatformInfoEntity> list = trdPlatformInfoRepository.list(queryWrapper);
         return !CollectionUtils.isEmpty(list);
     }
@@ -84,7 +84,7 @@ public class TrdPlatformInfoServiceImpl extends ServiceImpl<TrdPlatformInfoMappe
         if (StringUtils.isNotBlank(trdPlatformInfoQueryBo.getPlatformSource())) {
             queryWrapper.eq(TrdPlatformInfoEntity::getPlatformSource, trdPlatformInfoQueryBo.getPlatformSource());
         }
-        queryWrapper.eq(TrdPlatformInfoEntity::getIsDelete,0);
+        queryWrapper.eq(TrdPlatformInfoEntity::getIsDelete, 0);
         List<TrdPlatformInfoEntity> list = trdPlatformInfoRepository.list(queryWrapper);
         return MultiResponse.buildSuccess(BeanUtil.copyToList(list, TrdPlatformInfoBo.class));
     }

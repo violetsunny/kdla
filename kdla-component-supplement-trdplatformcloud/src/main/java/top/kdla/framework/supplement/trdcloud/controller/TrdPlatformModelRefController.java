@@ -73,10 +73,10 @@ public class TrdPlatformModelRefController {
             return SingleResponse.buildFailure("10001", checkResult);
         }
         TrdPlatformInfoEntity trdPlatformInfo = trdPlatformInfoService.getByPCode(trdPlatformModelRefAddVo.getPlatformCode());
-        if(trdPlatformInfo==null){
-            return SingleResponse.buildFailure("10001", trdPlatformModelRefAddVo.getPlatformCode()+" 没有平台信息，请确认信息是否正确");
+        if (trdPlatformInfo == null) {
+            return SingleResponse.buildFailure("10001", trdPlatformModelRefAddVo.getPlatformCode() + " 没有平台信息，请确认信息是否正确");
         }
-        trdPlatformModelRefAddVo.setEnnModelSource(StringUtils.isNotBlank(trdPlatformModelRefAddVo.getEnnModelSource())?trdPlatformModelRefAddVo.getEnnModelSource():trdPlatformInfo.getPlatformSource());
+        trdPlatformModelRefAddVo.setEnnModelSource(StringUtils.isNotBlank(trdPlatformModelRefAddVo.getEnnModelSource()) ? trdPlatformModelRefAddVo.getEnnModelSource() : trdPlatformInfo.getPlatformSource());
         return SingleResponse.buildSuccess(trdPlatformModelRefService.save(trdPlatformModelRefAddVo.createEntity(trdPlatformModelRefAddVo, bladeAuth)));
     }
 
@@ -90,10 +90,10 @@ public class TrdPlatformModelRefController {
             return SingleResponse.buildFailure("10001", checkResult);
         }
         TrdPlatformInfoEntity trdPlatformInfo = trdPlatformInfoService.getByPCode(trdPlatformModelRefAddVo.getPlatformCode());
-        if(trdPlatformInfo==null){
-            return SingleResponse.buildFailure("10001", trdPlatformModelRefAddVo.getPlatformCode()+" 没有平台信息，请确认信息是否正确");
+        if (trdPlatformInfo == null) {
+            return SingleResponse.buildFailure("10001", trdPlatformModelRefAddVo.getPlatformCode() + " 没有平台信息，请确认信息是否正确");
         }
-        trdPlatformModelRefAddVo.setEnnModelSource(StringUtils.isNotBlank(trdPlatformModelRefAddVo.getEnnModelSource())?trdPlatformModelRefAddVo.getEnnModelSource():trdPlatformInfo.getPlatformSource());
+        trdPlatformModelRefAddVo.setEnnModelSource(StringUtils.isNotBlank(trdPlatformModelRefAddVo.getEnnModelSource()) ? trdPlatformModelRefAddVo.getEnnModelSource() : trdPlatformInfo.getPlatformSource());
         return SingleResponse.buildSuccess(trdPlatformModelRefService.updateById(trdPlatformModelRefAddVo.updateEntity(id, trdPlatformModelRefAddVo, bladeAuth)));
     }
 
@@ -103,7 +103,7 @@ public class TrdPlatformModelRefController {
         LambdaQueryWrapper<TrdPlatformMeasureRefEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.like(TrdPlatformMeasureRefEntity::getModelRefId, id);
         List<TrdPlatformMeasureRefEntity> list = trdPlatformMeasureRefService.list(queryWrapper);
-        if(CollectionUtil.isNotEmpty(list)){
+        if (CollectionUtil.isNotEmpty(list)) {
             return SingleResponse.buildFailure("10001", "当前模型映射下存在测点映射，请先删除测点映射!");
         }
         return SingleResponse.buildSuccess(trdPlatformModelRefService.removeById(id));
@@ -113,7 +113,7 @@ public class TrdPlatformModelRefController {
     @Operation(summary = "根据平台code查询模型映射")
     public MultiResponse<TrdPlatformModelRefVo> listByPlatformCode(@PathVariable String platformCode) {
         LambdaQueryWrapper<TrdPlatformModelRefEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TrdPlatformModelRefEntity::getPlatformCode, platformCode).eq(TrdPlatformModelRefEntity::getIsDelete,0);
+        queryWrapper.eq(TrdPlatformModelRefEntity::getPlatformCode, platformCode).eq(TrdPlatformModelRefEntity::getIsDelete, 0);
         List<TrdPlatformModelRefEntity> modelRefList = trdPlatformModelRefService.list(queryWrapper);
         if (CollectionUtils.isEmpty(modelRefList)) {
             return MultiResponse.buildSuccess();
@@ -132,7 +132,7 @@ public class TrdPlatformModelRefController {
     @Operation(summary = "查看物模型是否被绑定")
     public SingleResponse<Boolean> isBindModel(@PathVariable String ennModelId) {
         LambdaQueryWrapper<TrdPlatformModelRefEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TrdPlatformModelRefEntity::getEnnModelId, ennModelId).eq(TrdPlatformModelRefEntity::getIsDelete,0);
+        queryWrapper.eq(TrdPlatformModelRefEntity::getEnnModelId, ennModelId).eq(TrdPlatformModelRefEntity::getIsDelete, 0);
         return SingleResponse.buildSuccess(!CollectionUtils.isEmpty(trdPlatformModelRefService.list(queryWrapper)));
     }
 

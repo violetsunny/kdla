@@ -12,8 +12,8 @@ import top.kdla.framework.dto.MultiResponse;
 import top.kdla.framework.dto.SingleResponse;
 import top.kdla.framework.supplement.trdcloud.bo.TrdPlatformApiBo;
 import top.kdla.framework.supplement.trdcloud.bo.TrdPlatformApiQueryBo;
-import top.kdla.framework.supplement.trdcloud.enums.TrdPlatformEnum;
 import top.kdla.framework.supplement.trdcloud.entity.TrdPlatformApiParamEntity;
+import top.kdla.framework.supplement.trdcloud.enums.TrdPlatformEnum;
 import top.kdla.framework.supplement.trdcloud.server.trd.TrdPlatformApiService;
 import top.kdla.framework.supplement.trdcloud.utils.JwtUtil;
 import top.kdla.framework.supplement.trdcloud.vo.*;
@@ -57,7 +57,7 @@ public class TrdPlatformAPIController {
     public SingleResponse<?> save(@Valid @RequestBody TrdPlatformApiAddVo trdPlatformApiAddVo, @RequestHeader(value = "blade-auth", required = false) String bladeAuth) {
         TrdPlatformApiBo trdPlatformApiBo = BeanUtil.copyProperties(trdPlatformApiAddVo, TrdPlatformApiBo.class);
         trdPlatformApiBo.setPlatformCode(trdPlatformApiAddVo.getPlatformCode());
-        if (trdPlatformApiService.isExistName(trdPlatformApiAddVo.getPlatformCode(),trdPlatformApiAddVo.getApiName())) {
+        if (trdPlatformApiService.isExistName(trdPlatformApiAddVo.getPlatformCode(), trdPlatformApiAddVo.getApiName())) {
             return SingleResponse.buildFailure("10001", "名称已存在，请换一个试试");
         }
         trdPlatformApiBo.setHasParam(CollectionUtils.isEmpty(trdPlatformApiAddVo.getParamList()) ? 0 : 1);
@@ -78,7 +78,7 @@ public class TrdPlatformAPIController {
 
     @PutMapping("/{id}")
     @Operation(summary = "修改API")
-    public SingleResponse<Boolean> update(@PathVariable Long id, @Valid @RequestBody TrdPlatformApiAddVo trdPlatformApiAddVo,@RequestHeader(value = "blade-auth", required = false) String bladeAuth) {
+    public SingleResponse<Boolean> update(@PathVariable Long id, @Valid @RequestBody TrdPlatformApiAddVo trdPlatformApiAddVo, @RequestHeader(value = "blade-auth", required = false) String bladeAuth) {
         TrdPlatformApiBo trdPlatformApiBo = BeanUtil.copyProperties(trdPlatformApiAddVo, TrdPlatformApiBo.class);
         trdPlatformApiBo.setId(id);
         trdPlatformApiBo.setPlatformCode(trdPlatformApiAddVo.getPlatformCode());

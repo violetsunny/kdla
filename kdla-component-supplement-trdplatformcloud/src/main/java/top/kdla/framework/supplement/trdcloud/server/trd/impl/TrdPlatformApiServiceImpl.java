@@ -90,11 +90,11 @@ public class TrdPlatformApiServiceImpl extends ServiceImpl<TrdPlatformApiMapper,
     }
 
     @Override
-    public boolean isExistName(String code,String name) {
+    public boolean isExistName(String code, String name) {
         LambdaQueryWrapper<TrdPlatformApiEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TrdPlatformApiEntity::getPlatformCode,code)
-        .eq(TrdPlatformApiEntity::getApiName, name)
-        .eq(TrdPlatformApiEntity::getIsDelete,0);
+        queryWrapper.eq(TrdPlatformApiEntity::getPlatformCode, code)
+                .eq(TrdPlatformApiEntity::getApiName, name)
+                .eq(TrdPlatformApiEntity::getIsDelete, 0);
         List<TrdPlatformApiEntity> list = trdPlatformApiRepository.list(queryWrapper);
         return !CollectionUtils.isEmpty(list);
     }
@@ -103,7 +103,7 @@ public class TrdPlatformApiServiceImpl extends ServiceImpl<TrdPlatformApiMapper,
     public boolean isExistCode(String code) {
         LambdaQueryWrapper<TrdPlatformApiEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TrdPlatformApiEntity::getPlatformCode, code)
-                .eq(TrdPlatformApiEntity::getIsDelete,0);
+                .eq(TrdPlatformApiEntity::getIsDelete, 0);
         List<TrdPlatformApiEntity> list = trdPlatformApiRepository.list(queryWrapper);
         return !CollectionUtils.isEmpty(list);
     }

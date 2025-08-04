@@ -27,14 +27,14 @@ import top.kdla.framework.dto.PageResponse;
 import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.BizException;
 import top.kdla.framework.supplement.http.VertxHttpClient;
+import top.kdla.framework.supplement.timer.manager.TimeJobManagerService;
+import top.kdla.framework.supplement.timer.manager.impl.IotXxlJobManager;
+import top.kdla.framework.supplement.timer.manager.impl.LocalJobManager;
 import top.kdla.framework.supplement.trdcloud.TrdPlatformCloudServer;
 import top.kdla.framework.supplement.trdcloud.bo.*;
 import top.kdla.framework.supplement.trdcloud.cloud.*;
 import top.kdla.framework.supplement.trdcloud.enums.TrdPlatformEnum;
 import top.kdla.framework.supplement.trdcloud.repository.*;
-import top.kdla.framework.supplement.timer.manager.TimeJobManagerService;
-import top.kdla.framework.supplement.timer.manager.impl.IotXxlJobManager;
-import top.kdla.framework.supplement.timer.manager.impl.LocalJobManager;
 import top.kdla.framework.supplement.trdcloud.utils.StringUtil;
 
 import javax.annotation.Resource;
@@ -85,7 +85,9 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
 
     @Override
     public JSONObject sendRequest(String method, String url, Map<String, String> headers, Object req, Class res) throws Exception {
-        log.info("CloudDockingReqManage-send  url:{}  headers:{}  req:{}", url, JSON.toJSONString(headers), JSON.toJSONString(req));
+        if (log.isInfoEnabled()) {
+            log.info("TrdPlatformCloudServer send  url:{}  headers:{}  req:{}", url, JSON.toJSONString(headers), JSON.toJSONString(req));
+        }
 
         JSONObject jsonObject;
         try {
@@ -113,8 +115,8 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
                 jsonObject.put("headers", headerRes);//合并对象
             }
 
-            if (reslog) {
-                log.info("CloudDockingReqManage-res {} {}", url, JSON.toJSONString(jsonObject));
+            if (reslog && log.isInfoEnabled()) {
+                log.info("TrdPlatformCloudServer res {} {}", url, JSON.toJSONString(jsonObject));
             }
         } catch (Exception e) {
             throw new BizException(ErrorCode.FAIL.getCode(), "调用接口异常::%s", ExceptionUtils.getMessage(e));
@@ -276,7 +278,9 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
                 TrdPlatformBody countbody = this.createApi(countApi);
                 if (countbody != null) {
                     JSONObject countobj = this.sendRequest(countbody.getMethod(), countbody.getUrl(), countbody.getHeader(), countbody.getBody(), String.class);
-                    log.info("获取count:{}", countobj);
+                    if(log.isInfoEnabled()){
+                        log.info("TrdPlatformCloudServer 获取count:{}", countobj);
+                    }
                     if (countbody.getBodyAnalysisType() == TrdPlatformEnum.BodyParsingMethodEnum.JSON.getCode()) {
                         Object v = JSONPath.read(countobj.toJSONString(), countbody.getBodyAnalysisCode());
                         count = Integer.parseInt(String.valueOf(v));
@@ -349,7 +353,7 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
                     return authToken;
                 }
             } catch (Exception e) {
-                log.error("转换tokenBo error", e);
+                log.error("TrdPlatformCloudServer 转换tokenBo error", e);
             }
         }
         TrdPlatformBody body = this.createApi(authApi);
@@ -389,7 +393,7 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
                         authToken.setExpirationTime(String.valueOf(t));
                     }
                 } catch (Exception e) {
-                    log.warn("Exception", e);
+                    log.warn("TrdPlatformCloudServer Exception", e);
                 }
             }
 
@@ -439,7 +443,7 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
         try {
             BeanUtils.copyProperties(paramBoTwo, paramDto);
         } catch (Exception e) {
-            log.error("BeanUtils异常", e);
+            log.error("TrdPlatformCloudServer BeanUtils异常", e);
         }
         return paramBoTwo;
     }
@@ -546,7 +550,9 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
 
         if (TrdPlatformEnum.ADD.getCode() == operate) {
             if (StringUtils.isNotBlank(taskId)) {
-                log.info("{} {} {} {} 任务已经存在", task.getPlatformCode(), task.getTaskCode(), task.getFrequency(), taskId);
+                if(log.isInfoEnabled()){
+                    log.info("TrdPlatformCloudServer {} {} {} {} 任务已经存在", task.getPlatformCode(), task.getTaskCode(), task.getFrequency(), taskId);
+                }
             } else {
                 addTask(timeJobManagerService, task, jobKey);
             }
@@ -570,14 +576,18 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
     private synchronized void addTask(TimeJobManagerService timeJobManagerService, TrdPlatformTaskMessage task, String jobKey) {
         String taskIdRe = timeJobManagerService.register(task.getTaskName(), task.getFrequency(), "CloudJob", task.getPlatformCode() + "," + task.getTaskCode());
         redisTemplate.opsForValue().set(jobKey, taskIdRe);
-        log.info("{} {} {} 启动成功", task.getPlatformCode(), task.getTaskCode(), task.getFrequency());
+        if(log.isInfoEnabled()){
+            log.info("TrdPlatformCloudServer {} {} {} 启动成功", task.getPlatformCode(), task.getTaskCode(), task.getFrequency());
+        }
         updateTaskStatus(task);
     }
 
     private synchronized void removeTask(TimeJobManagerService timeJobManagerService, TrdPlatformTaskMessage task, String jobKey, String taskId) {
         timeJobManagerService.unRegister(taskId);
         redisTemplate.delete(jobKey);
-        log.info("{} {} 删除成功", task.getPlatformCode(), task.getTaskCode());
+        if(log.isInfoEnabled()){
+            log.info("TrdPlatformCloudServer {} {} 删除成功", task.getPlatformCode(), task.getTaskCode());
+        }
     }
 
     public static boolean isValidCronExpression(String cronExpression) {
@@ -613,7 +623,7 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
                     }
                 }
             } catch (Exception e) {
-                log.warn("EnnewDeviceContext modelRef exception {}", e.getMessage());
+                log.warn("TrdPlatformCloudServer modelRef exception {}", e.getMessage());
             }
         } else {
             return modelRef;

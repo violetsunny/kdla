@@ -25,7 +25,7 @@ public class TrdPlatformMeasureRefServiceImpl extends ServiceImpl<TrdPlatformMea
     public String entityParamCheck(TrdPlatformMeasureRefEntity trdPlatformMeasureRefEntity) {
         LambdaQueryWrapper<TrdPlatformMeasureRefEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TrdPlatformMeasureRefEntity::getModelRefId, trdPlatformMeasureRefEntity.getModelRefId());
-        queryWrapper.eq(TrdPlatformMeasureRefEntity::getIsDelete,0);
+        queryWrapper.eq(TrdPlatformMeasureRefEntity::getIsDelete, 0);
         if (trdPlatformMeasureRefEntity.getId() != null) {
             queryWrapper.ne(TrdPlatformMeasureRefEntity::getId, trdPlatformMeasureRefEntity.getId());
         }

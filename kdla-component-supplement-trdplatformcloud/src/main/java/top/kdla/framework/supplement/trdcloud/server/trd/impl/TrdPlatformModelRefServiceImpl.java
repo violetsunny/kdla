@@ -33,7 +33,7 @@ public class TrdPlatformModelRefServiceImpl extends ServiceImpl<TrdPlatformModel
     public String entityParamCheck(TrdPlatformModelRefEntity trdPlatformModelRefEntity) {
         LambdaQueryWrapper<TrdPlatformModelRefEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TrdPlatformModelRefEntity::getPlatformCode, trdPlatformModelRefEntity.getPlatformCode());
-        queryWrapper.eq(TrdPlatformModelRefEntity::getIsDelete,0);
+        queryWrapper.eq(TrdPlatformModelRefEntity::getIsDelete, 0);
         if (trdPlatformModelRefEntity.getId() != null) {
             queryWrapper.ne(TrdPlatformModelRefEntity::getId, trdPlatformModelRefEntity.getId());
         }
@@ -71,7 +71,7 @@ public class TrdPlatformModelRefServiceImpl extends ServiceImpl<TrdPlatformModel
         if (!StringUtils.isEmpty(trdPlatformModelRefRQueryBo.getPlatformModelCode())) {
             queryWrapper.eq(TrdPlatformModelRefEntity::getPlatformModelCode, trdPlatformModelRefRQueryBo.getPlatformModelCode());
         }
-        queryWrapper.eq(TrdPlatformModelRefEntity::getIsDelete,0);
+        queryWrapper.eq(TrdPlatformModelRefEntity::getIsDelete, 0);
         List<TrdPlatformModelRefEntity> list = trdPlatformModelRefRepository.list(queryWrapper);
         return MultiResponse.buildSuccess(BeanUtil.copyToList(list, TrdPlatformModelRefBo.class));
     }
