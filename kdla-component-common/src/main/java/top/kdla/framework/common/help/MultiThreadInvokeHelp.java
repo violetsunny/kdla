@@ -28,7 +28,7 @@ public class MultiThreadInvokeHelp {
      * @return 包含任务执行结果的 CompletableFuture 列表
      */
     public static <T> List<CompletableFuture<T>> invokeS(List<Supplier<T>> suppliers, Executor executor) {
-        return executeS(suppliers, executor);
+        return executeSJoin(suppliers, executor);
     }
 
     /**
@@ -38,7 +38,7 @@ public class MultiThreadInvokeHelp {
      * @return 包含任务执行结果的 CompletableFuture 列表
      */
     public static <T> List<CompletableFuture<T>> invokeS(List<Supplier<T>> suppliers) {
-        return executeS(suppliers);
+        return executeSJoin(suppliers);
     }
 
     /**
@@ -53,7 +53,7 @@ public class MultiThreadInvokeHelp {
     public static <T> List<T> invokeGetS(List<Supplier<T>> suppliers, Executor executor) throws Exception {
         List<T> results = new ArrayList<>();
         // 转换
-        List<CompletableFuture<T>> completableFutures = executeS(suppliers, executor);
+        List<CompletableFuture<T>> completableFutures = executeSJoin(suppliers, executor);
         for (CompletableFuture<T> completableFuture : completableFutures) {
             // 等待获取结果,get会抛出检查异常
             results.add(completableFuture.get());
@@ -74,7 +74,7 @@ public class MultiThreadInvokeHelp {
     public static <T> List<T> invokeGetS(List<Supplier<T>> suppliers, Executor executor, long timeout) throws Exception {
         List<T> results = new ArrayList<>();
         // 转换
-        List<CompletableFuture<T>> completableFutures = executeS(suppliers, executor);
+        List<CompletableFuture<T>> completableFutures = executeSJoin(suppliers, executor);
         for (CompletableFuture<T> completableFuture : completableFutures) {
             // 等待获取结果,get会抛出检查异常
             results.add(completableFuture.get(timeout, TimeUnit.SECONDS));
@@ -98,6 +98,18 @@ public class MultiThreadInvokeHelp {
     /**
      * 执行并获取结果
      *
+     * @param supplier task
+     * @param executor 线程池
+     * @param <T>
+     * @return 任务执行结果
+     */
+    public static <T> T invokeGetS(Supplier<T> supplier, Executor executor) {
+        return CompletableFuture.supplyAsync(supplier, executor).join();
+    }
+
+    /**
+     * 执行并获取结果
+     *
      * @param suppliers tasks
      *                  ForkJoinPool线程池
      * @param timeout   超时时间 单位秒
@@ -108,7 +120,7 @@ public class MultiThreadInvokeHelp {
     public static <T> List<T> invokeGetS(List<Supplier<T>> suppliers, long timeout) throws Exception {
         List<T> results = new ArrayList<>();
         // 转换
-        List<CompletableFuture<T>> completableFutures = executeS(suppliers);
+        List<CompletableFuture<T>> completableFutures = executeSJoin(suppliers);
         for (CompletableFuture<T> completableFuture : completableFutures) {
             // 等待获取结果  get会抛出检查异常  join是运行时异常
             results.add(completableFuture.get(timeout, TimeUnit.SECONDS));
@@ -128,7 +140,7 @@ public class MultiThreadInvokeHelp {
     public static <T> List<T> invokeGetS(List<Supplier<T>> suppliers) throws Exception {
         List<T> results = new ArrayList<>();
         // 转换
-        List<CompletableFuture<T>> completableFutures = executeS(suppliers);
+        List<CompletableFuture<T>> completableFutures = executeSJoin(suppliers);
         for (CompletableFuture<T> completableFuture : completableFutures) {
             // 等待获取结果  get会抛出检查异常  join是运行时异常
             results.add(completableFuture.get());
@@ -150,13 +162,25 @@ public class MultiThreadInvokeHelp {
     }
 
     /**
+     * 执行并获取结果
+     *
+     * @param supplier task
+     *                 ForkJoinPool线程池
+     * @param <T>
+     * @return 任务执行结果
+     */
+    public static <T> T invokeGetS(Supplier<T> supplier) {
+        return CompletableFuture.supplyAsync(supplier).join();
+    }
+
+    /**
      * 真正多线程任务执行 --> 同步等待返回值
      *
      * @param suppliers tasks
      * @param executor  线程池
      * @return 包含任务执行结果的 CompletableFuture 列表
      */
-    private static <T> List<CompletableFuture<T>> executeS(List<Supplier<T>> suppliers, Executor executor) {
+    private static <T> List<CompletableFuture<T>> executeSJoin(List<Supplier<T>> suppliers, Executor executor) {
         //supplyAsync有返回
         List<CompletableFuture<T>> tasks = suppliers.stream().map(supplier -> CompletableFuture.supplyAsync(supplier, executor)).collect(Collectors.toList());
         // 转换并执行汇总等待结果 join是运行时异常
@@ -171,7 +195,7 @@ public class MultiThreadInvokeHelp {
      *                  ForkJoinPool线程池
      * @return 包含任务执行结果的 CompletableFuture 列表
      */
-    private static <T> List<CompletableFuture<T>> executeS(List<Supplier<T>> suppliers) {
+    private static <T> List<CompletableFuture<T>> executeSJoin(List<Supplier<T>> suppliers) {
         // supplyAsync有返回
         List<CompletableFuture<T>> tasks = suppliers.stream().map(CompletableFuture::supplyAsync).collect(Collectors.toList());
         // 转换并执行汇总等待结果 join是运行时异常
@@ -219,6 +243,19 @@ public class MultiThreadInvokeHelp {
     }
 
     /**
+     * 真正多线程任务执行 --> 无返回值，不等待 --> 转换成另一个CompletableFuture
+     *
+     * @param consumers tasks
+     * @param executor  线程池
+     * @return 转换成另一个CompletableFuture
+     */
+    public static <T> CompletableFuture<Void> execute(List<Consumer<T>> consumers, T t, Executor executor) {
+        List<CompletableFuture<Void>> tasks = executeC(consumers, t, executor);
+        // 等待执行完成
+        return CompletableFuture.allOf(tasks.toArray(new CompletableFuture[tasks.size()]));
+    }
+
+    /**
      * 真正多线程任务执行 --> 无返回值，不等待
      *
      * @param consumers tasks
@@ -255,5 +292,18 @@ public class MultiThreadInvokeHelp {
         // 等待执行完成,join会合并等待完成
         CompletableFuture.allOf(tasks.toArray(new CompletableFuture[tasks.size()])).join();
         return tasks;
+    }
+
+    /**
+     * 真正多线程任务执行 --> 无返回值，不等待 --> 转换成另一个CompletableFuture
+     *
+     * @param consumers tasks
+     *                  ForkJoinPool线程池
+     * @return 转换成另一个CompletableFuture
+     */
+    public static <T> CompletableFuture<Void> execute(List<Consumer<T>> consumers, T t) {
+        List<CompletableFuture<Void>> tasks = executeC(consumers, t);
+        // 等待执行完成,join会合并等待完成
+        return CompletableFuture.allOf(tasks.toArray(new CompletableFuture[tasks.size()]));
     }
 }
