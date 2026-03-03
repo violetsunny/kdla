@@ -25,6 +25,7 @@ import javax.security.sasl.AuthenticationException;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.AccessDeniedException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -167,12 +168,29 @@ public class UnifiedExceptionControllerAdvice {
     }
 
     @ResponseBody
+    @ExceptionHandler(BindException.class)
+    public Response handleBindException(BindException ex, WebRequest request) {
+        String uri = request.getDescription(false);
+        String errorMessage = ex.getMessage();
+        if (StringUtils.hasText(errorMessage)) {
+            log.warn("参数校验异常, url: {}, message: {}", uri, errorMessage);
+            return Response.buildFailure(ErrorCode.FAIL.getCode(), "参数校验失败");
+        }
+        return Response.buildFailure(ErrorCode.FAIL.getCode(), "参数校验失败");
+    }
+
+    @ResponseBody
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public Response handleHttpMessageNotReadableException(HttpMessageNotReadableException ex, HttpServletRequest request) throws Exception {
+    public Response handleHttpMessageNotReadableException(HttpMessageNotReadableException ex, HttpServletRequest request) {
         String requestBody = "";
         if (request instanceof ContentCachingRequestWrapper) {
             ContentCachingRequestWrapper requestWrapper = (ContentCachingRequestWrapper) request;
-            requestBody = new String(requestWrapper.getContentAsByteArray(), requestWrapper.getCharacterEncoding());
+            try {
+                requestBody = new String(requestWrapper.getContentAsByteArray(), requestWrapper.getCharacterEncoding());
+            } catch (UnsupportedEncodingException e) {
+                log.error("HttpMessageNotReadableException,UnsupportedEncodingException:{}", ExceptionUtils.getStackTrace(e));
+                requestBody = "UnsupportedEncodingException";
+            }
         }
         log.error("req: {},body: {},HttpMessageNotReadableException:{}", request.getRequestURI(), requestBody, ExceptionUtils.getStackTrace(ex));
         return Response.buildFailure(ErrorCode.BAD_REQUEST.getCode(), ex.getMessage());
@@ -200,18 +218,7 @@ public class UnifiedExceptionControllerAdvice {
     public Response handleThrowable(WebRequest request, Throwable exception) {
         String uri = request.getDescription(false); // 获取请求URI
         log.error("handleThrowable,url:{},Throwable:{}", uri, ExceptionUtils.getStackTrace(exception));
-        // 隐藏敏感异常信息，返回通用错误信息给前端
-        if (exception instanceof ConstraintViolationException || exception instanceof BindException) {
-            String errorMessage = exception.getMessage();
-            if (StringUtils.hasText(errorMessage)) {
-                log.warn("参数校验异常, url: {}, message: {}", uri, errorMessage);
-                return Response.buildFailure(ErrorCode.FAIL.getCode(), "参数校验失败");
-            }
-            return Response.buildFailure(ErrorCode.FAIL.getCode(), "参数校验失败");
-        } else {
-            // 记录详细错误信息到日志，但不返回给前端
-            log.error("系统异常, url: {}", uri, exception);
-            return Response.buildFailure(ErrorCode.SYS_ERROR.getCode(), "系统内部错误");
-        }
+        // 记录详细错误信息到日志，但不返回给前端
+        return Response.buildFailure(ErrorCode.SYS_ERROR.getCode(), "系统内部错误");
     }
 }
