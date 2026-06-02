@@ -44,9 +44,8 @@ K-DDD-Layed-Application&amp;Architect
 - [Sm4Util](./kdla-component-common/src/main/java/top/kdla/framework/common/utils/Sm4Util.java)
 
 ***
-spring.factories 
+org.springframework.boot.autoconfigure.AutoConfiguration.imports
 ```
-org.springframework.boot.autoconfigure.EnableAutoConfiguration = \
 top.kdla.framework.common.aspect.watch.StopWatchAutoConfigure
 ```
 
