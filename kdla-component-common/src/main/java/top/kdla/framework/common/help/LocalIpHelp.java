@@ -182,16 +182,29 @@ public class LocalIpHelp {
     }
 
     /**
+     * 本地IPv4缓存：网卡枚举/socket探测开销大，traceId生成为每请求热路径，解析一次后复用
+     */
+    private static volatile String localIp4AddressCache;
+
+    /**
      * 获取本地IPv4地址
      *
      * @return Inet4Address>
      */
     public static String getLocalIp4Address() throws SocketException {
+        String cached = localIp4AddressCache;
+        if (cached != null) {
+            return cached;
+        }
         final List<Inet4Address> inet4Addresses = getLocalIp4AddressFromNetworkInterface();
+        String result;
         if (inet4Addresses.size() != 1) {
             final Optional<Inet4Address> ipBySocketOpt = getIpBySocket();
-            return ipBySocketOpt.map(Inet4Address::getHostAddress).orElseGet(() -> inet4Addresses.isEmpty() ? DEFAULT_IP : inet4Addresses.get(0).getHostAddress());
+            result = ipBySocketOpt.map(Inet4Address::getHostAddress).orElseGet(() -> inet4Addresses.isEmpty() ? DEFAULT_IP : inet4Addresses.get(0).getHostAddress());
+        } else {
+            result = inet4Addresses.get(0).getHostAddress();
         }
-        return inet4Addresses.get(0).getHostAddress();
+        localIp4AddressCache = result;
+        return result;
     }
 }

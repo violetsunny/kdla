@@ -70,8 +70,8 @@ public class ThreadPoolHelp {
 
     //服务器的cpu核数
     private static final Integer CPUS = Runtime.getRuntime().availableProcessors();
-    //默认阻塞队列
-    private static final BlockingQueue<Runnable> DEFAULT_WORK_QUEUE = new LinkedBlockingQueue<Runnable>();
+    //默认阻塞队列容量（每个默认池独立持有有界队列，避免多池共享同一队列导致任务串扰）
+    private static final int DEFAULT_WORK_QUEUE_CAPACITY = 1024;
     //默认直接抛异常
     private static final RejectedExecutionHandler DEFAULT_HANDLER = new ThreadPoolExecutor.AbortPolicy();
     //默认工厂
@@ -108,7 +108,9 @@ public class ThreadPoolHelp {
                 1,
                 0L,
                 TimeUnit.SECONDS,
-                new SynchronousQueue<Runnable>(),
+                // 单线程池必须配 LinkedBlockingQueue 排队（串行语义）；
+                // 原 SynchronousQueue+AbortPolicy 在第二个任务并发提交时直接抛 RejectedExecutionException
+                new LinkedBlockingQueue<Runnable>(),
                 DEFAULT_FACTORY,
                 DEFAULT_HANDLER);
         return TtlExecutors.getTtlExecutorService(threadPool);
@@ -140,7 +142,7 @@ public class ThreadPoolHelp {
                 initMirrorIOMaxPoolSize(),
                 0L,
                 TimeUnit.SECONDS,
-                DEFAULT_WORK_QUEUE,
+                new LinkedBlockingQueue<Runnable>(DEFAULT_WORK_QUEUE_CAPACITY),
                 DEFAULT_FACTORY,
                 DEFAULT_HANDLER);
         return TtlExecutors.getTtlExecutorService(threadPool);
@@ -177,14 +179,15 @@ public class ThreadPoolHelp {
                                               BlockingQueue<Runnable> workQueue,
                                               RejectedExecutionHandler handler,
                                               String factoryName) {
+        // 拆箱防护：Builder/无参构造路径下字段可能为 null，未显式指定时回退到与 getDefaultExecutorService 一致的默认值
         ExecutorService threadPool = new ThreadPoolExecutor(
-                corePoolSize,
-                maximumPoolSize,
-                keepAliveTime,
-                unit,
-                workQueue,
-                new SimpleThreadFactory(factoryName),
-                handler);
+                corePoolSize == null ? CPUS + 1 : corePoolSize,
+                maximumPoolSize == null ? initMirrorIOMaxPoolSize() : maximumPoolSize,
+                keepAliveTime == null ? 0L : keepAliveTime,
+                unit == null ? TimeUnit.SECONDS : unit,
+                workQueue == null ? new LinkedBlockingQueue<Runnable>(DEFAULT_WORK_QUEUE_CAPACITY) : workQueue,
+                new SimpleThreadFactory(factoryName == null ? "kdlaThreadPool" : factoryName),
+                handler == null ? DEFAULT_HANDLER : handler);
         return TtlExecutors.getTtlExecutorService(threadPool);
     }
 

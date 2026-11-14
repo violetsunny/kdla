@@ -24,12 +24,16 @@ public class PinYinHelp {
      * @return
      */
     public static List<String> CH2PY(String chinese){
+        List<String> resultPinYin = new ArrayList<>();
+        // 空串/null 入参直接返回空结果，避免 getPinYin 递归访问 pinYinArray[0] 抛 ArrayIndexOutOfBoundsException
+        if (chinese == null || chinese.isEmpty()) {
+            return resultPinYin;
+        }
         char[] chars = chinese.toCharArray();
         String[][] pinYinArray = new String[chars.length][];
         for (int i = 0; i < chars.length; i++) {
             pinYinArray[i] = PinyinHelper.convertToPinyinArray(chars[i], PinyinFormat.WITHOUT_TONE);
         }
-        List<String> resultPinYin = new ArrayList<>();
         //一字多音，组合拼
         getPinYin(pinYinArray, 0, "", resultPinYin);
         return resultPinYin;

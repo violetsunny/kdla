@@ -32,7 +32,8 @@ public class BigDecimalHelp {
      * @return
      */
     public static BigDecimal divide(BigDecimal bd1, BigDecimal bd2) {
-        if (BigDecimal.ZERO.equals(filter(bd1)) || BigDecimal.ZERO.equals(filter(bd2))) {
+        // equals 会比较 scale（0.00 != ZERO），必须用 compareTo 判零；否则除数为 0.00 时漏判导致 ArithmeticException
+        if (filter(bd1).compareTo(BigDecimal.ZERO) == 0 || filter(bd2).compareTo(BigDecimal.ZERO) == 0) {
             return BigDecimal.ZERO;
         }
         return filter(bd1).divide(filter(bd2), 4, BigDecimal.ROUND_HALF_UP);
@@ -57,7 +58,7 @@ public class BigDecimalHelp {
     }
 
     public static BigDecimal filter(BigInteger val) {
-        return null == val ? new BigDecimal("0") : new BigDecimal(val.toString(20));
+        return null == val ? new BigDecimal("0") : new BigDecimal(val);
     }
 
     public static BigDecimal filter(Double val) {

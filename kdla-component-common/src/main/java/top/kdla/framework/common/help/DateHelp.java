@@ -90,7 +90,21 @@ public class DateHelp {
         }
 
         DateTimeFormatter fmt = DateTimeFormat.forPattern(pattern);
-        return fmt.parseLocalDateTime(strDate).toDate();
+        // 纯日期 pattern（不含时间字段）走 parseLocalDate，避免 parseLocalDateTime 因缺失时间字段抛异常
+        if (containsTimeField(pattern)) {
+            return fmt.parseLocalDateTime(strDate).toDate();
+        }
+        return fmt.parseLocalDate(strDate).toDate();
+    }
+
+    /**
+     * 判断 joda pattern 是否包含时间字段（时/分/秒/毫秒）
+     */
+    private static boolean containsTimeField(String pattern) {
+        return pattern.indexOf('H') >= 0 || pattern.indexOf('h') >= 0
+                || pattern.indexOf('k') >= 0 || pattern.indexOf('K') >= 0
+                || pattern.indexOf('m') >= 0 || pattern.indexOf('s') >= 0
+                || pattern.indexOf('S') >= 0;
     }
 
     /**

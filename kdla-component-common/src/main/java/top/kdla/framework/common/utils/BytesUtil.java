@@ -311,7 +311,7 @@ public class BytesUtil {
     }
 
     public static byte[] floatToLe(byte[] target, float number, int offset) {
-        return intToBe(target, Float.floatToIntBits(number), offset);
+        return intToLe(target, Float.floatToIntBits(number), offset);
     }
 
     public static byte[] floatToLe(float src) {
@@ -436,11 +436,13 @@ public class BytesUtil {
      * @return 转换后到数组
      */
     public static byte[] reverse(byte[] data, int offset, int length) {
-
-        int len = Math.min(data.length - 1, length);
+        // 原实现rev=len-i未加offset且len钳制错位，offset>0时交换索引必错且可能越界；改为标准区间反转
+        if (offset < 0 || length < 0 || offset + length > data.length) {
+            throw new IndexOutOfBoundsException("offset=" + offset + ", length=" + length + ", data.length=" + data.length);
+        }
         for (int i = 0; i < length / 2; i++) {
-            int idx = i + offset;
-            int rev = len - i;
+            int idx = offset + i;
+            int rev = offset + length - 1 - i;
             byte temp = data[idx];
             data[idx] = data[rev];
             data[rev] = temp;

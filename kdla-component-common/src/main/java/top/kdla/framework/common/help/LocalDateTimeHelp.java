@@ -230,7 +230,8 @@ public class LocalDateTimeHelp {
      * @return
      */
     public static Boolean isMonthNew(LocalDate date, LocalDate now) {
-        return date.getMonthValue() == now.getMonthValue();
+        // 必须同时比较年份：仅比较月份会把 2024-01 和 2025-01 误判为同月
+        return YearMonth.from(date).equals(YearMonth.from(now));
     }
 
     /**
