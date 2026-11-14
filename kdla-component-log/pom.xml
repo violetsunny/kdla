@@ -146,6 +146,12 @@
             <artifactId>guava</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- JacksonUtil运行期依赖：provided不透传给宿主，仅本模块编译/测试期可见（RequestLogAspect回归测试需要） -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- 日志 -->
         <dependency>

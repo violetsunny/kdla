@@ -1,6 +1,5 @@
 package top.kdla.framework.log;
 
-import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.util.StringUtils;
@@ -28,10 +27,13 @@ public class LogInterceptor implements AsyncHandlerInterceptor {
 
     private void printHttpRequestHeaderInfo(final HttpServletRequest request) {
         try {
-            KdlaHttpServletRequestWrapper requestWrapper = new KdlaHttpServletRequestWrapper(request);
+            // 仅当请求已被KdlaBodyReaderRequestFilter缓存时才打印body；
+            // 直接new wrapper会消费原始输入流且未替换下游request，导致controller读到空body
+            String body = request instanceof KdlaHttpServletRequestWrapper
+                    ? ((KdlaHttpServletRequestWrapper) request).getBody() : null;
             // 打印请求信息
             if (log.isInfoEnabled()) {
-                log.info("### uri：{}, requestParam: {}, requestBody:{} ", requestWrapper.getRequestURI(), JacksonUtil.toJson(requestWrapper.getParameterMap()), requestWrapper.getBody());
+                log.info("### uri：{}, requestParam: {}, requestBody:{} ", request.getRequestURI(), JacksonUtil.toJson(request.getParameterMap()), body == null ? "<body未缓存>" : body);
             }
         } catch (Exception e) {
             if (log.isWarnEnabled()) {
@@ -45,9 +47,8 @@ public class LogInterceptor implements AsyncHandlerInterceptor {
     public boolean preHandle(final HttpServletRequest request, final HttpServletResponse response, final Object handler) {
         //日志跟踪标识traceId
         if (!StringUtils.hasText(MDC.get(CommonConstants.LOG_TRACE_ID))) {
-            JSONObject traceIdInfo = new JSONObject();
-            traceIdInfo.put(CommonConstants.LOG_TRACE_ID, SelfSnowflakeGeneratorHelp.generate());
-            MDC.put(CommonConstants.LOG_TRACE_ID, traceIdInfo.toJSONString());
+            // 放裸traceId字符串，与KdlaBodyReaderRequestFilter/CatchLogAspect格式一致（此前误放JSON串导致日志前缀格式不统一）
+            MDC.put(CommonConstants.LOG_TRACE_ID, SelfSnowflakeGeneratorHelp.generate());
         }
         LogTraceHolder.set(Boolean.TRUE);
         BEGIN_TIMESTAMP.set(DateHelp.now());
@@ -63,7 +64,9 @@ public class LogInterceptor implements AsyncHandlerInterceptor {
     @Override
     public void afterCompletion(final HttpServletRequest request, final HttpServletResponse response,
                                 final Object handler, final Exception ex) throws Exception {
-        Long executionTime = DateHelp.now() - BEGIN_TIMESTAMP.get();
+        // 异步dispatch/预检失败等preHandle未执行的路径下get()为null，直接拆箱会NPE；-1表示未计时
+        Long begin = BEGIN_TIMESTAMP.get();
+        long executionTime = begin == null ? -1L : DateHelp.now() - begin;
         if (log.isInfoEnabled()) {
             log.info("### uri: {}, remote-addr: {}, execution: {}", request.getRequestURI(), request.getRemoteAddr(), executionTime);
         }
