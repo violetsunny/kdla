@@ -19,12 +19,25 @@ public class MultiResponse<T> extends Response {
 
     private Collection<T> data;
 
+    /**
+     * 总条数，与data.size()解耦（分页等场景）；旧版buildSuccess(items,totalCount)曾静默丢弃该参数
+     */
+    private int totalCount;
+
     public Collection<T> getData() {
         return this.data;
     }
 
     public void setData(Collection<T> data) {
         this.data = data;
+    }
+
+    public int getTotalCount() {
+        return this.totalCount;
+    }
+
+    public void setTotalCount(int totalCount) {
+        this.totalCount = totalCount;
     }
 
     public static MultiResponse buildSuccess() {
@@ -40,6 +53,7 @@ public class MultiResponse<T> extends Response {
         MultiResponse<T> response = new MultiResponse<>();
         response.setSuccess();
         response.setData(items);
+        response.setTotalCount(totalCount);
         return response;
     }
 
