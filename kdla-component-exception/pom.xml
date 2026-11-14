@@ -141,6 +141,36 @@
             <artifactId>logback-core</artifactId>
             <scope>provided</scope>
         </dependency>
+
+        <!-- spring-jdbc: provides org.springframework.dao.DuplicateKeyException -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- spring-security: 仅编译期依赖，提供 org.springframework.security.access.AccessDeniedException；
+             版本由根 pom 导入的 spring-boot-dependencies BOM 管理；
+             optional=true 不传递给宿主，运行时由 @ConditionalOnClass 保证未引入 security 的宿主不加载相关 handler -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+            <scope>provided</scope>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- 测试 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-api</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     </dependencies>
 
 </project>

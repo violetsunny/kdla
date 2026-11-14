@@ -28,6 +28,8 @@ public class ResponseHandler {
             response.setSuccess(false);
             response.setCode(code);
             response.setMsg(message);
+            // 与 Response.buildFailure 对齐：msg 与 message 双字段同时回填
+            response.setMessage(message);
             return response;
         } catch (Exception ex) {
             return Response.buildFailure(code, message);
