@@ -30,4 +30,20 @@ public class MdcHelp {
     public static void clear() {
         MDC.clear();
     }
+
+    /**
+     * 恢复指定 MDC 键的旧值：旧值为 null 时移除该键。
+     * 用于切面 finally 中精确还原被覆盖的键，替代 MDC.clear() 整体清空，
+     * 避免嵌套场景丢失外层上下文。
+     *
+     * @param key    MDC 键
+     * @param oldVal 进入切面前保存的旧值，可为 null
+     */
+    public static void restore(String key, String oldVal) {
+        if (oldVal == null) {
+            MDC.remove(key);
+        } else {
+            MDC.put(key, oldVal);
+        }
+    }
 }

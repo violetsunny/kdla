@@ -7,6 +7,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.slf4j.MDC;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -28,6 +29,8 @@ import java.lang.reflect.Method;
 @Slf4j
 @Aspect
 public class MdcAspect implements ApplicationContextAware {
+    private static final String BIZ_CODE_KEY = "bizCode";
+
     private ExpressionParser parser = new SpelExpressionParser();
     private ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
 
@@ -41,6 +44,8 @@ public class MdcAspect implements ApplicationContextAware {
     @Around("getLogAnnotation()")
     public Object handle(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.currentTimeMillis();
+        // 覆盖前保存 bizCode 旧值，finally 精确恢复而非 MDC.clear() 整体清空，嵌套 @MdcDot 时外层上下文不丢
+        String oldBizCode = MDC.get(BIZ_CODE_KEY);
         boolean hasTag = addMdcCode(joinPoint);
         try {
             return joinPoint.proceed();
@@ -49,7 +54,7 @@ public class MdcAspect implements ApplicationContextAware {
                 log.info("方法执行耗时: {}#{} = {}", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName() , System.currentTimeMillis() - start);
             }
             if (hasTag) {
-                MdcHelp.clear();
+                MdcHelp.restore(BIZ_CODE_KEY, oldBizCode);
             }
         }
     }
@@ -63,7 +68,7 @@ public class MdcAspect implements ApplicationContextAware {
         }
 
         if (dot != null) {
-            MdcHelp.add("bizCode", loadBizCode(dot.bizCode(), joinPoint));
+            MdcHelp.add(BIZ_CODE_KEY, loadBizCode(dot.bizCode(), joinPoint));
             return true;
         }
         return false;
@@ -77,12 +82,23 @@ public class MdcAspect implements ApplicationContextAware {
 
         context.setBeanResolver(new BeanFactoryResolver(applicationContext));
         String[] params = parameterNameDiscoverer.getParameterNames(((MethodSignature) joinPoint.getSignature()).getMethod());
-        assert params != null;
+        if (params == null) {
+            return "";
+        }
         Object[] args = joinPoint.getArgs();
         for (int i = 0; i < args.length; i++) {
             context.setVariable(params[i], args[i]);
         }
-        return parser.parseExpression(key).getValue(context, String.class);
+        try {
+            // SpEL 解析失败降级为空串，禁止让日志切面异常炸掉业务方法
+            String val = parser.parseExpression(key).getValue(context, String.class);
+            return val == null ? "" : val;
+        } catch (Exception e) {
+            if (log.isWarnEnabled()) {
+                log.warn("MdcAspect loadBizCode SpEL 解析失败, key:{}, 降级为空串", key, e);
+            }
+            return "";
+        }
     }
 
     private ApplicationContext applicationContext;
