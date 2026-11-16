@@ -56,7 +56,8 @@ import java.util.stream.Collectors;
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnProperty(name = "kdla.exception.handler.enabled",
                        havingValue = "true", matchIfMissing = true)
-@Import(UnifiedExceptionControllerAdvice.SecurityAccessDeniedExceptionAdvice.class)
+@Import({UnifiedExceptionControllerAdvice.SecurityAccessDeniedExceptionAdvice.class,
+        UnifiedExceptionControllerAdvice.DuplicateKeyExceptionAdvice.class})
 public class UnifiedExceptionControllerAdvice {
 
     /**
@@ -93,6 +94,31 @@ public class UnifiedExceptionControllerAdvice {
                 log.warn("handleAuthenticationException:{}", ExceptionUtils.getStackTrace(e));
             }
             return Response.buildFailure(ErrorCode.UNAUTHORIZED);
+        }
+    }
+
+    /**
+     * spring-jdbc 数据重复异常专属处理。
+     * <p>
+     * DuplicateKeyException 位于 spring-jdbc（本库 provided scope，不向下游传递）：
+     * 无 spring-jdbc 的纯 web 宿主解析外层 @ExceptionHandler 方法签名时会
+     * NoClassDefFoundError 导致启动失败（本 advice 在 T 默认开启，B7 裁定）。
+     * 比照 SecurityAccessDeniedExceptionAdvice 同模式移入 @ConditionalOnClass
+     * 守护的内层 Advice，仅在宿主 classpath 存在 spring-jdbc 时注册。
+     */
+    @RestControllerAdvice
+    @Order(Ordered.LOWEST_PRECEDENCE)
+    @ConditionalOnClass(DuplicateKeyException.class)
+    public static class DuplicateKeyExceptionAdvice {
+
+        @ResponseBody
+        @ResponseStatus(HttpStatus.OK)
+        @ExceptionHandler(DuplicateKeyException.class)
+        public Response handleDuplicateKeyException(DuplicateKeyException ex) {
+            if (log.isWarnEnabled()) {
+                log.warn("DuplicateKeyException:{}", ExceptionUtils.getStackTrace(ex));
+            }
+            return Response.buildFailure(ErrorCode.DUPLICATE_KEY);
         }
     }
 
@@ -181,16 +207,6 @@ public class UnifiedExceptionControllerAdvice {
             log.warn("req: {},IllegalArgumentException:{}", request.getRequestURI(), ExceptionUtils.getStackTrace(ex));
         }
         return Response.buildFailure(ErrorCode.PARAMETER_ERROR.getCode(), ex.getMessage());
-    }
-
-    @ResponseBody
-    @ResponseStatus(HttpStatus.OK)
-    @ExceptionHandler(DuplicateKeyException.class)
-    public Response handleDuplicateKeyException(DuplicateKeyException ex) {
-        if (log.isWarnEnabled()) {
-            log.warn("DuplicateKeyException:{}", ExceptionUtils.getStackTrace(ex));
-        }
-        return Response.buildFailure(ErrorCode.DUPLICATE_KEY);
     }
 
     @ResponseBody

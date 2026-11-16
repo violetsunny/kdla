@@ -5,6 +5,7 @@
 package top.kdla.framework.supplement.cache.cache.config;
 
 import cn.hutool.core.lang.generator.SnowflakeGenerator;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -75,13 +76,14 @@ public class CacheAutoConfigure {
 
     @Bean
     @ConditionalOnMissingBean(CacheManager.class)
-    public CacheManager caffeineCacheManager(@Autowired List<KdlaCafCache<Object, Object>> caffeines) {
+    public CacheManager caffeineCacheManager(ObjectProvider<KdlaCafCache<Object, Object>> caffeines) {
         //加入CacheManager为了和@Cacheable一起使用
+        //ObjectProvider 替代 @Autowired List：宿主开启 kdla.cache.enabled 但未定义任何
+        //KdlaCafCache bean 时（如只用 SpringRedisHelp/雪花ID），空集合注入会 UnsatisfiedDependencyException 启动失败
         List<Cache> caches = new ArrayList<>();
         SimpleCacheManager cacheManager = new SimpleCacheManager();
-        for (KdlaCafCache<Object, Object> caffeine : caffeines) {
-            caches.add(new CaffeineCache(caffeine.getCacheName(), caffeine.getCafCache()));
-        }
+        caffeines.orderedStream().forEach(caffeine ->
+                caches.add(new CaffeineCache(caffeine.getCacheName(), caffeine.getCafCache())));
         cacheManager.setCaches(caches);
         return cacheManager;
     }
