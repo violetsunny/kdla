@@ -24,3 +24,14 @@
 hs_err_pid*
 
 target/
+
+# Eclipse / IDE noise
+.classpath
+.project
+.factorypath
+.settings/
+.DS_Store
+
+# agent working dirs
+.scratch/
+.agents/
