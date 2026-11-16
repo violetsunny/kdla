@@ -6,6 +6,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.exporter.PushGateway;
 import top.kdla.framework.common.aspect.watch.StopWatchWrapperAspect;
 import top.kdla.framework.supplement.monitor.prometheus.PushGatewayManager;
 
@@ -18,7 +20,7 @@ public class PrometheusAutoConfigure {
 
     @Bean
     @ConditionalOnMissingBean(PrometheusPointAspect.class)
-    @ConditionalOnClass({PushGatewayManager.class})
+    @ConditionalOnClass({CollectorRegistry.class, PushGateway.class})
     public PrometheusPointAspect prometheusPointAspect(@Autowired PushGatewayManager pushGatewayManager) {
         return new PrometheusPointAspect(pushGatewayManager);
     }
