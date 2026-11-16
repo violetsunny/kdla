@@ -3,28 +3,30 @@ package top.kdla.framework.validator;
 import com.baidu.unbiz.fluentvalidator.FluentValidator;
 import com.baidu.unbiz.fluentvalidator.Result;
 import com.baidu.unbiz.fluentvalidator.jsr303.HibernateSupportedValidator;
-import org.springframework.stereotype.Component;
+
 import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.BizException;
 
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
-import java.util.Locale;
 
 import static com.baidu.unbiz.fluentvalidator.ResultCollectors.toSimple;
 
 /**
- * 通用的默认校验器
+ * 通用的默认校验器。
+ * <p>
+ * 校验消息插值使用JVM默认Locale；此前实例初始化块中Locale.setDefault(Locale.CHINA)
+ * 属JVM全局副作用（会影响宿主应用全部Locale敏感逻辑），已移除。
+ * 需要中文消息的宿主请自行在启动参数/入口设置Locale。
+ *
  * @author kll
  */
-@Component
 public class CommonValidator {
 
     protected Validator validator;
 
     {
-        Locale.setDefault(Locale.CHINA);
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
     }

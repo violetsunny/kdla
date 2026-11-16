@@ -150,27 +150,26 @@ public abstract class BaseAssert {
         notEmpty(map, "[Assertion failed] Map must not be empty: it must contain at least one entry");
     }
 
-    public static void isBlank(String str, String code, String message) {
-        if (null == str || "".equals(str)) {
+    /**
+     * 断言字符串非空白（null/空串/纯空白串均判空白），空白则抛BizException。
+     * 原名isBlank语义反转（名为is实为assertNot），已重命名为notBlank；
+     * 且旧实现只判null/""，纯空白串"   "会漏过，现按trim后判空。
+     */
+    public static void notBlank(String str, String code, String message) {
+        if (null == str || str.trim().isEmpty()) {
             throw new BizException(code, message);
         }
     }
 
-    public static void isBlank(String str, ErrorCodeI errorCodeI, String message) {
-        if (null == str || "".equals(str)) {
+    public static void notBlank(String str, ErrorCodeI errorCodeI, String message) {
+        if (null == str || str.trim().isEmpty()) {
             throw new BizException(errorCodeI, message);
         }
     }
 
-    public static void isBlank(String str, String message) {
-        if (null == str || "".equals(str)) {
+    public static void notBlank(String str, String message) {
+        if (null == str || str.trim().isEmpty()) {
             throw new BizException(ErrorCode.PARAMETER_ERROR, message);
-        }
-    }
-
-    public static void isNull(Object object, String code, String message) {
-        if (object == null) {
-            throw new BizException(code, message);
         }
     }
 

@@ -11,6 +11,9 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import javax.validation.Payload;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Target({ElementType.METHOD, ElementType.FIELD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = DBLengthValid.Validator.class)
@@ -36,6 +39,8 @@ public @interface DBLengthValid {
 
     class Validator implements ConstraintValidator<DBLengthValid, Object> {
 
+        private static final Logger log = LoggerFactory.getLogger(DBLengthValid.class);
+
         private int length;
 
         private int decimal;
@@ -56,11 +61,10 @@ public @interface DBLengthValid {
                 if (value instanceof String) {
                     return ((String)value).length() <= this.length;
                 }
-                if (value instanceof Integer) {
-                    return (Integer)value <= new BigDecimal(10).pow(this.length).intValue() - 1;
-                }
-                if (value instanceof Long) {
-                    return (Long)value <= new BigDecimal(10).pow(this.length).longValue() - 1;
+                if (value instanceof Integer || value instanceof Long) {
+                    // BigDecimal全程比较：此前pow(length).intValue()/longValue()在length较大时溢出（如10^10超int、10^19超long）导致误判
+                    BigDecimal max = new BigDecimal(10).pow(this.length).subtract(BigDecimal.ONE);
+                    return new BigDecimal(value.toString()).compareTo(max) <= 0;
                 }
                 if (value instanceof BigDecimal) {
                     BigDecimal num = new BigDecimal(10).pow(this.length).subtract(new BigDecimal(1));
@@ -70,7 +74,7 @@ public @interface DBLengthValid {
                 }
                 return Boolean.FALSE;
             } catch (Exception e) {
-                e.printStackTrace();
+                log.warn("DBLengthValid check failed for value: {}", value, e);
                 return Boolean.FALSE;
             }
 
