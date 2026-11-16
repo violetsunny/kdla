@@ -22,6 +22,7 @@ import top.kdla.framework.dto.Response;
 import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.*;
 import top.kdla.framework.log.LogTraceHolder;
+import top.kdla.framework.log.sanitize.LogSanitizeUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -126,7 +127,7 @@ public class CatchLogAspect {
         } finally {
             sw.stop();
             if (log.isInfoEnabled()) {
-                log.info("### {} Invoke Finished, requestParam: {}, response: {}, shortSummary:{}", clazzMethodInfo, JSON.toJSONString(args), JSON.toJSONString(response), sw.shortSummary());
+                log.info("### {} Invoke Finished, requestParam: {}, response: {}, shortSummary:{}", clazzMethodInfo, LogSanitizeUtil.truncate(JSON.toJSONString(args)), LogSanitizeUtil.truncate(JSON.toJSONString(response)), sw.shortSummary());
             }
             // 仅本层放入traceId时才负责清理，禁止内层清掉外层的traceId
             if (!LogTraceHolder.get() && tracePutByThisLayer) {

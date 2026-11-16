@@ -9,6 +9,7 @@ import top.kdla.framework.common.constants.CommonConstants;
 import top.kdla.framework.common.help.DateHelp;
 import top.kdla.framework.common.help.SelfSnowflakeGeneratorHelp;
 import top.kdla.framework.common.utils.JacksonUtil;
+import top.kdla.framework.log.sanitize.LogSanitizeUtil;
 import top.kdla.framework.log.webfilter.KdlaHttpServletRequestWrapper;
 
 import javax.servlet.http.HttpServletRequest;
@@ -33,7 +34,7 @@ public class LogInterceptor implements AsyncHandlerInterceptor {
                     ? ((KdlaHttpServletRequestWrapper) request).getBody() : null;
             // 打印请求信息
             if (log.isInfoEnabled()) {
-                log.info("### uri：{}, requestParam: {}, requestBody:{} ", request.getRequestURI(), JacksonUtil.toJson(request.getParameterMap()), body == null ? "<body未缓存>" : body);
+                log.info("### uri：{}, requestParam: {}, requestBody:{} ", request.getRequestURI(), JacksonUtil.toJson(request.getParameterMap()), body == null ? "<body未缓存>" : LogSanitizeUtil.truncate(body));
             }
         } catch (Exception e) {
             if (log.isWarnEnabled()) {

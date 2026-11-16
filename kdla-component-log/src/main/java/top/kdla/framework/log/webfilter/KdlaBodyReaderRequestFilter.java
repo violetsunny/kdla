@@ -1,8 +1,11 @@
 package top.kdla.framework.log.webfilter;
 
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.util.StringUtils;
 import top.kdla.framework.common.help.KdlaStringHelp;
+import top.kdla.framework.common.help.SelfSnowflakeGeneratorHelp;
 
 import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
@@ -11,6 +14,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+
+import static top.kdla.framework.common.constants.CommonConstants.LOG_TRACE_ID;
 
 /**
  * kdlaBodyReaderRequest过滤器,解决Request的Body只能读取一次的解决方法
@@ -36,26 +41,43 @@ public class KdlaBodyReaderRequestFilter implements Filter {
         throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest)req;
         HttpServletResponse response = (HttpServletResponse)res;
-        if (handleExcludeURL(request, response)) {
-            filterChain.doFilter(request, response);
-            return;
+
+        // 获取trace
+        if (!StringUtils.hasText(MDC.get(LOG_TRACE_ID))) {
+            String traceId = request.getHeader(LOG_TRACE_ID);
+            if (StringUtils.hasText(traceId)) {
+                MDC.put(LOG_TRACE_ID, traceId);
+            } else {
+                // 自定义一个
+                MDC.put(LOG_TRACE_ID, SelfSnowflakeGeneratorHelp.generate());
+            }
         }
-        KdlaHttpServletRequestWrapper requestWrapper = null;
-        if (KdlaStringHelp.startsWithIgnoreCase(request.getContentType(), MediaType.APPLICATION_JSON_VALUE)) {
-            requestWrapper = new KdlaHttpServletRequestWrapper(request);
-        }
-        if (Objects.isNull(requestWrapper)) {
-            filterChain.doFilter(request, response);
-        } else {
-            filterChain.doFilter(requestWrapper, response);
+
+        try {
+            if (handleExcludeURL(request, response)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+            KdlaHttpServletRequestWrapper requestWrapper = null;
+            if (KdlaStringHelp.startsWithIgnoreCase(request.getContentType(), MediaType.APPLICATION_JSON_VALUE)) {
+                requestWrapper = new KdlaHttpServletRequestWrapper(request);
+            }
+            if (Objects.isNull(requestWrapper)) {
+                filterChain.doFilter(request, response);
+            } else {
+                filterChain.doFilter(requestWrapper, response);
+            }
+        } finally {
+            MDC.remove(LOG_TRACE_ID);
         }
     }
 
     private boolean handleExcludeURL(HttpServletRequest request, HttpServletResponse response) {
         String url = request.getServletPath();
         String method = request.getMethod();
-        // GET DELETE 不过滤
-        if (method == null || method.matches(METHOD_DELETE)) {
+        // GET DELETE 不过滤（此前漏判GET，仅排除了DELETE，与注释语义不符）
+        if (excludes == null || excludes.isEmpty() || method == null
+                || method.matches(METHOD_GET) || method.matches(METHOD_DELETE)) {
             return true;
         }
         return KdlaStringHelp.matches(url, excludes);

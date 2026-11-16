@@ -12,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 /**
  * http请求wrapper
@@ -35,15 +36,17 @@ public class KdlaHttpServletRequestWrapper extends HttpServletRequestWrapper {
     public KdlaHttpServletRequestWrapper(HttpServletRequest request) {
         super(request);
         try {
-            this.setBody(new String(IOUtils.toByteArray(request.getInputStream())));
+            this.setBody(new String(IOUtils.toByteArray(request.getInputStream()), StandardCharsets.UTF_8));
         } catch (IOException ex) {
             log.error("IOException:{}", ExceptionUtils.getStackTrace(ex));
+            // 读取失败时body置空串兜底，避免getInputStream()因body为null抛NPE
+            this.setBody("");
         }
     }
 
     @Override
     public ServletInputStream getInputStream() throws IOException {
-        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body.getBytes());
+        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8));
         ServletInputStream servletInputStream = new ServletInputStream() {
             @Override
             public boolean isFinished() {
@@ -69,7 +72,7 @@ public class KdlaHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
     @Override
     public BufferedReader getReader() throws IOException {
-        return new BufferedReader(new InputStreamReader(this.getInputStream()));
+        return new BufferedReader(new InputStreamReader(this.getInputStream(), StandardCharsets.UTF_8));
     }
 
     public String getBody() {

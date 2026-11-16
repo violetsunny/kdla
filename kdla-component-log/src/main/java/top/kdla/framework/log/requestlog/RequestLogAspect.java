@@ -24,6 +24,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
 import top.kdla.framework.common.utils.JacksonUtil;
 import top.kdla.framework.common.help.KdlaStringHelp;
+import top.kdla.framework.log.sanitize.LogSanitizeUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -50,106 +51,119 @@ public class RequestLogAspect {
         Method method = ms.getMethod();
         Object[] args = point.getArgs();
         Map<String, Object> paraMap = new HashMap(16);
+        String requestURI = null;
+        String requestMethod = null;
+        long startNs = 0;
+        StringBuilder afterReqLog = new StringBuilder(200);
+        List<Object> afterReqArgs = new ArrayList<>();
+        boolean var24 = false;
 
-        String paraName;
-        for (int i = 0; i < args.length; ++i) {
-            MethodParameter methodParam = new SynthesizingMethodParameter(method, i);
-            methodParam.initParameterNameDiscovery(new DefaultParameterNameDiscoverer());
-            PathVariable pathVariable = methodParam.getParameterAnnotation(PathVariable.class);
-            if (pathVariable == null) {
-                RequestBody requestBody = methodParam.getParameterAnnotation(RequestBody.class);
-                String parameterName = methodParam.getParameterName();
-                Object value = args[i];
-                if (requestBody != null && value != null) {
-                    paraMap.putAll(BeanUtil.beanToMap(value));
-                } else {
-                    if (value instanceof List) {
-                        value = ((List) value).get(0);
-                    }
-                    if (value instanceof HttpServletRequest) {
-                        paraMap.putAll(((HttpServletRequest) value).getParameterMap());
-                    } else if (value instanceof WebRequest) {
-                        paraMap.putAll(((WebRequest) value).getParameterMap());
-                    } else if (value instanceof MultipartFile) {
-                        MultipartFile multipartFile = (MultipartFile) value;
-                        paraName = multipartFile.getName();
-                        String fileName = multipartFile.getOriginalFilename();
-                        paraMap.put(paraName, fileName);
-                    } else if (!(value instanceof HttpServletResponse) && !(value instanceof InputStream) && !(value instanceof InputStreamSource)) {
+        try {
+            String paraName;
+            for (int i = 0; i < args.length; ++i) {
+                MethodParameter methodParam = new SynthesizingMethodParameter(method, i);
+                methodParam.initParameterNameDiscovery(new DefaultParameterNameDiscoverer());
+                PathVariable pathVariable = methodParam.getParameterAnnotation(PathVariable.class);
+                if (pathVariable == null) {
+                    RequestBody requestBody = methodParam.getParameterAnnotation(RequestBody.class);
+                    String parameterName = methodParam.getParameterName();
+                    Object value = args[i];
+                    if (requestBody != null && value != null) {
+                        paraMap.putAll(BeanUtil.beanToMap(value));
+                    } else {
                         if (value instanceof List) {
-                            List<?> list = (List) value;
-                            AtomicBoolean isSkip = new AtomicBoolean(false);
-                            Iterator var14 = list.iterator();
+                            List<?> list = (List<?>) value;
+                            if (!list.isEmpty()) {
+                                value = list.get(0);
+                            }
+                        }
+                        if (value instanceof HttpServletRequest) {
+                            paraMap.putAll(((HttpServletRequest) value).getParameterMap());
+                        } else if (value instanceof WebRequest) {
+                            paraMap.putAll(((WebRequest) value).getParameterMap());
+                        } else if (value instanceof MultipartFile) {
+                            MultipartFile multipartFile = (MultipartFile) value;
+                            paraName = multipartFile.getName();
+                            String fileName = multipartFile.getOriginalFilename();
+                            paraMap.put(paraName, fileName);
+                        } else if (!(value instanceof HttpServletResponse) && !(value instanceof InputStream) && !(value instanceof InputStreamSource)) {
+                            if (value instanceof List) {
+                                List<?> list = (List) value;
+                                AtomicBoolean isSkip = new AtomicBoolean(false);
+                                Iterator var14 = list.iterator();
 
-                            while (var14.hasNext()) {
-                                Object o = var14.next();
-                                if ("StandardMultipartFile".equalsIgnoreCase(o.getClass().getSimpleName())) {
-                                    isSkip.set(true);
-                                    break;
+                                while (var14.hasNext()) {
+                                    Object o = var14.next();
+                                    if ("StandardMultipartFile".equalsIgnoreCase(o.getClass().getSimpleName())) {
+                                        isSkip.set(true);
+                                        break;
+                                    }
                                 }
-                            }
 
-                            if (isSkip.get()) {
-                                paraMap.put(parameterName, "此参数不能序列化为json");
-                            }
-                        } else {
-                            RequestParam requestParam = methodParam.getParameterAnnotation(RequestParam.class);
-                            if (requestParam != null && KdlaStringHelp.isNotBlank(requestParam.value())) {
-                                paraName = requestParam.value();
+                                if (isSkip.get()) {
+                                    paraMap.put(parameterName, "此参数不能序列化为json");
+                                }
                             } else {
-                                paraName = methodParam.getParameterName();
-                            }
+                                RequestParam requestParam = methodParam.getParameterAnnotation(RequestParam.class);
+                                if (requestParam != null && KdlaStringHelp.isNotBlank(requestParam.value())) {
+                                    paraName = requestParam.value();
+                                } else {
+                                    paraName = methodParam.getParameterName();
+                                }
 
-                            paraMap.put(paraName, value);
+                                paraMap.put(paraName, value);
+                            }
                         }
                     }
                 }
             }
-        }
 
-        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
-        HttpServletRequest request = requestAttributes == null ? null : ((ServletRequestAttributes) requestAttributes).getRequest();
-        String requestURI = Objects.requireNonNull(request).getRequestURI();
-        String requestMethod = request.getMethod();
-        StringBuilder beforeReqLog = new StringBuilder(300);
-        List<Object> beforeReqArgs = new ArrayList<>();
-        beforeReqLog.append("\n\n================  Request Start  ================\n");
-        beforeReqLog.append("===> {}: {}");
-        beforeReqArgs.add(requestMethod);
-        beforeReqArgs.add(requestURI);
-        if (paraMap.isEmpty()) {
-            beforeReqLog.append("\n");
-        } else {
-            beforeReqLog.append(" Parameters: {}\n");
-            beforeReqArgs.add(JacksonUtil.toJson(paraMap));
-        }
+            RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+            HttpServletRequest request = requestAttributes == null ? null : ((ServletRequestAttributes) requestAttributes).getRequest();
+            requestURI = Objects.requireNonNull(request).getRequestURI();
+            requestMethod = request.getMethod();
+            StringBuilder beforeReqLog = new StringBuilder(300);
+            List<Object> beforeReqArgs = new ArrayList<>();
+            beforeReqLog.append("\n\n================  Request Start  ================\n");
+            beforeReqLog.append("===> {}: {}");
+            beforeReqArgs.add(requestMethod);
+            beforeReqArgs.add(requestURI);
+            if (paraMap.isEmpty()) {
+                beforeReqLog.append("\n");
+            } else {
+                beforeReqLog.append(" Parameters: {}\n");
+                beforeReqArgs.add(JacksonUtil.toJson(paraMap));
+            }
 
-        Enumeration headers = request.getHeaderNames();
+            Enumeration headers = request.getHeaderNames();
 
-        while (headers.hasMoreElements()) {
-            String headerName = (String) headers.nextElement();
-            paraName = request.getHeader(headerName);
-            beforeReqLog.append("===Headers===  {} : {}\n");
-            beforeReqArgs.add(headerName);
-            beforeReqArgs.add(paraName);
-        }
+            while (headers.hasMoreElements()) {
+                String headerName = (String) headers.nextElement();
+                // 敏感Header（authorization/cookie/password/token/mobile）值脱敏为***
+                paraName = LogSanitizeUtil.maskHeader(headerName, request.getHeader(headerName));
+                beforeReqLog.append("===Headers===  {} : {}\n");
+                beforeReqArgs.add(headerName);
+                beforeReqArgs.add(paraName);
+            }
 
-        beforeReqLog.append("================  Request End   ================\n");
-        long startNs = System.nanoTime();
-        if (log.isInfoEnabled()) {
-            log.info(beforeReqLog.toString(), beforeReqArgs.toArray());
+            beforeReqLog.append("================  Request End   ================\n");
+            startNs = System.nanoTime();
+            if (log.isInfoEnabled()) {
+                log.info(beforeReqLog.toString(), beforeReqArgs.toArray());
+            }
+            afterReqLog.append("\n\n================  Response Start  ================\n");
+        } catch (Exception e) {
+            log.warn("request log aspect parse error, skip request log", e);
+            return point.proceed();
         }
-        StringBuilder afterReqLog = new StringBuilder(200);
-        List<Object> afterReqArgs = new ArrayList<>();
-        afterReqLog.append("\n\n================  Response Start  ================\n");
-        boolean var24 = false;
 
         Object var17;
         try {
             var24 = true;
             Object result = point.proceed();
             afterReqLog.append("===Result===  {}\n");
-            afterReqArgs.add(JacksonUtil.toJson(result));
+            // 完整响应超2KB截断，防止大报文刷爆日志
+            afterReqArgs.add(LogSanitizeUtil.truncate(JacksonUtil.toJson(result)));
             var17 = result;
             var24 = false;
         } finally {
