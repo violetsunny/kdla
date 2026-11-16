@@ -15,6 +15,8 @@
  */
 package top.kdla.framework.supplement.mqtt.netty;
 
+import java.util.concurrent.TimeUnit;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -26,8 +28,6 @@ import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.ScheduledFuture;
-
-import java.util.concurrent.TimeUnit;
 
 final class MqttPingHandler extends ChannelInboundHandlerAdapter {
 
@@ -75,7 +75,7 @@ final class MqttPingHandler extends ChannelInboundHandlerAdapter {
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PINGREQ, false, MqttQoS.AT_MOST_ONCE, false, 0);
         channel.writeAndFlush(new MqttMessage(fixedHeader));
 
-        if (this.pingRespTimeout != null) {
+        if (this.pingRespTimeout == null) {
             this.pingRespTimeout = channel.eventLoop().schedule(() -> {
                 MqttFixedHeader fixedHeader2 = new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0);
                 channel.writeAndFlush(new MqttMessage(fixedHeader2)).addListener(ChannelFutureListener.CLOSE);

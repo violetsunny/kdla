@@ -3,7 +3,6 @@ package top.kdla.framework.supplement.fieldvaluefinder;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import top.kdla.framework.common.utils.JacksonUtil;
 import top.kdla.framework.domain.ApplicationContextHelp;
 import top.kdla.framework.supplement.fieldvaluefinder.annotation.FieldValueFind;
@@ -21,7 +20,6 @@ import java.util.stream.Collectors;
  * @date 2021/12/7
  */
 @Slf4j
-@Component
 public class FieldValueFindHelp {
 
 
@@ -138,7 +136,7 @@ public class FieldValueFindHelp {
                 ExistPolicy existPolicy = fieldValueFind.existPolicy();
                 if (field.get(sourceObject) != null) {
                     if (ExistPolicy.KEEP_SELF.equals(existPolicy)) {
-                        break;
+                        continue;
                     }
                     if (!ExistPolicy.USE_FROM.equals(existPolicy)) {
                         throw new IllegalArgumentException();

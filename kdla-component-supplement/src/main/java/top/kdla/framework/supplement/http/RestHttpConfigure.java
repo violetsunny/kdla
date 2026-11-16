@@ -11,7 +11,9 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -23,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 
 
 @Configuration
+@ConditionalOnClass(RestTemplate.class)
+@ConditionalOnProperty(name = "kdla.config.rest-http.enabled", havingValue = "true", matchIfMissing = false)
 public class RestHttpConfigure {
 
     @Value("${http.connectionPoolSize:200}")

@@ -43,9 +43,16 @@ public class VertxHttpClient {
     private final WebClient webClientHttp;
     private final WebClient webClientHttps;
 
+    //单次请求整体超时(ms)，<=0表示不设超时。防止服务端无响应时future永不完成导致调用方线程阻塞
+    private long requestTimeoutMs = 30000L;
+
     public VertxHttpClient(WebClient webClientHttp, WebClient webClientHttps) {
         this.webClientHttp = webClientHttp;
         this.webClientHttps = webClientHttps;
+    }
+
+    public void setRequestTimeoutMs(long requestTimeoutMs) {
+        this.requestTimeoutMs = requestTimeoutMs;
     }
 
     private WebClient getWebClient(String url) {
@@ -118,12 +125,14 @@ public class VertxHttpClient {
                     }
                 } catch (Exception e) {
                     log.warn("VertxHttpClient-send url:{} req:{} \n result:{}", url, JSON.toJSONString(req), response.bodyAsString());
-                    future.completeExceptionally(e.getCause());
-                    throw new BizException(ErrorCode.FAIL.getCode(), e.getCause(), "调用外部接口异常：%s", response.bodyAsString());
+                    //旧实现completeExceptionally(e.getCause())在cause为null时传入null，且随后throw的BizException在Vert.x事件循环线程抛出无法到达调用方；
+                    //改为：cause为null时回退用e本身，异常统一通过future传递，不再在回调内throw
+                    Throwable cause = e.getCause() != null ? e.getCause() : e;
+                    future.completeExceptionally(new BizException(ErrorCode.FAIL.getCode(), cause, "调用外部接口异常：%s", response.bodyAsString()));
                 }
             } else {
+                //异常通过future传递；旧实现在此throw的BizException运行于事件循环线程，无法到达调用方，已移除
                 future.completeExceptionally(ar.cause());
-                throw new BizException(ErrorCode.FAIL.getCode(), ar.cause(), "调用外部接口失败");
             }
         });
         return future;
@@ -140,8 +149,8 @@ public class VertxHttpClient {
             if (ar.succeeded()) {
                 future.complete(ar.result());
             } else {
+                //异常通过future传递；旧实现在此throw的BizException运行于事件循环线程，无法到达调用方，已移除
                 future.completeExceptionally(ar.cause());
-                throw new BizException(ErrorCode.FAIL.getCode(), ar.cause(), "调用外部接口失败");
             }
         });
         return future;
@@ -167,7 +176,8 @@ public class VertxHttpClient {
         } else {
             headers = new HashMap<>();
         }
-        headers.putIfAbsent(HttpHeaderNames.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON_VALUE);
+        //headers的key已在上方统一转小写，此处putIfAbsent/get也必须用小写key，否则用户传入的content-type会被默认值覆盖或取不到
+        headers.putIfAbsent(HttpHeaderNames.CONTENT_TYPE.toString().toLowerCase(), MediaType.APPLICATION_JSON_VALUE);
 
         HttpRequest<Buffer> request = null;
         //HTTP method
@@ -186,10 +196,15 @@ public class VertxHttpClient {
         }
         //HTTP head
         request.putHeaders(HeadersMultiMap.httpHeaders().setAll(headers));
+        //设置单次请求整体超时：服务端接受连接但长时间不响应时，旧实现responseFuture永不完成，导致调用方future.get()永久阻塞；
+        //超时触发后请求以TimeoutException失败，经onComplete的ar.failed()分支completeExceptionally，future得以完成
+        if (requestTimeoutMs > 0) {
+            request.timeout(requestTimeoutMs);
+        }
         //HTTP head type responseFuture
         Future<HttpResponse<Buffer>> responseFuture;
         if (req != null) {
-            String contentType = headers.get(HttpHeaderNames.CONTENT_TYPE.toString());
+            String contentType = headers.get(HttpHeaderNames.CONTENT_TYPE.toString().toLowerCase());
             if (contentType.equalsIgnoreCase(HttpHeaderValues.APPLICATION_JSON.toString())) {
                 responseFuture = request.sendJson(req);
             } else if (contentType.equalsIgnoreCase(HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.toString())) {

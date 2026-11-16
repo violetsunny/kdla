@@ -16,10 +16,24 @@
 package top.kdla.framework.supplement.mqtt.netty;
 
 import com.google.common.collect.ImmutableSet;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.mqtt.*;
+import io.netty.handler.codec.mqtt.MqttConnAckMessage;
+import io.netty.handler.codec.mqtt.MqttConnectMessage;
+import io.netty.handler.codec.mqtt.MqttConnectPayload;
+import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
+import io.netty.handler.codec.mqtt.MqttConnectVariableHeader;
+import io.netty.handler.codec.mqtt.MqttFixedHeader;
+import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.handler.codec.mqtt.MqttMessageIdVariableHeader;
+import io.netty.handler.codec.mqtt.MqttMessageType;
+import io.netty.handler.codec.mqtt.MqttPubAckMessage;
+import io.netty.handler.codec.mqtt.MqttPublishMessage;
+import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttSubAckMessage;
+import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
 import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.Promise;
 
@@ -117,7 +131,8 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
         if (!handlerInvoked && client.getDefaultHandler() != null) {
             client.getDefaultHandler().onMessage(message.variableHeader().topicName(), message.payload());
         }
-        message.payload().release();
+        // 此处不release payload：QoS0/1由SimpleChannelInboundHandler的autoRelease统一释放，
+        // 旧实现在此处额外release一次，与autoRelease叠加造成双重释放（IllegalReferenceCountException）
     }
 
     private void handleConack(Channel channel, MqttConnAckMessage message) {
@@ -153,6 +168,13 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
                 this.connectFuture.setSuccess(new MqttConnectResult(false, message.variableHeader().connectReturnCode(), channel.closeFuture()));
                 channel.close();
                 // Don't start reconnect logic here
+                break;
+
+            default:
+                // 未知returnCode：旧实现既不success也不failure，connectFuture永久悬挂致连接方无限等待
+                this.connectFuture.setFailure(new IllegalStateException(
+                        "MQTT CONACK unknown return code: " + message.variableHeader().connectReturnCode()));
+                channel.close();
                 break;
         }
     }
@@ -198,6 +220,9 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
                     MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(message.variableHeader().packetId());
                     MqttMessage pubrecMessage = new MqttMessage(fixedHeader, variableHeader);
 
+                    // 跨包存储（等待PUBREL）必须retain持有引用：否则channelRead0返回后
+                    // autoRelease即释放payload，PUBREL到达再读取属于use-after-free
+                    message.retain();
                     MqttIncomingQos2Publish incomingQos2Publish = new MqttIncomingQos2Publish(message);
                     this.client.getQos2PendingIncomingPublishes().put(message.variableHeader().packetId(), incomingQos2Publish);
 
@@ -231,6 +256,10 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
 
     private void handlePubrec(Channel channel, MqttMessage message) {
         MqttPendingPublish pendingPublish = this.client.getPendingPublishes().get(((MqttMessageIdVariableHeader) message.variableHeader()).messageId());
+        // 重复/错序PUBREC时pendingPublish可能已移除，旧实现直接调方法NPE杀死event loop（对齐handlePuback判空）
+        if (pendingPublish == null) {
+            return;
+        }
         pendingPublish.onPubackReceived();
 
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBREL, false, MqttQoS.AT_LEAST_ONCE, false, 0);
@@ -243,10 +272,15 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
     }
 
     private void handlePubrel(Channel channel, MqttMessage message) {
-        if (this.client.getQos2PendingIncomingPublishes().containsKey(((MqttMessageIdVariableHeader) message.variableHeader()).messageId())) {
-            MqttIncomingQos2Publish incomingQos2Publish = this.client.getQos2PendingIncomingPublishes().get(((MqttMessageIdVariableHeader) message.variableHeader()).messageId());
-            this.invokeHandlersForIncomingPublish(incomingQos2Publish.getIncomingPublish());
-            this.client.getQos2PendingIncomingPublishes().remove(incomingQos2Publish.getIncomingPublish().variableHeader().packetId());
+        MqttIncomingQos2Publish incomingQos2Publish = this.client.getQos2PendingIncomingPublishes()
+                .remove(((MqttMessageIdVariableHeader) message.variableHeader()).messageId());
+        if (incomingQos2Publish != null) {
+            try {
+                this.invokeHandlersForIncomingPublish(incomingQos2Publish.getIncomingPublish());
+            } finally {
+                // 释放handlePublish存储时retain的引用，retain/release一一配对
+                incomingQos2Publish.getIncomingPublish().release();
+            }
         }
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBCOMP, false, MqttQoS.AT_MOST_ONCE, false, 0);
         MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(((MqttMessageIdVariableHeader) message.variableHeader()).messageId());
@@ -256,6 +290,10 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
     private void handlePubcomp(MqttMessage message) {
         MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) message.variableHeader();
         MqttPendingPublish pendingPublish = this.client.getPendingPublishes().get(variableHeader.messageId());
+        // 重复/错序PUBCOMP判空，同handlePubrec
+        if (pendingPublish == null) {
+            return;
+        }
         pendingPublish.getFuture().setSuccess(null);
         this.client.getPendingPublishes().remove(variableHeader.messageId());
         pendingPublish.getPayload().release();

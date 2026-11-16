@@ -14,7 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import top.kdla.framework.domain.ApplicationContextHelp;
@@ -30,6 +32,8 @@ import java.util.stream.IntStream;
  * @version $Id: VertxHttpConfig, v 0.1 2023/5/18 10:22 kanglele Exp $
  */
 @Configuration
+@ConditionalOnClass(MqttClient.class)
+@ConditionalOnProperty(name = "kdla.config.mqtt.enabled", havingValue = "true", matchIfMissing = false)
 @Slf4j
 public class VertxMqttConfigure {
 
@@ -48,7 +52,7 @@ public class VertxMqttConfigure {
     @Value("${kdla.mqtt.port:1883}")
     private int port;
 
-    @Value("${kdla.mqtt.topics}")
+    @Value("${kdla.mqtt.topics:}")
     private List<String> topics;
 
     @Value("${kdla.mqtt.qos:0}")
@@ -61,6 +65,7 @@ public class VertxMqttConfigure {
     private long retry;
 
     @Bean
+    @ConditionalOnMissingBean(VertxMqttClient.class)
     public VertxMqttClient vertxMqttClient(MqttClient mqttClient) {
         return new VertxMqttClient(mqttClient);
     }
@@ -126,6 +131,7 @@ public class VertxMqttConfigure {
         }
 
         IntStream.range(0, topics.size())
+                .filter(i -> org.apache.commons.lang3.StringUtils.isNotBlank(topics.get(i)))
                 .forEach(i -> {
                     mqttClient.subscribe(topics.get(i), MqttQoS.valueOf(qos).value())
                             .onSuccess(id -> {
@@ -157,12 +163,6 @@ public class VertxMqttConfigure {
             }
 
         });
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(Vertx.class)
-    public Vertx vertx() {
-        return Vertx.vertx();
     }
 
 }

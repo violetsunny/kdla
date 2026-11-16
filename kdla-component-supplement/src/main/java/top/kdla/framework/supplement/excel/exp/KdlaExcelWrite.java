@@ -61,9 +61,14 @@ public class KdlaExcelWrite<T extends BaseExcel> {
 
     public <E> void writeSheet(File file, Map<Class<E>, List<E>> lists) {
         ExcelWriter writer = EasyExcel.write(file).build();
-        for (Map.Entry<Class<E>, List<E>> classMap : lists.entrySet()) {
-            WriteSheet sheet = EasyExcel.writerSheet("sheet1").head(classMap.getKey()).build();
-            writer.write(classMap.getValue(), sheet);
+        try {
+            for (Map.Entry<Class<E>, List<E>> classMap : lists.entrySet()) {
+                WriteSheet sheet = EasyExcel.writerSheet("sheet1").head(classMap.getKey()).build();
+                writer.write(classMap.getValue(), sheet);
+            }
+        } finally {
+            //旧实现writer创建后未关闭，文件句柄/输出流泄漏；finish()会flush并释放底层资源
+            writer.finish();
         }
     }
 
