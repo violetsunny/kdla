@@ -2,7 +2,6 @@ package top.kdla.framework.supplement.cache.cache;
 
 import cn.hutool.core.lang.generator.SnowflakeGenerator;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 
 import java.net.InetAddress;
@@ -30,6 +29,11 @@ public class MachineIdHelp {
     private static final Integer MAX_ID = 31;
 
     private static final Integer MIN_ID = 0;
+
+    /**
+     * 机器ID注册记录的过期时间（毫秒），与旧实现3600秒语义一致
+     */
+    private static final long REGISTER_EXPIRE_MILLIS = 3600L * 1000;
 
     /**
      * 机器id
@@ -66,6 +70,7 @@ public class MachineIdHelp {
     private String getIPAddress() throws UnknownHostException {
         InetAddress address = InetAddress.getLocalHost();
         String ip = address.getHostAddress();
+        localIp = ip;
         String ipStr = ip.replaceAll("\\.", "&");
         if (log.isInfoEnabled()) {
             log.info("MachineIdConfig.getIPAddress ip={},ipStr={}", ip, ipStr);
@@ -86,9 +91,9 @@ public class MachineIdHelp {
                     dataCenterId = dataCenter;
                     MutablePair<String, String> keyPair = getKeyPair(machineId, dataCenterId);
                     String key = keyPair.left + keyPair.right;
-                    String cacheValue = (String) redisHelp.get(key);
-                    if (StringUtils.isBlank(cacheValue)) {
-                        redisHelp.set(key, ip, 3600L);
+                    // SETNX原子注册，消除旧实现get判空后再set的check-then-act竞态（并发下多实例会抢到同一ID）；
+                    // 注册失败说明该ID已被占用，换下一个ID重试
+                    if (redisHelp.lock(key, ip, REGISTER_EXPIRE_MILLIS)) {
                         if (log.isInfoEnabled()) {
                             log.info("MachineIdConfig.init ip:{},machineId:{},dataCenterId:{}, usedTime : {}", ip, machineId, dataCenterId, (System.currentTimeMillis() - start));
                         }
@@ -105,10 +110,14 @@ public class MachineIdHelp {
      * 容器销毁前清除注册记录
      */
     public void destroyMachineId() {
+        if (machineId == null || dataCenterId == null) {
+            return;
+        }
         MutablePair<String, String> keyPair = getKeyPair(machineId, dataCenterId);
         try {
             String key = keyPair.left + keyPair.right;
-            redisHelp.set(key, StringUtils.EMPTY, 1L);
+            //旧实现set(key,空串,1秒)：1秒窗口内key仍存在(空值)会阻塞其他实例SETNX注册；改为del立即删除，消除窗口
+            redisHelp.del(key);
             if (log.isInfoEnabled()) {
                 log.info("MachineIdConfig destroy start.... key:{}", keyPair.left);
             }
@@ -129,9 +138,8 @@ public class MachineIdHelp {
     private void getRandomMachineAndDataCenterId() {
         machineId = (int) (Math.random() * 32);
         dataCenterId = (int) (Math.random() * 32);
-        if (log.isInfoEnabled()) {
-            log.info("MachineIdConfig.getRandomMachineAndDataCenterId machineId={},dataCenterId={}", machineId, dataCenterId);
-        }
+        // 回退随机取号未经redis SETNX注册，多实例可能撞号导致雪花ID重复，显式告警便于监控发现
+        log.error("MachineIdConfig回退随机取号(未注册) machineId={},dataCenterId={}，存在跨实例雪花ID冲突风险", machineId, dataCenterId);
     }
 
 }

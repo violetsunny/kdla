@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -30,21 +31,34 @@ import java.util.List;
  * @version $Id: CacheAutoConfig, v 0.1 2023/8/17 19:37 kanglele Exp $
  */
 @Configuration
-@EnableCaching
 @ConditionalOnClass({RedisTemplate.class})
+@ConditionalOnProperty(name = "kdla.cache.enabled", havingValue = "true", matchIfMissing = false)
 public class CacheAutoConfigure {
+
+    /**
+     * @EnableCaching 全局副作用隔离在内部配置类，仅随 kdla.cache.enabled 开关生效
+     */
+    @Configuration
+    @EnableCaching
+    static class CachingEnabler {
+    }
 
     @Value("${app.id:}")
     private String appId;
 
+    private MachineIdHelp machineIdHelp;
+
     @Bean
+    @ConditionalOnMissingBean(SpringRedisHelp.class)
     public SpringRedisHelp springRedisHelp(@Autowired RedisTemplate redisTemplate) {
         return new SpringRedisHelp(redisTemplate);
     }
 
     @Bean
+    @ConditionalOnMissingBean(MachineIdHelp.class)
     public MachineIdHelp machineIdHelp(SpringRedisHelp springRedisHelp) {
-        return new MachineIdHelp(springRedisHelp, appId);
+        this.machineIdHelp = new MachineIdHelp(springRedisHelp, appId);
+        return this.machineIdHelp;
     }
 
     @Bean
@@ -55,8 +69,7 @@ public class CacheAutoConfigure {
 
 
     @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnClass({KdlaCafCache.class})
+    @ConditionalOnMissingBean(CacheManager.class)
     public CacheManager caffeineCacheManager(@Autowired List<KdlaCafCache<Object, Object>> caffeines) {
         //加入CacheManager为了和@Cacheable一起使用
         List<Cache> caches = new ArrayList<>();
@@ -69,7 +82,9 @@ public class CacheAutoConfigure {
     }
 
     @PreDestroy
-    public void destroy(MachineIdHelp machineIdHelp) {
-        machineIdHelp.destroyMachineId();
+    public void destroy() {
+        if (machineIdHelp != null) {
+            machineIdHelp.destroyMachineId();
+        }
     }
 }

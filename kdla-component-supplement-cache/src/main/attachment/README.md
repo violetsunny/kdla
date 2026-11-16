@@ -14,7 +14,7 @@
    - 请参考SQL附件
 
 * 3.配置
-    - 3.1）top.kdla.framework.supplement.sequence.enable = true
+    - 3.1）top.kdla.framework.supplement.cache.sequence.enable = true
     设置为true才能让本starter包生效
     - 3.2）kdla.sequence.lock.key.prefix
     用来定义分布式锁的key值

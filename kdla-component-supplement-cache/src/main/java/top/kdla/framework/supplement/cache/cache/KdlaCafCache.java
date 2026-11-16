@@ -6,11 +6,13 @@ package top.kdla.framework.supplement.cache.cache;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Expiry;
 import com.github.benmanes.caffeine.cache.RemovalListener;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -78,10 +80,24 @@ public class KdlaCafCache<T, E> {
                 .initialCapacity(this.initialCapacity)
                 // 设置最大缓存数量
                 .maximumSize(this.maximumSize)
-                // 使用自定义的过期策略--没办法按照key设置不同的超时时间
-                //.expireAfter(new CustomExpiry())
-                // 设置缓存过期时间-公共过期
-                .expireAfterWrite(this.duration, TimeUnit.SECONDS)
+                // 可变过期策略：默认duration秒；使put(key,value,duration)的expireVariably按key覆盖生效
+                // （原expireAfterWrite构建下expireVariably()恒为空Optional，per-key TTL被静默忽略）
+                .expireAfter(new Expiry<T, E>() {
+                    @Override
+                    public long expireAfterCreate(T key, E value, long currentTime) {
+                        return TimeUnit.SECONDS.toNanos(duration);
+                    }
+
+                    @Override
+                    public long expireAfterUpdate(T key, E value, long currentTime, long currentDuration) {
+                        return currentDuration;
+                    }
+
+                    @Override
+                    public long expireAfterRead(T key, E value, long currentTime, long currentDuration) {
+                        return currentDuration;
+                    }
+                })
                 // 设置要统计缓存的命中率
 //                .recordStats()
                 // 设置缓存的移除通知
@@ -118,11 +134,9 @@ public class KdlaCafCache<T, E> {
      */
     public synchronized void put(T key, long duration) {
         E value = this.loaderFunction == null ? null : this.loaderFunction.apply(key);
-        assert value != null;
-        // 使用Cache.policy().expireVariably()设置单个键的过期时间
-        this.loadingCache.policy().expireVariably().ifPresent(expiry -> expiry.setExpiresAfter(key, duration, TimeUnit.SECONDS));
-        // 将值放入缓存
+        Objects.requireNonNull(value, "loaderFunction returned null for key: " + key);
         this.loadingCache.put(key, value);
+        this.loadingCache.policy().expireVariably().ifPresent(expiry -> expiry.setExpiresAfter(key, duration, TimeUnit.SECONDS));
     }
 
     /**
@@ -133,10 +147,8 @@ public class KdlaCafCache<T, E> {
      * @param duration 分
      */
     public synchronized void put(T key, E value, long duration) {
-        // 使用Cache.policy().expireVariably()设置单个键的过期时间
-        this.loadingCache.policy().expireVariably().ifPresent(expiry -> expiry.setExpiresAfter(key, duration, TimeUnit.SECONDS));
-        // 将值放入缓存
         this.loadingCache.put(key, value);
+        this.loadingCache.policy().expireVariably().ifPresent(expiry -> expiry.setExpiresAfter(key, duration, TimeUnit.SECONDS));
     }
 
     /**

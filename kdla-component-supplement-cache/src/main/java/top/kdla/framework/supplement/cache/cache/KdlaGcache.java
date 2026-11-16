@@ -11,6 +11,7 @@ import com.google.common.cache.RemovalListener;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -132,7 +133,7 @@ public class KdlaGcache<T, E> {
      */
     public synchronized void put(T key, Long duration) {
         E value = this.loaderFunction == null ? null : this.loaderFunction.apply(key);
-        assert value != null;
+        Objects.requireNonNull(value, "loaderFunction returned null for key: " + key);
         long expiryTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(duration);
         this.loadingCache.put(key, new CacheValue<>(value, expiryTime));
     }
