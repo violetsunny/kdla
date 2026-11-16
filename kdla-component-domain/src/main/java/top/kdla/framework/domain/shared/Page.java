@@ -2,6 +2,7 @@ package top.kdla.framework.domain.shared;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 类描述
@@ -46,7 +47,8 @@ public class Page<T> implements ValueObject<Page<T>>, Serializable {
         this.totalCount = totalCount;
         this.pageSize = pageSize;
         this.currPage = currPage;
-        this.totalPage = (int)Math.ceil((double)totalCount / pageSize);
+        // pageSize<=0时totalPage置0（此前除0得Infinity再转int溢出为Integer.MAX_VALUE）；(long)替代(int)避免大值截断
+        this.totalPage = pageSize <= 0 ? 0 : (long) Math.ceil((double) totalCount / pageSize);
     }
 
     public long getTotalCount() {
@@ -91,7 +93,15 @@ public class Page<T> implements ValueObject<Page<T>>, Serializable {
 
     @Override
     public boolean sameValueAs(Page other) {
-        return false;
+        // 值对象按属性值比较（此前恒返回false，违反ValueObject契约）
+        if (other == null) {
+            return false;
+        }
+        return totalCount == other.totalCount
+                && pageSize == other.pageSize
+                && totalPage == other.totalPage
+                && currPage == other.currPage
+                && Objects.equals(list, other.list);
     }
 
     @Override

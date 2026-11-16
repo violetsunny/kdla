@@ -1,12 +1,13 @@
 package top.kdla.framework.infra.dal.es.model;
 
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 /**
  * @author shq
  */
 @EqualsAndHashCode(callSuper = true)
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor(staticName = "of")
 @Data

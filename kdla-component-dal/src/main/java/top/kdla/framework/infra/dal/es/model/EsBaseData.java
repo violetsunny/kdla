@@ -5,6 +5,8 @@
 package top.kdla.framework.infra.dal.es.model;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
 
@@ -15,6 +17,8 @@ import java.io.Serializable;
  * @version $Id: EsBaseData, v 0.1 2023/1/13 15:01 kanglele Exp $
  */
 @Data
+@NoArgsConstructor
+@SuperBuilder
 public class EsBaseData implements ElasticIndex {
 
     private String id;

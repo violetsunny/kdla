@@ -10,7 +10,6 @@ import top.kdla.framework.dto.PageQuery;
 import top.kdla.framework.infra.dal.mybatis.common.DoConstants;
 
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Mybatis-Plus查询参数
@@ -63,22 +62,24 @@ public class PlusPageQuery<T> {
 
 
     public IPage<T> getPage(Map<String, Object> params, String defaultOrderByColumn, boolean isOrderByAsc) {
-        //分页参数
+        //分页参数（pageNum/pageSize是基本类型long，Objects.nonNull恒true，改判>0，未设置(0)/负数回退默认值）
         long curPage = 1;
         long limit = 10;
 
-        if (Objects.nonNull(this.getPageNum())) {
+        if (this.getPageNum() > 0) {
             curPage = this.getPageNum();
         }
-        if (Objects.nonNull(this.getPageSize())) {
+        if (this.getPageSize() > 0) {
             limit = this.getPageSize();
         }
 
         //分页对象
         Page<T> page = new Page<>(curPage, limit);
 
-        //分页参数
-        params.put(DoConstants.PAGE, page);
+        //分页参数（params允许为null，此前直接put抛NPE）
+        if (params != null) {
+            params.put(DoConstants.PAGE, page);
+        }
 
         //排序字段
         //防止SQL注入（因为sidx、order是通过拼接SQL实现排序的，会有SQL注入风险）
@@ -110,14 +111,14 @@ public class PlusPageQuery<T> {
     }
 
     public IPage<T> getPage(String defaultOrderByColumn, boolean isOrderByAsc) {
-        //分页参数
+        //分页参数（pageNum/pageSize是基本类型long，Objects.nonNull恒true，改判>0，未设置(0)/负数回退默认值）
         long curPage = 1;
         long limit = 10;
 
-        if (Objects.nonNull(this.getPageNum())) {
+        if (this.getPageNum() > 0) {
             curPage = this.getPageNum();
         }
-        if (Objects.nonNull(this.getPageSize())) {
+        if (this.getPageSize() > 0) {
             limit = this.getPageSize();
         }
 

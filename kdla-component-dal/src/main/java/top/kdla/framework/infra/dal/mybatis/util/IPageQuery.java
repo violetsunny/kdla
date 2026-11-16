@@ -16,20 +16,21 @@ import java.util.Map;
  **/
 public class IPageQuery<T> {
 
+    /**
+     * 每页条数上限，防止超大limit拖垮数据库
+     */
+    private static final long MAX_LIMIT = 500;
+
     public IPage<T> mapPage(Map<String, Object> params) {
         return this.mapPage(params, null, false);
     }
 
     public IPage<T> mapPage(Map<String, Object> params, String defaultOrderField, boolean isAsc) {
-        //分页参数
-        long curPage = 1;
-        long limit = 10;
-
-        if (params.get(DoConstants.PAGE) != null) {
-            curPage = Long.parseLong((String)params.get(DoConstants.PAGE));
-        }
-        if (params.get(DoConstants.LIMIT) != null) {
-            limit = Long.parseLong((String)params.get(DoConstants.LIMIT));
+        //分页参数（容错解析：非String/非数字/负数一律回退默认值，limit加上限）
+        long curPage = parsePagingValue(params.get(DoConstants.PAGE), 1);
+        long limit = parsePagingValue(params.get(DoConstants.LIMIT), 10);
+        if (limit > MAX_LIMIT) {
+            limit = MAX_LIMIT;
         }
 
         //分页对象
@@ -65,5 +66,25 @@ public class IPageQuery<T> {
         }
 
         return page;
+    }
+
+    /**
+     * 分页参数容错解析：值可能是String/Integer等任意类型，统一String.valueOf后try-parse，
+     * 解析失败或为负数时回退默认值（此前(String)强转+parseLong无防护，类型不符抛ClassCastException、非数字抛NumberFormatException）
+     *
+     * @param value        原始参数值，可为null
+     * @param defaultValue 回退默认值
+     * @return 解析后的分页参数
+     */
+    private static long parsePagingValue(Object value, long defaultValue) {
+        if (value == null) {
+            return defaultValue;
+        }
+        try {
+            long parsed = Long.parseLong(String.valueOf(value).trim());
+            return parsed < 0 ? defaultValue : parsed;
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 }
