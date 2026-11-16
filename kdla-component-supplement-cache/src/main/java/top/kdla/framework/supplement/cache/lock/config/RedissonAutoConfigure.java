@@ -5,6 +5,7 @@
 package top.kdla.framework.supplement.cache.lock.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.lang.annotation.Aspect;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,6 +73,7 @@ public class RedissonAutoConfigure {
 
     @Bean
     @ConditionalOnMissingBean
+    @ConditionalOnClass(Aspect.class)
     public DistributeLockedAspect distributeLockedAspect() {
         return new DistributeLockedAspect();
     }

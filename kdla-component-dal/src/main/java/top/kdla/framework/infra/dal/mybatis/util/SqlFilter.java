@@ -24,10 +24,10 @@ public class SqlFilter {
     private static final int MAX_COLUMN_LENGTH = 64;
 
     /**
-      * SQL注入过滤
-      * @param str  待验证的字符串
+     * SQL注入过滤
+     * @param str  待验证的字符串
      */
-     public static String sqlInject(String str){
+    public static String sqlInject(String str){
         if(StringUtils.isBlank(str)){
             return null;
         }

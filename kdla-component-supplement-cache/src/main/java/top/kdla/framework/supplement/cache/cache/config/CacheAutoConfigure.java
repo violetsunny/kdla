@@ -7,9 +7,12 @@ package top.kdla.framework.supplement.cache.cache.config;
 import cn.hutool.core.lang.generator.SnowflakeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -32,6 +35,8 @@ import java.util.List;
  */
 @Configuration
 @ConditionalOnClass({RedisTemplate.class})
+@ConditionalOnBean(RedisTemplate.class)
+@AutoConfigureAfter(RedisAutoConfiguration.class)
 @ConditionalOnProperty(name = "kdla.cache.enabled", havingValue = "true", matchIfMissing = false)
 public class CacheAutoConfigure {
 
