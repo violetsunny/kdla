@@ -93,7 +93,7 @@
 
 | # | 位置 | 问题 | 来源 |
 |---|---|---|---|
-| P1 | cache MachineIdHelp.init:88-106 | 注册失败（Redis 异常）或 1024 槽耗尽时静态 machineId/dataCenterId 残留脏值，getGenerator 判空不进随机回退 → 多实例 (0,0) 或他人已注册 ID 撞号（雪花 ID 重复→主键冲突）。现有测试只覆盖成功路径 | R 上游 SAME |
+| P1 | cache MachineIdHelp.init:88-106 | 注册失败（Redis 异常）或 1024 槽耗尽时静态 machineId/dataCenterId 残留脏值，getGenerator 判空不进随机回退 → 多实例 (0,0) 或他人已注册 ID 撞号（雪花 ID 重复→主键冲突）。现有测试只覆盖成功路径 | 已修复（2026-11-16 用户裁定最小修复：注册成功才发布静态字段，失败路径保持 null 走随机回退；+2 回归测试 MachineIdHelpFailPathTest。R 侧未修，两仓该类出现 diff）|
 
 **Bug/泄漏类（R 上游）**：
 

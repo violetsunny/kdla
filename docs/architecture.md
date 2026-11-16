@@ -253,9 +253,8 @@ mvn -pl kdla-component-common -am clean test
 | K1 | exception/log | `CatchLogAspect` 仅识别 KDLA 自有异常类型，下游自定义异常会落入 `UNKNOWN_ERROR` | 待处理 |
 | K3 | dal | `BaseDo.isDeleted`（Boolean）与 MyBatis-Plus 逻辑删除不兼容，需使用 `MpBaseDo` | 已部分处理 |
 | K5 | domain | `ApplicationContextHelp` 静态方法不可 mock，强制集成测试 | 待处理 |
-| P1 | supplement-cache | `MachineIdHelp` 注册失败脏值残留可能撞号（数据正确性风险） | 待裁定，见 `docs/nit-inventory.md` |
 
-> K2（`KdlaBizDisLockService` 死锁风险）已在 2026-08-28 修复；K4（`SequenceNoGenerator` 缺装配开关）已在 2026-09-04 修复。
+> K2（`KdlaBizDisLockService` 死锁风险）已在 2026-08-28 修复；K4（`SequenceNoGenerator` 缺装配开关）已在 2026-09-04 修复；P1（`MachineIdHelp` 注册失败脏值撞号）已在 2026-11-16 修复（注册成功才发布静态字段，失败路径走随机回退+ERROR 告警）。
 > 其余上游同源遗留 19 项（P2-P20）登记于 `docs/nit-inventory.md`，只登记不修（与参考仓保持 diff 可核验）。
 
 ## FAQ

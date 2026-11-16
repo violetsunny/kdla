@@ -87,13 +87,15 @@ public class MachineIdHelp {
             String ip = getIPAddress();
             for (int dataCenter = MIN_ID; dataCenter <= MAX_ID; dataCenter++) {
                 for (int machine = MIN_ID; machine <= MAX_ID; machine++) {
-                    machineId = machine;
-                    dataCenterId = dataCenter;
-                    MutablePair<String, String> keyPair = getKeyPair(machineId, dataCenterId);
+                    MutablePair<String, String> keyPair = getKeyPair(machine, dataCenter);
                     String key = keyPair.left + keyPair.right;
                     // SETNX原子注册，消除旧实现get判空后再set的check-then-act竞态（并发下多实例会抢到同一ID）；
                     // 注册失败说明该ID已被占用，换下一个ID重试
                     if (redisHelp.lock(key, ip, REGISTER_EXPIRE_MILLIS)) {
+                        // 注册成功才发布到静态字段：失败路径（Redis异常/槽耗尽）不残留脏值，
+                        // 保证getGenerator判空命中走随机回退+ERROR告警，而非静默用未注册ID发号撞号
+                        machineId = machine;
+                        dataCenterId = dataCenter;
                         if (log.isInfoEnabled()) {
                             log.info("MachineIdConfig.init ip:{},machineId:{},dataCenterId:{}, usedTime : {}", ip, machineId, dataCenterId, (System.currentTimeMillis() - start));
                         }
@@ -101,6 +103,7 @@ public class MachineIdHelp {
                     }
                 }
             }
+            log.error("MachineIdConfig注册失败:1024槽耗尽,appId:{}", appId);
         } catch (Exception e) {
             log.error("MachineIdConfig init failed. machineId:{},dataCenterId:{}", machineId, dataCenterId, e);
         }

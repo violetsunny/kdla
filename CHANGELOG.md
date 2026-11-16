@@ -69,7 +69,8 @@ R 侧 15 个配置类全部默认关；**T 侧 9 类默认开**（T 现状已开
 - `DistributeLockedAspect` @Bean 补 `@ConditionalOnClass(Aspect)` 守护。
 - `UnifiedExceptionControllerAdvice`：`DuplicateKeyException` handler 移入 `@ConditionalOnClass` 守护的内层 advice（spring-jdbc provided 不传递，纯 web 宿主不再 NoClassDefFoundError 启动炸）。
 - 历史 commit 误入的 20 个 IDE 噪音文件（.classpath/.project/.settings）已从索引移除，.gitignore 加固。
-- R 上游同源遗留 20 项登记 `.scratch/kdla-backport/nit-inventory.md` P1-P20（含 P1 MachineIdHelp 注册失败脏值撞号风险——数据正确性，建议 R/T 同步修复，待裁定）。
+- R 上游同源遗留 20 项登记 `docs/nit-inventory.md` P1-P20（只登记不修，保两仓 diff 可核验）。
+- **P1 已修（2026-11-16 用户裁定最小修复）**：`MachineIdHelp.init` 改为 SETNX 注册成功才发布静态 `machineId`/`dataCenterId`，失败路径（Redis 异常/1024 槽耗尽）字段保持 null → `getGenerator` 判空命中走随机回退+ERROR 告警，消除脏值静默撞号；槽耗尽补 ERROR 日志；+2 回归测试（`MachineIdHelpFailPathTest`）。R 侧未修，两仓该类出现 diff。
 
 ---
 
