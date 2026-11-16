@@ -1,6 +1,19 @@
 # kdla
 K-DDD-Layed-Application&amp;Architect
 
+13 模块 Maven 框架库（非应用），发布到公司内部 Nexus（`nexus.enncloud.cn`）。Java 8 编译目标 + Spring Boot 2.7.18 + Spring Cloud 2021.0.9。
+
+## 文档导航
+
+- [CHANGELOG.md](./CHANGELOG.md) — 变更记录（2026-11-16 R→T backport 块含 BREAKING 清单与下游知会事项，升级必读）
+- [docs/architecture.md](./docs/architecture.md) — 架构说明、装配矩阵与配置键速查
+- [docs/project-map.md](./docs/project-map.md) — 目录结构与模块导航
+- [docs/nit-inventory.md](./docs/nit-inventory.md) — 上游同源遗留登记（只登记不修）
+
+> ⚠️ 本仓与另一裁剪版仓库（9 模块）共享 GAV `top.kdla.framework:*:1.0.1-SNAPSHOT`，同名配置键默认值语义相反（本仓多数默认开）。排障前先确认构件来源。
+>
+> 装配默认值速查：MDC / StopWatch / CatchLog / 异常拦截 / Validator / Domain / Redisson / Vertx / VertxHttp / FieldValueFind / 钉钉告警 / Prometheus 默认**开**；RequestLog / LogInterceptor / WebFilter / Cache / RestHttp / MQTT / CORS / 序列号默认**关**。详见 [docs/architecture.md](./docs/architecture.md)。
+
 ## kdla-component-model
 基础数据模型：实体类，枚举类，异常类
 
