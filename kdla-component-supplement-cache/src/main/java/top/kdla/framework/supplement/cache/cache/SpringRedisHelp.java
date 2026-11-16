@@ -4,6 +4,7 @@ import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.CollectionUtils;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit;
  * @Author: kll
  * @Date: 2019-04-08 11:46
  */
+@Slf4j
 public class SpringRedisHelp {
 
     private final RedisTemplate redisTemplate;
@@ -40,19 +42,26 @@ public class SpringRedisHelp {
             }
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("expire error, key:{}", key, e);
             return false;
         }
     }
 
     /**
-     * 根据key 获取过期时间
+     * 获取指定缓存的过期时间
      *
-     * @param key 键 不能为null
-     * @return 时间(秒) 返回0代表为永久有效
+     * @param key 键
+     * @return 过期时间（秒），-1 表示永不过期，-2 表示 key 不存在
+     * @deprecated 自 1.0.1 起废弃，请改用 {@link RedisTemplate#getExpire(Object, TimeUnit)} 直接调用
      */
+    @Deprecated
     public long getExpire(String key) {
-        return redisTemplate.getExpire(key, TimeUnit.SECONDS);
+        try {
+            return redisTemplate.getExpire(key, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.error("getExpire error, key:{}", key, e);
+            return -2;
+        }
     }
 
     /**
@@ -65,7 +74,7 @@ public class SpringRedisHelp {
         try {
             return redisTemplate.hasKey(key);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("hasKey error, key:{}", key, e);
             return false;
         }
     }
@@ -110,7 +119,7 @@ public class SpringRedisHelp {
             redisTemplate.opsForValue().set(key, value);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return false;
         }
 
@@ -133,7 +142,7 @@ public class SpringRedisHelp {
             }
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return false;
         }
     }
@@ -179,7 +188,7 @@ public class SpringRedisHelp {
     public boolean lock(String lockKey, String value, long expireTime) {
         //SET_IF_ABSENT--->NX  没有值放入
         //SET_IF_PRESENT--->XX  有值放入
-        return redisTemplate.opsForValue().setIfAbsent(lockKey, value, expireTime, TimeUnit.MILLISECONDS);
+        return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(lockKey, value, expireTime, TimeUnit.MILLISECONDS));
     }
 
     /**
@@ -195,8 +204,11 @@ public class SpringRedisHelp {
      * @return
      */
     public boolean unLock(String key, String value) {
+        // 裸getBytes与RedisTemplate序列化器不一致时Lua内get(key)==value永假，解锁静默失败；统一走template序列化器
+        byte[] rawKey = redisTemplate.getKeySerializer().serialize(key);
+        byte[] rawValue = redisTemplate.getValueSerializer().serialize(value);
         Long result = (Long) redisTemplate.execute((RedisCallback<Long>) connection ->
-                connection.eval(LUA_UNLOCK.getBytes(), ReturnType.INTEGER, 1, key.getBytes(), value.getBytes()));
+                connection.eval(LUA_UNLOCK.getBytes(), ReturnType.INTEGER, 1, rawKey, rawValue));
 
         return Objects.nonNull(result) && result > 0;
     }
@@ -236,7 +248,7 @@ public class SpringRedisHelp {
             redisTemplate.opsForHash().putAll(key, map);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return false;
         }
     }
@@ -257,7 +269,7 @@ public class SpringRedisHelp {
             }
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return false;
         }
     }
@@ -275,7 +287,7 @@ public class SpringRedisHelp {
             redisTemplate.opsForHash().put(key, item, value);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return false;
         }
     }
@@ -297,7 +309,7 @@ public class SpringRedisHelp {
             }
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return false;
         }
     }
@@ -359,7 +371,7 @@ public class SpringRedisHelp {
         try {
             return redisTemplate.opsForSet().members(key);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return null;
         }
     }
@@ -375,7 +387,7 @@ public class SpringRedisHelp {
         try {
             return redisTemplate.opsForSet().isMember(key, value);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return false;
         }
     }
@@ -391,7 +403,7 @@ public class SpringRedisHelp {
         try {
             return redisTemplate.opsForSet().add(key, values);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return 0;
         }
     }
@@ -412,7 +424,7 @@ public class SpringRedisHelp {
             }
             return count;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return 0;
         }
     }
@@ -427,7 +439,7 @@ public class SpringRedisHelp {
         try {
             return redisTemplate.opsForSet().size(key);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return 0;
         }
     }
@@ -444,7 +456,7 @@ public class SpringRedisHelp {
             Long count = redisTemplate.opsForSet().remove(key, values);
             return count;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return 0;
         }
     }
@@ -462,7 +474,7 @@ public class SpringRedisHelp {
         try {
             return redisTemplate.opsForList().range(key, start, end);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return null;
         }
     }
@@ -477,7 +489,7 @@ public class SpringRedisHelp {
         try {
             return redisTemplate.opsForList().size(key);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return 0;
         }
     }
@@ -493,7 +505,7 @@ public class SpringRedisHelp {
         try {
             return redisTemplate.opsForList().index(key, index);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return null;
         }
     }
@@ -510,7 +522,7 @@ public class SpringRedisHelp {
             redisTemplate.opsForList().rightPush(key, value);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return false;
         }
     }
@@ -531,7 +543,7 @@ public class SpringRedisHelp {
             }
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return false;
         }
     }
@@ -548,7 +560,7 @@ public class SpringRedisHelp {
             redisTemplate.opsForList().rightPushAll(key, value);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return false;
         }
     }
@@ -569,7 +581,7 @@ public class SpringRedisHelp {
             }
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return false;
         }
     }
@@ -587,7 +599,7 @@ public class SpringRedisHelp {
             redisTemplate.opsForList().set(key, index, value);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return false;
         }
     }
@@ -605,7 +617,7 @@ public class SpringRedisHelp {
             Long remove = redisTemplate.opsForList().remove(key, count, value);
             return remove;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("redis operation error:", e);
             return 0;
         }
     }

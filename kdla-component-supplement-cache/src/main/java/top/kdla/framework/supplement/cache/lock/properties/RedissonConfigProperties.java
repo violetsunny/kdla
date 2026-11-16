@@ -18,7 +18,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.ClassUtils;
 import top.kdla.framework.supplement.cache.lock.RedisClusterType;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,16 +80,23 @@ public class RedissonConfigProperties {
         List<RedissonClient> clients = new ArrayList<>();
 
         if (RedisClusterType.SINGLE.equals(this.type)) {
-            clients.add(Redisson.create(configSingleNode(this.address, this.password)));
+            //地址空白时fail fast，避免把空串传给Redisson产生晦涩报错
+            splitNodes(this.address);
+            clients.add(Redisson.create(configSingleNode(this.address.trim(), this.password)));
         } else if (RedisClusterType.MASTERSLAVE.equals(this.type)) {
             //TODO 3.2 master slave not support dns configure
+            splitNodes(this.address);
             clients.add(Redisson.create(configMasterSlave()));
         } else if (RedisClusterType.CLUSTER.equals(this.type)) {
             clients.add(Redisson.create(configCluster()));
         } else if (RedisClusterType.REPLICATE.equals(this.type)) {
-            String[] nodes = this.address.split(",");
+            List<String> nodes = splitNodes(this.address);
             if (this.password != null) {
                 String[] passwords = this.password.split(",");
+                if (passwords.length != nodes.size()) {
+                    throw new IllegalArgumentException(
+                            "REPLICATE模式下密码数量(" + passwords.length + ")与节点数量(" + nodes.size() + ")不匹配");
+                }
                 int index = 0;
                 for (String node : nodes) {
                     clients.add(Redisson.create(configSingleNode(node, passwords[index])));
@@ -102,10 +108,35 @@ public class RedissonConfigProperties {
                 }
             }
         } else if (RedisClusterType.SENTINEL.equals(this.type)) {
-            //TODO
+            //旧实现此处为TODO空分支，静默返回空client列表导致锁不可用；改为fail fast
+            throw new UnsupportedOperationException(
+                    "SENTINEL模式尚未实现，请勿配置 kdla.redisson.type=SENTINEL（address:" + this.address + "）");
         }
 
         return clients;
+    }
+
+    /**
+     * 解析逗号分隔的节点地址列表：trim并过滤空串；地址为空或无有效节点时抛IllegalArgumentException（fail fast，不静默）。
+     *
+     * @param address 逗号分隔的地址串，如 "127.0.0.1:7000,127.0.0.1:7001"
+     * @return 非空的有效节点地址列表
+     */
+    public static List<String> splitNodes(String address) {
+        if (address == null || address.trim().isEmpty()) {
+            throw new IllegalArgumentException("kdla.redisson.address 不能为空，请配置至少一个Redis节点地址");
+        }
+        List<String> nodes = new ArrayList<>();
+        for (String node : address.split(",")) {
+            String trimmed = node.trim();
+            if (!trimmed.isEmpty()) {
+                nodes.add(trimmed);
+            }
+        }
+        if (nodes.isEmpty()) {
+            throw new IllegalArgumentException("kdla.redisson.address 未解析出有效节点地址：" + address);
+        }
+        return nodes;
     }
 
     private Config configSingleNode(String address, String password) {
@@ -134,12 +165,9 @@ public class RedissonConfigProperties {
         config.setThreads(this.thread);
         config.setEventLoopGroup(new NioEventLoopGroup());
         config.setTransportMode(TransportMode.NIO);
-        try {
-            if (log.isInfoEnabled()) {
-                log.info("inti the redisson client with config: {}", config.toYAML());
-            }
-        } catch (IOException ex) {
-            log.error("parse json error:", ex);
+        // toYAML输出含password明文，改为仅记录非敏感项
+        if (log.isInfoEnabled()) {
+            log.info("init the redisson client, address:{}, codec:{}, threads:{}", address, this.codec, this.thread);
         }
         return config;
     }
@@ -175,8 +203,10 @@ public class RedissonConfigProperties {
 
     private Config configCluster() {
         Config config = new Config();
+        //旧实现把整个逗号分隔串当单个节点地址传入，多节点配置不生效；改为逐节点添加
+        List<String> clusterNodes = splitNodes(this.address);
         config.useClusterServers()
-                .addNodeAddress(this.address)
+                .addNodeAddress(clusterNodes.toArray(new String[0]))
                 .setScanInterval(this.scanInterval)
                 .setSubscriptionsPerConnection(this.subscriptionsPerConnection)
                 .setClientName(this.clientName)

@@ -28,7 +28,8 @@ public class RedissonRedDisLock implements DistributeLock {
 
     @Override
     public RLock lock(String lockKey) throws LockFailException {
-        return lock(lockKey, null, -1, -1);
+        // Defensive default: use milliseconds to avoid passing null TimeUnit.
+        return lock(lockKey, TimeUnit.MILLISECONDS, -1, -1);
     }
 
     @Override
@@ -42,21 +43,23 @@ public class RedissonRedDisLock implements DistributeLock {
     }
 
     @Override
-    public synchronized RLock lock(String lockKey, TimeUnit unit, long timeout, long leaseTime) throws LockFailException {
+    public RLock lock(String lockKey, TimeUnit unit, long timeout, long leaseTime) throws LockFailException {
         if (log.isInfoEnabled()) {
             log.info("lock use redlock with name {} start...", lockKey);
         }
 
         try {
             RedissonRedLock rdfaRedLock = (RedissonRedLock) factory.getLock(lockKey);
-            if (rdfaRedLock.tryLock(timeout, leaseTime, unit)) {
+            TimeUnit actualUnit = unit == null ? TimeUnit.MILLISECONDS : unit;
+            if (rdfaRedLock.tryLock(timeout, leaseTime, actualUnit)) {
                 return rdfaRedLock;
             } else {
                 throw new LockFailException("lock use redlock with name " + lockKey + " failed.");
             }
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             if (log.isWarnEnabled()) {
-                log.warn("lock time expired");
+                log.warn("lock interrupted, key={}", lockKey);
             }
             throw new LockFailException("lock use redlock with name " + lockKey + " failed for " + e.getMessage());
         }

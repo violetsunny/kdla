@@ -17,7 +17,6 @@ import org.springframework.util.ClassUtils;
 import top.kdla.framework.supplement.cache.lock.properties.RedissonConfigProperties;
 
 import javax.annotation.PreDestroy;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,11 +46,18 @@ public class RedissonLockFactory implements DistributeLockFactory {
         List<RedissonClient> clients = new ArrayList<>();
 
         if (RedisClusterType.SINGLE.equals(redissonConfig.getType())) {
-            clients.add(Redisson.create(configSingleNode(redissonConfig.getAddress(), redissonConfig.getPassword())));
+            //地址空白时fail fast，避免把空串传给Redisson产生晦涩报错
+            RedissonConfigProperties.splitNodes(redissonConfig.getAddress());
+            clients.add(Redisson.create(configSingleNode(redissonConfig.getAddress().trim(), redissonConfig.getPassword())));
         } else if (RedisClusterType.REPLICATE.equals(redissonConfig.getType())) {
-            String[] nodes = redissonConfig.getAddress().split(",");
+            //split后trim并过滤空串；无有效节点时抛IllegalArgumentException，不再静默产出空client列表
+            List<String> nodes = RedissonConfigProperties.splitNodes(redissonConfig.getAddress());
             if (redissonConfig.getPassword() != null) {
                 String[] passwords = redissonConfig.getPassword().split(",");
+                if (passwords.length != nodes.size()) {
+                    throw new IllegalArgumentException(
+                            "REPLICATE模式下密码数量(" + passwords.length + ")与节点数量(" + nodes.size() + ")不匹配");
+                }
                 int index = 0;
                 for (String node : nodes) {
                     clients.add(Redisson.create(configSingleNode(node, passwords[index])));
@@ -62,6 +68,10 @@ public class RedissonLockFactory implements DistributeLockFactory {
                     clients.add(Redisson.create(configSingleNode(node, null)));
                 }
             }
+        } else {
+            //旧实现对MASTERSLAVE/SENTINEL/CLUSTER静默返回空client列表，getLock会构造零节点的RedLock；改为fail fast
+            throw new IllegalArgumentException(
+                    "RedissonLockFactory 不支持集群类型:" + redissonConfig.getType() + "（仅支持SINGLE/REPLICATE）");
         }
         return clients;
     }
@@ -94,12 +104,9 @@ public class RedissonLockFactory implements DistributeLockFactory {
         config.setThreads(redissonConfig.getThread());
         config.setEventLoopGroup(new NioEventLoopGroup());
         config.setTransportMode(TransportMode.NIO);
-        try {
-            if (log.isInfoEnabled()) {
-                log.info("inti the redisson client with config: {}", config.toYAML());
-            }
-        } catch (IOException ex) {
-            log.error("parse json error:", ex);
+        // toYAML输出含password明文，改为仅记录非敏感项
+        if (log.isInfoEnabled()) {
+            log.info("init the redisson client, address:{}, codec:{}, threads:{}", address, redissonConfig.getCodec(), redissonConfig.getThread());
         }
         return config;
     }

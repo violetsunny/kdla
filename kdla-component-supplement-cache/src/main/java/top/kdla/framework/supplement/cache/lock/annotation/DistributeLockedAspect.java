@@ -13,16 +13,27 @@ import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
-import org.springframework.stereotype.Component;
+import org.springframework.expression.spel.support.SimpleEvaluationContext;
+import top.kdla.framework.exception.LockFailException;
 import top.kdla.framework.supplement.cache.lock.RedissonLockFactory;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.TimeUnit;
 
 /**
+ * 分布式锁切面，处理 {@link UnblockDistributeLocked} 注解。
+ * <p>
+ * <b>行为变更（1.0.1-SNAPSHOT, 2026-08-28）</b>：
+ * 旧版本中 {@code redissonLockFactory.getLock(key)} 仅构造锁对象但从未真正加锁，
+ * 注解形同虚设，业务永远放行。当前版本使用 {@code tryLock(0, -1, MS)} 真正加锁：
+ * <ul>
+ *   <li>{@code waitTime=0}：零等待，并发竞争时立即抛 {@link top.kdla.framework.exception.LockFailException}（throwEx=true）或返回 null（throwEx=false）</li>
+ *   <li>{@code leaseTime=-1}：使用 Redisson 默认看门狗自动续期</li>
+ * </ul>
+ * 此前被掩盖的竞争问题会在升级后集中暴露，下游使用方需知晓该行为变更。
+ *
  * @date 2021-05-17
  */
-@Component
 @Aspect
 @Slf4j
 public class DistributeLockedAspect {
@@ -47,7 +58,7 @@ public class DistributeLockedAspect {
      * @throws Throwable 业务方法抛出的异常
      */
     @Around("pointCut()")
-    public Object lockAround(ProceedingJoinPoint jp) throws Exception, Throwable {
+    public Object lockAround(ProceedingJoinPoint jp) throws Throwable {
         if (log.isInfoEnabled()) {
             log.info("DistributeLockedAspect.lockAround");
         }
@@ -60,46 +71,56 @@ public class DistributeLockedAspect {
 
         String key = lockAction.key();
 
-        if (lockAction.isSpelKey()) {//如果是spel表达式,解析之
+        if (lockAction.isSpelKey()) {
             ExpressionParser spelExpressionParser = new SpelExpressionParser();
             Expression expression = spelExpressionParser.parseExpression(key);
-            EvaluationContext evalContext = new StandardEvaluationContext(jp.getArgs());
+            EvaluationContext evalContext = SimpleEvaluationContext.forReadOnlyDataBinding().build();
             evalContext.setVariable("args", jp.getArgs());
             Object eval = expression.getValue(evalContext);
             key = eval == null ? "" : String.valueOf(eval);
         }
 
-        if (StringUtils.isBlank(key)) {//如果key值为空,不加锁,放行
+        if (StringUtils.isBlank(key)) {
             rvt = jp.proceed();
             return rvt;
         }
 
         RLock lock = null;
+        boolean locked = false;
         try {
             key = LOCK_KEY_PREFIX + key;
             if (log.isInfoEnabled()) {
                 log.info("开始尝试上锁");
             }
-            lock = redissonLockFactory.getLock(key);//非阻塞方法,取不到锁抛出LockFailException异常
-            if (lock != null) {//获取到锁
+            lock = redissonLockFactory.getLock(key);
+            if (lock != null) {
+                locked = lock.tryLock(0, -1, TimeUnit.MILLISECONDS);
+            }
+            if (locked) {
                 if (log.isInfoEnabled()) {
                     log.info("上锁成功,执行业务代码");
                 }
                 rvt = jp.proceed();
             } else {
-                throw new Exception("lock为空,未获取到锁");
-            }
-        } catch (Exception e) {
-            if (lockAction.throwEx()) {
-                throw new Exception("未获取到锁,请重新尝试");
-            } else {
-                if (log.isWarnEnabled()) {
-                    log.warn("未获取到锁");
+                if (lockAction.throwEx()) {
+                    throw new LockFailException("lock为空,未获取到锁");
+                } else {
+                    if (log.isWarnEnabled()) {
+                        log.warn("未获取到锁");
+                    }
                 }
             }
         } finally {
-            if (lock != null) {
-                lock.unlock();
+            if (locked && lock != null) {
+                try {
+                    if (lock.isHeldByCurrentThread()) {
+                        lock.unlock();
+                    }
+                } catch (Exception e) {
+                    if (log.isWarnEnabled()) {
+                        log.warn("unlock failed:", e);
+                    }
+                }
             }
         }
 

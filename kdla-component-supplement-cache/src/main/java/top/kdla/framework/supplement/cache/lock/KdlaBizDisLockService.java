@@ -4,8 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import top.kdla.framework.dto.exception.ErrorCodeI;
 import top.kdla.framework.exception.LockFailException;
+import top.kdla.framework.supplement.cache.lock.properties.KdlaLockProperties;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -13,9 +15,16 @@ import java.util.function.Supplier;
 public class KdlaBizDisLockService {
 
     private final RedissonRedDisLock redDisLock;
+    private final KdlaLockProperties lockProperties;
 
     public KdlaBizDisLockService(RedissonRedDisLock redDisLock) {
         this.redDisLock = redDisLock;
+        this.lockProperties = new KdlaLockProperties();
+    }
+
+    public KdlaBizDisLockService(RedissonRedDisLock redDisLock, KdlaLockProperties lockProperties) {
+        this.redDisLock = redDisLock;
+        this.lockProperties = lockProperties;
     }
 
     /**
@@ -66,33 +75,44 @@ public class KdlaBizDisLockService {
      * @param <T>
      * @return
      */
-    public synchronized <T> T biz(String lockKey, Predicate<String> dbPredicate, Supplier<T> bizSupplier, ErrorCodeI errCode) {
+    public <T> T biz(String lockKey, Predicate<String> dbPredicate, Supplier<T> bizSupplier, ErrorCodeI errCode) {
+        if (lockKey == null || lockKey.trim().isEmpty()) {
+            throw new IllegalArgumentException("lockKey is blank");
+        }
+        if (bizSupplier == null) {
+            throw new IllegalArgumentException("bizSupplier is null");
+        }
+
         RLock lock = null;
-        boolean lockRst = false;
-        // must use try catch finnaly to lock and unlock!
+        boolean locked = false;
         try {
-            lock = redDisLock.lock(lockKey);
-            // lock.lock()
-            // 数据库锁
-            if (lock.tryLock() && (dbPredicate == null || dbPredicate.test(lockKey))) {
+            lock = redDisLock.lock(lockKey, TimeUnit.MILLISECONDS,
+                    lockProperties.getWaitTimeMs(), lockProperties.getLeaseTimeMs());
+            locked = true;
+
+            if (dbPredicate == null || dbPredicate.test(lockKey)) {
                 if (log.isInfoEnabled()) {
                     log.info("lock {} success!", lockKey);
                 }
-                // do the business
                 return bizSupplier.get();
-            } else {
-                if (log.isInfoEnabled()) {
-                    log.info("lock {} failed!", lockKey);
-                }
-                if (Objects.nonNull(errCode)) {
-                    throw new LockFailException(errCode.getCode(),lockKey+"-重复请求");
-                } else {
-                    throw new LockFailException(lockKey+"-重复请求");
-                }
             }
+
+            if (log.isInfoEnabled()) {
+                log.info("lock {} failed!", lockKey);
+            }
+            if (Objects.nonNull(errCode)) {
+                throw new LockFailException(errCode.getCode(), lockKey + "-重复请求");
+            }
+            throw new LockFailException(lockKey + "-重复请求");
         } finally {
-            if(lock!=null){
-                lock.unlock();
+            if (locked && lock != null) {
+                try {
+                    if (lock.isHeldByCurrentThread()) {
+                        lock.unlock();
+                    }
+                } catch (Exception e) {
+                    log.warn("unlock failed for key: {}", lockKey, e);
+                }
             }
         }
     }
