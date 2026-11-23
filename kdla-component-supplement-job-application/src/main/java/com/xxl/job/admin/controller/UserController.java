@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +94,7 @@ public class UserController {
             return new ReturnT<String>(ReturnT.FAIL_CODE, I18nUtil.getString("system_lengh_limit")+"[4-20]" );
         }
         // md5 password
-        xxlJobUser.setPassword(DigestUtils.md5DigestAsHex(xxlJobUser.getPassword().getBytes()));
+        xxlJobUser.setPassword(DigestUtils.md5DigestAsHex(xxlJobUser.getPassword().getBytes(StandardCharsets.UTF_8)));
 
         // check repeat
         XxlJobUser existUser = xxlJobUserDao.loadByUserName(xxlJobUser.getUsername());
@@ -124,7 +125,7 @@ public class UserController {
                 return new ReturnT<String>(ReturnT.FAIL_CODE, I18nUtil.getString("system_lengh_limit")+"[4-20]" );
             }
             // md5 password
-            xxlJobUser.setPassword(DigestUtils.md5DigestAsHex(xxlJobUser.getPassword().getBytes()));
+            xxlJobUser.setPassword(DigestUtils.md5DigestAsHex(xxlJobUser.getPassword().getBytes(StandardCharsets.UTF_8)));
         } else {
             xxlJobUser.setPassword(null);
         }
@@ -163,7 +164,7 @@ public class UserController {
         }
 
         // md5 password
-        String md5Password = DigestUtils.md5DigestAsHex(password.getBytes());
+        String md5Password = DigestUtils.md5DigestAsHex(password.getBytes(StandardCharsets.UTF_8));
 
         // update pwd
         XxlJobUser loginUser = (XxlJobUser) request.getAttribute(LoginService.LOGIN_IDENTITY_KEY);

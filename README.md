@@ -87,3 +87,11 @@ top.kdla.framework.common.aspect.watch.StopWatchAutoConfigure
 
 ## kdla-component-supplement-job
 业务支撑-任务：
+
+## 2.0.0 破坏性变更
+
+### xxl-job 内嵌源码包名（kdla-component-supplement-job / kdla-component-supplement-job-application）
+2.x 内嵌的 xxl-job 源码包名为 `com.xxl.job.core` / `com.xxl.job.admin`，与官方 `com.xuxueli:xxl-job-core` 的 `com.xxl.job.core` 同包同名类冲突。下游应用不得同时依赖本模块与官方 xxl-job-core；执行器注册、组件扫描路径须按内嵌包名配置。
+
+### JwtUtil 强制验签（kdla-component-supplement-trdplatformcloud）
+`JwtUtil.getInfoFromToken` 由"仅解码不验签"改为强制 HS256 验签 + exp 过期校验，任何失败抛 BizException，不再返回空串。下游必须配置 `kdla.trd.jwt.sign-key`，未配置或验签失败时依赖该工具的 trd 接口立即不可用。密钥按 raw UTF-8 bytes 参与签名（非 base64 解码），此假设未对真实 BladeX token 实测，接入前须用真实 token 验证。

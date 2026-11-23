@@ -5,6 +5,7 @@ import com.xxl.job.core.handler.IJobHandler;
 import groovy.lang.GroovyClassLoader;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -64,7 +65,7 @@ public class GlueFactory {
 	private Class<?> getCodeSourceClass(String codeSource){
 		try {
 			// md5
-			byte[] md5 = MessageDigest.getInstance("MD5").digest(codeSource.getBytes());
+			byte[] md5 = MessageDigest.getInstance("MD5").digest(codeSource.getBytes(StandardCharsets.UTF_8));
 			String md5Str = new BigInteger(1, md5).toString(16);
 
 			Class<?> clazz = CLASS_CACHE.get(md5Str);

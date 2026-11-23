@@ -13,6 +13,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author xuxueli 2019-05-04 22:13:264
@@ -28,13 +29,13 @@ public class LoginService {
 
     private String makeToken(XxlJobUser xxlJobUser){
         String tokenJson = JacksonUtil.writeValueAsString(xxlJobUser);
-        String tokenHex = new BigInteger(tokenJson.getBytes()).toString(16);
+        String tokenHex = new BigInteger(tokenJson.getBytes(StandardCharsets.UTF_8)).toString(16);
         return tokenHex;
     }
     private XxlJobUser parseToken(String tokenHex){
         XxlJobUser xxlJobUser = null;
         if (tokenHex != null) {
-            String tokenJson = new String(new BigInteger(tokenHex, 16).toByteArray());      // username_password(md5)
+            String tokenJson = new String(new BigInteger(tokenHex, 16).toByteArray(), StandardCharsets.UTF_8);      // username_password(md5)
             xxlJobUser = JacksonUtil.readValue(tokenJson, XxlJobUser.class);
         }
         return xxlJobUser;
@@ -53,7 +54,7 @@ public class LoginService {
         if (xxlJobUser == null) {
             return new ReturnT<String>(500, I18nUtil.getString("login_param_unvalid"));
         }
-        String passwordMd5 = DigestUtils.md5DigestAsHex(password.getBytes());
+        String passwordMd5 = DigestUtils.md5DigestAsHex(password.getBytes(StandardCharsets.UTF_8));
         if (!passwordMd5.equals(xxlJobUser.getPassword())) {
             return new ReturnT<String>(500, I18nUtil.getString("login_param_unvalid"));
         }
