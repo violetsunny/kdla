@@ -94,6 +94,13 @@ class MdcAspectTest {
     }
 
     @Test
+    void repeatedInvocation_paramNamesResolvedFromCache() {
+        assertEquals("inner-a", proxy(new InnerService()).inner("a"));
+        // 第二次命中静态 LVT 缓存，参数名仍须可解析，缓存不得返回哨兵或串味
+        assertEquals("inner-b", proxy(new InnerService()).inner("b"));
+    }
+
+    @Test
     void badSpel_degradesToEmptyAndBusinessMethodStillRuns() {
         BadSpelService service = proxy(new BadSpelService());
 

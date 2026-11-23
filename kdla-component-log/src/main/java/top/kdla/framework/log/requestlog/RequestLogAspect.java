@@ -21,6 +21,7 @@ import org.springframework.core.MethodParameter;
 import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.core.annotation.SynthesizingMethodParameter;
 import org.springframework.core.io.InputStreamSource;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -50,6 +51,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Aspect
 @Slf4j
 public class RequestLogAspect {
+
+    /** 软引用缓存，避免每个请求每参数重读字节码；不可解析用 NO_NAMES 哨兵占位（Map 不允许 null 值） */
+    private static final Map<Method, String[]> LVT_CACHE = new ConcurrentReferenceHashMap<>();
+    private static final String[] NO_NAMES = new String[0];
 
     public RequestLogAspect() {
     }
@@ -218,6 +223,14 @@ public class RequestLogAspect {
      * 读字节码LocalVariableTable取参数名（spring-core内嵌ASM），与common模块MdcAspect同方案
      */
     private static String[] lvtParameterNames(Method method) {
+        String[] names = LVT_CACHE.computeIfAbsent(method, m -> {
+            String[] resolved = readLvtParameterNames(m);
+            return resolved == null ? NO_NAMES : resolved;
+        });
+        return names == NO_NAMES ? null : names;
+    }
+
+    private static String[] readLvtParameterNames(Method method) {
         Class<?> clazz = method.getDeclaringClass();
         String resource = clazz.getName().replace('.', '/') + ".class";
         ClassLoader loader = clazz.getClassLoader();

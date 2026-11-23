@@ -23,11 +23,13 @@ import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import top.kdla.framework.common.help.MdcHelp;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Map;
 
 /**
  * @MdcDot(bizCode = "#req.articleId")
@@ -38,6 +40,10 @@ import java.lang.reflect.Modifier;
 @Aspect
 public class MdcAspect implements ApplicationContextAware {
     private static final String BIZ_CODE_KEY = "bizCode";
+
+    /** 软引用缓存，避免每次调用重读字节码；不可解析用 NO_NAMES 哨兵占位（Map 不允许 null 值） */
+    private static final Map<Method, String[]> LVT_CACHE = new ConcurrentReferenceHashMap<>();
+    private static final String[] NO_NAMES = new String[0];
 
     private ExpressionParser parser = new SpelExpressionParser();
     private ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
@@ -119,6 +125,14 @@ public class MdcAspect implements ApplicationContextAware {
      * 反射拿不到参数名；回退读字节码 LocalVariableTable（spring-core 内嵌 ASM），保住 SpEL #参数名 绑定
      */
     private static String[] lvtParameterNames(Method method) {
+        String[] names = LVT_CACHE.computeIfAbsent(method, m -> {
+            String[] resolved = readLvtParameterNames(m);
+            return resolved == null ? NO_NAMES : resolved;
+        });
+        return names == NO_NAMES ? null : names;
+    }
+
+    private static String[] readLvtParameterNames(Method method) {
         Class<?> clazz = method.getDeclaringClass();
         String resource = clazz.getName().replace('.', '/') + ".class";
         ClassLoader loader = clazz.getClassLoader();
