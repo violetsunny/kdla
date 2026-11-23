@@ -5,10 +5,15 @@
 package top.kdla.framework.supplement.cache.cache.config;
 
 import cn.hutool.core.lang.generator.SnowflakeGenerator;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -32,19 +37,27 @@ import java.util.List;
 @Configuration
 @EnableCaching
 @ConditionalOnClass({RedisTemplate.class})
+@ConditionalOnBean(RedisTemplate.class)
+@AutoConfigureAfter(RedisAutoConfiguration.class)
+@ConditionalOnProperty(name = "kdla.cache.enabled", havingValue = "true", matchIfMissing = false)
 public class CacheAutoConfigure {
 
     @Value("${app.id:}")
     private String appId;
 
+    private MachineIdHelp machineIdHelp;
+
     @Bean
+    @ConditionalOnMissingBean(SpringRedisHelp.class)
     public SpringRedisHelp springRedisHelp(@Autowired RedisTemplate redisTemplate) {
         return new SpringRedisHelp(redisTemplate);
     }
 
     @Bean
+    @ConditionalOnMissingBean(MachineIdHelp.class)
     public MachineIdHelp machineIdHelp(SpringRedisHelp springRedisHelp) {
-        return new MachineIdHelp(springRedisHelp, appId);
+        this.machineIdHelp = new MachineIdHelp(springRedisHelp, appId);
+        return this.machineIdHelp;
     }
 
     @Bean
@@ -57,19 +70,21 @@ public class CacheAutoConfigure {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnClass({KdlaCafCache.class})
-    public CacheManager caffeineCacheManager(@Autowired List<KdlaCafCache<Object, Object>> caffeines) {
+    public CacheManager caffeineCacheManager(ObjectProvider<KdlaCafCache<Object, Object>> caffeines) {
         //加入CacheManager为了和@Cacheable一起使用
+        //ObjectProvider 替代 @Autowired List：宿主开启 kdla.cache.enabled 但未定义任何 KdlaCafCache bean 时，空集合注入会启动失败
         List<Cache> caches = new ArrayList<>();
         SimpleCacheManager cacheManager = new SimpleCacheManager();
-        for (KdlaCafCache<Object, Object> caffeine : caffeines) {
-            caches.add(new CaffeineCache(caffeine.getCacheName(), caffeine.getCafCache()));
-        }
+        caffeines.orderedStream().forEach(caffeine ->
+                caches.add(new CaffeineCache(caffeine.getCacheName(), caffeine.getCafCache())));
         cacheManager.setCaches(caches);
         return cacheManager;
     }
 
     @PreDestroy
-    public void destroy(MachineIdHelp machineIdHelp) {
-        machineIdHelp.destroyMachineId();
+    public void destroy() {
+        if (machineIdHelp != null) {
+            machineIdHelp.destroyMachineId();
+        }
     }
 }

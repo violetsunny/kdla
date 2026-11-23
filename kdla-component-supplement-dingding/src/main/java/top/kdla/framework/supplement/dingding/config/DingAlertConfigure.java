@@ -4,10 +4,12 @@
  */
 package top.kdla.framework.supplement.dingding.config;
 
+import io.vertx.core.Vertx;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import top.kdla.framework.supplement.dingding.properties.DingAlertProperties;
@@ -19,6 +21,7 @@ import jakarta.annotation.Resource;
  * @version $Id: DingAlertConfig, v 0.1 2023/2/2 14:06 kanglele Exp $
  */
 @Configuration
+@ConditionalOnClass(Vertx.class)
 @EnableConfigurationProperties({DingAlertProperties.class})
 @Data
 @Builder

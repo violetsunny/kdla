@@ -68,6 +68,7 @@ public class VertxMqttConfigure {
     private volatile boolean retry = false;
 
     @Bean
+    @ConditionalOnMissingBean(VertxMqttClient.class)
     public VertxMqttClient vertxMqttClient(MqttClient mqttClient) {
         if (log.isInfoEnabled()) {
             log.info("VertxHttpClient init Bean");

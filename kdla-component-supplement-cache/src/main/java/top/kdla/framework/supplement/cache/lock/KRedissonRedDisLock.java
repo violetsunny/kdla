@@ -28,7 +28,8 @@ public class KRedissonRedDisLock implements KDistributeLock {
 
     @Override
     public RLock lock(String lockKey) throws LockFailException {
-        return lock(lockKey, null, -1, -1);
+        // 防御性默认：用毫秒，避免向下游传 null TimeUnit。
+        return lock(lockKey, TimeUnit.MILLISECONDS, -1, -1);
     }
 
     @Override
@@ -42,21 +43,23 @@ public class KRedissonRedDisLock implements KDistributeLock {
     }
 
     @Override
-    public synchronized RLock lock(String lockKey, TimeUnit unit, long timeout, long leaseTime) throws LockFailException {
+    public RLock lock(String lockKey, TimeUnit unit, long timeout, long leaseTime) throws LockFailException {
         if (log.isInfoEnabled()) {
             log.info("lock use redlock with name {} start...", lockKey);
         }
 
         try {
             RedissonRedLock rdfaRedLock = (RedissonRedLock) factory.getLock(lockKey);
-            if (rdfaRedLock.tryLock(timeout, leaseTime, unit)) {
+            TimeUnit actualUnit = unit == null ? TimeUnit.MILLISECONDS : unit;
+            if (rdfaRedLock.tryLock(timeout, leaseTime, actualUnit)) {
                 return rdfaRedLock;
             } else {
                 throw new LockFailException("lock use redlock with name " + lockKey + " failed.");
             }
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             if (log.isWarnEnabled()) {
-                log.warn("lock time expired");
+                log.warn("lock interrupted, key={}", lockKey);
             }
             throw new LockFailException("lock use redlock with name " + lockKey + " failed for " + e.getMessage());
         }
@@ -64,7 +67,7 @@ public class KRedissonRedDisLock implements KDistributeLock {
 
     @Override
     public boolean tryLock(String lockKey, TimeUnit unit, long waitTime, long leaseTime) {
-        throw new LockFailException("Red lock not support the try lock method.");
+        throw new UnsupportedOperationException("Red lock not support the try lock method.");
     }
 
     @Override
@@ -75,16 +78,14 @@ public class KRedissonRedDisLock implements KDistributeLock {
 
     @Override
     public void unlock(Lock lock) {
-        synchronized (this) {
-            if (lock == null) {
-                return;
-            }
-            if (!(lock instanceof RedissonRedLock)) {
-                return;
-            }
-            RedissonRedLock rdfaRedLock = (RedissonRedLock) lock;
-            rdfaRedLock.unlock();
+        if (lock == null) {
+            return;
         }
+        if (!(lock instanceof RedissonRedLock)) {
+            return;
+        }
+        RedissonRedLock rdfaRedLock = (RedissonRedLock) lock;
+        rdfaRedLock.unlock();
     }
 }
 

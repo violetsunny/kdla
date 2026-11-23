@@ -1,3 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration =\
-top.kdla.framework.supplement.dingding.config.DingAlertConfigure,\
-top.kdla.framework.supplement.http.VertxHttpConfigure

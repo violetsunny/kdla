@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 
 @Configuration
-@ConditionalOnClass(RestTemplate.class)
+@ConditionalOnClass({RestTemplate.class, HttpClient.class})
 @ConditionalOnProperty(name = "kdla.config.rest-http.enabled", havingValue = "true", matchIfMissing = false)
 @Slf4j
 public class RestHttpConfigure {

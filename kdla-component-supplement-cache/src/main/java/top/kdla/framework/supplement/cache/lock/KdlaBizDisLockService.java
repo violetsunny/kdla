@@ -4,8 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import top.kdla.framework.dto.exception.ErrorCodeI;
 import top.kdla.framework.exception.LockFailException;
+import top.kdla.framework.supplement.cache.lock.properties.KdlaLockProperties;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -14,8 +16,16 @@ public class KdlaBizDisLockService {
 
     private final KRedissonRedDisLock redissonRedDisLock;
 
+    private final KdlaLockProperties lockProperties;
+
     public KdlaBizDisLockService(KRedissonRedDisLock redDisLock) {
         this.redissonRedDisLock = redDisLock;
+        this.lockProperties = new KdlaLockProperties();
+    }
+
+    public KdlaBizDisLockService(KRedissonRedDisLock redDisLock, KdlaLockProperties lockProperties) {
+        this.redissonRedDisLock = redDisLock;
+        this.lockProperties = lockProperties;
     }
 
     /**
@@ -66,12 +76,22 @@ public class KdlaBizDisLockService {
      * @param <T>
      * @return
      */
-    public synchronized <T> T biz(String lockKey, Predicate<String> dbPredicate, Supplier<T> bizSupplier, ErrorCodeI errCode) {
+    public <T> T biz(String lockKey, Predicate<String> dbPredicate, Supplier<T> bizSupplier, ErrorCodeI errCode) {
+        if (lockKey == null || lockKey.trim().isEmpty()) {
+            throw new IllegalArgumentException("lockKey is blank");
+        }
+        if (bizSupplier == null) {
+            throw new IllegalArgumentException("bizSupplier is null");
+        }
+
         RLock lock = null;
         //boolean lockRst = false;
+        boolean locked = false;
         // must use try catch finnaly to lock and unlock!
         try {
-            lock = redissonRedDisLock.lock(lockKey);
+            lock = redissonRedDisLock.lock(lockKey, TimeUnit.MILLISECONDS,
+                    lockProperties.getWaitTimeMs(), lockProperties.getLeaseTimeMs());
+            locked = true;
             // lock.tryLock()
             // 数据库锁
             if (dbPredicate == null || dbPredicate.test(lockKey)) {
@@ -91,8 +111,14 @@ public class KdlaBizDisLockService {
                 }
             }
         } finally {
-            if (lock != null) {
-                lock.unlock();
+            if (locked && lock != null) {
+                try {
+                    if (lock.isHeldByCurrentThread()) {
+                        lock.unlock();
+                    }
+                } catch (Exception e) {
+                    log.warn("unlock failed for key: {}", lockKey, e);
+                }
             }
         }
     }

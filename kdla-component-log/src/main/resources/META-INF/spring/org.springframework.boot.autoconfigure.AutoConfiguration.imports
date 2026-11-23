@@ -1,1 +1,4 @@
-#top.kdla.framework.log.catchlog.CatchLogAutoConfigure
+top.kdla.framework.log.catchlog.CatchLogAutoConfigure
+top.kdla.framework.log.LogInterceptorAutoConfigure
+top.kdla.framework.log.requestlog.RequestLogAutoConfigure
+top.kdla.framework.log.webfilter.WebFilterAutoConfigure
