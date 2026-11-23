@@ -54,6 +54,17 @@ public class SequenceNoGeneratorV2 {
     private static final long WAITE_TIME = 1_000;
     private static final long LEASE_TIME = 10_000;
 
+    /**
+     * 生成序列号。
+     * <p>
+     * 当 {@code isCache=0}（非缓存模式）时，每次生成后都会执行一次 DB UPDATE 持久化 maxValue，
+     * 以保证跨重启不产生重复号码。高并发场景下需知晓该 DB 写入成本。
+     * 当 {@code isCache=1}（缓存模式）时，批量生成号段缓存到本地，减少 DB 交互。
+     *
+     * @param code 序列号配置编码
+     * @return 生成的序列号
+     * @throws Exception 生成失败时抛出
+     */
     public String getMaxNo(String code) throws Exception {
         if (StringUtils.isBlank(code)) {
             throw new BizException("code不能为空");
@@ -118,6 +129,9 @@ public class SequenceNoGeneratorV2 {
             Map ruleMap = JacksonUtil.toMap(JacksonUtil.toJson(rule), String.class, Object.class);
             String ruleType = (String) ruleMap.get("ruleType");
             RuleTypeEnum ruleTypeEnum = RuleTypeEnum.getByCode(ruleType);
+            if (ruleTypeEnum == null) {
+                throw new BizException("不合法的ruleType:"+ruleType);
+            }
             GenerateNoRule generateNoRule = new GenerateNoRule();
             generateNoRule.setRuleType(ruleTypeEnum);
             generateNoRule.setOrder((Integer) ruleMap.get("order"));
@@ -155,23 +169,26 @@ public class SequenceNoGeneratorV2 {
             }
 
             RLock lock = null;
+            boolean isLocked = false;
             try {
-                //isLocked = lock.tryLock(WAITE_TIME, LEASE_TIME, TimeUnit.MILLISECONDS);
                 lock = redissonRedDisLock.lock(sequenceNoLockKey + code, TimeUnit.MILLISECONDS, WAITE_TIME, LEASE_TIME);
+                isLocked = true;
                 //各种锁加上后，开始生成编号,这里开始会和数据库打交道，导致数据变更
                 sequenceNo = generateSequenceNo(code);
             } catch (Exception e) {
                 log.error("createNo exception:", e);
-                noCacheMap.clear();
-                throw new BizException("获取流水号失败");
+                noCacheMap.remove(code);
+                throw new BizException("获取流水号失败", e);
             } finally {
-                try {
-                    if (lock != null) {
-                        lock.unlock();
-                    }
-                } catch (Exception e) {
-                    if (log.isWarnEnabled()) {
-                        log.warn("createNo,unlock failed,exception is:", e);
+                if (isLocked) {
+                    try {
+                        if (lock.isHeldByCurrentThread()) {
+                            lock.unlock();
+                        }
+                    } catch (Exception e) {
+                        if (log.isWarnEnabled()) {
+                            log.warn("createNo,unlock failed,exception is:", e);
+                        }
                     }
                 }
             }
@@ -182,6 +199,9 @@ public class SequenceNoGeneratorV2 {
 
     private String generateSequenceNo(String code) {
         CodeGeneratorCfgV2 cfg = codeGeneratorCfgMapper.selectByCode(code);
+        if (cfg == null) {
+            throw new BizException("通过code查找配置规则失败，code:" + code);
+        }
         Long currentEpoch = generateCurrentEpoch(code);
         if (StringUtils.isBlank(cfg.getMaxValue()) || cfg.getEpoch() == null) {
             //如果cfg中没有，那么需要弄新的
@@ -201,9 +221,11 @@ public class SequenceNoGeneratorV2 {
         GenerateNoInfoContext generateNoInfoContext = GenerateNoInfoContext.builder()
                 .code(code).cfg(cfg).epoch(currentEpoch)
                 .date(new Date()).build();
-        //不缓存的话，直接生成编号返回
+        //不缓存的话，直接生成编号返回，并持久化最新maxValue，保证跨重启不重号
         if (cfg.getIsCache() == 0) {
-            return generateOneSequenceNo(generateNoInfoContext);
+            String sequenceNo = generateOneSequenceNo(generateNoInfoContext);
+            codeGeneratorCfgMapper.updateById(generateNoInfoContext.getCfg());
+            return sequenceNo;
         }
         //缓存的话，生成一堆编号缓存后，从缓存中拿走一个编号返回
         ConcurrentLinkedQueue<String> cacheQueue = new ConcurrentLinkedQueue<>();
@@ -286,7 +308,12 @@ public class SequenceNoGeneratorV2 {
                 .map(RandomTypeEnum::getPool)
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
-        poolList.addAll(randomTypeRule.getCustomizePool());
+        if (randomTypeRule.getCustomizePool() != null) {
+            poolList.addAll(randomTypeRule.getCustomizePool());
+        }
+        if (poolList.isEmpty()) {
+            throw new BizException("随机字符池不能为空");
+        }
         StringBuilder sb = new StringBuilder();
         Random random = new Random();
         int i = 1;

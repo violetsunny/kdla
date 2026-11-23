@@ -11,16 +11,13 @@ import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.Codec;
 import org.redisson.config.Config;
-import org.redisson.config.ConfigSupport;
 import org.redisson.config.ReadMode;
 import org.redisson.config.TransportMode;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.ClassUtils;
-import top.kdla.framework.common.help.KdlaStringHelp;
 import top.kdla.framework.supplement.cache.lock.RedisClusterType;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,20 +78,47 @@ public class KRedissonConfigProperties {
 
     private int nettyThreads = 32;
 
+    /**
+     * 解析逗号分隔的节点地址：null/空白/仅逗号一律fail fast，多节点trim并过滤空串。
+     */
+    public static List<String> splitNodes(String address) {
+        if (address == null || address.trim().isEmpty()) {
+            throw new IllegalArgumentException("kdla.redisson.address 不能为空，请配置至少一个Redis节点地址");
+        }
+        List<String> nodes = new ArrayList<>();
+        for (String node : address.split(",")) {
+            String trimmed = node.trim();
+            if (!trimmed.isEmpty()) {
+                nodes.add(trimmed);
+            }
+        }
+        if (nodes.isEmpty()) {
+            throw new IllegalArgumentException("kdla.redisson.address 未解析出有效节点地址：" + address);
+        }
+        return nodes;
+    }
+
     public List<RedissonClient> redissons(){
         List<RedissonClient> clients = new ArrayList<>();
 
         if(RedisClusterType.SINGLE.equals(type)){
-            clients.add(Redisson.create(configSingleNode(address, password)));
+            //地址空白时fail fast，避免把空串传给Redisson产生晦涩报错
+            splitNodes(address);
+            clients.add(Redisson.create(configSingleNode(address.trim(), password)));
         }else if(RedisClusterType.MASTER_SLAVE.equals(type)){
             //TODO 3.2 master slave not support dns configure
+            splitNodes(address);
             clients.add(Redisson.create(configMasterSlave()));
         }else if(RedisClusterType.CLUSTER.equals(type)){
             clients.add(Redisson.create(configCluster()));
         }else if(RedisClusterType.REPLICATE.equals(type)){
-            String[] nodes = address.split(",");
+            List<String> nodes = splitNodes(address);
             if(password!=null){
                 String[] passwords = password.split(",");
+                if (passwords.length != nodes.size()) {
+                    throw new IllegalArgumentException(
+                            "REPLICATE模式下密码数量(" + passwords.length + ")与节点数量(" + nodes.size() + ")不匹配");
+                }
                 int index = 0;
                 for(String node : nodes){
                     clients.add(Redisson.create(configSingleNode(node, passwords[index])));
@@ -106,7 +130,9 @@ public class KRedissonConfigProperties {
                 }
             }
         }else if(RedisClusterType.SENTINEL.equals(type)){
-            //TODO
+            //旧实现此处为TODO空分支，静默返回空client列表导致锁不可用；改为fail fast
+            throw new UnsupportedOperationException(
+                    "SENTINEL模式尚未实现，请勿配置 kdla.redisson.type=SENTINEL（address:" + address + "）");
         }
 
         return clients;
@@ -132,23 +158,17 @@ public class KRedissonConfigProperties {
                 .setConnectTimeout(connectTimeout)
                 .setIdleConnectionTimeout(idleConnectionTimeout)
 //                .setPingTimeout(pingTimeout)
-//                .setPassword(password)
+                .setPassword(password)
                 .setPingConnectionInterval(pingConnectionInterval);
-        if(KdlaStringHelp.isNotEmpty(password)){
-            config.useSingleServer().setPassword(password);
-        }
         Codec codec = getCodecInstance();
         config.setCodec(codec);
         config.setThreads(thread);
         config.setNettyThreads(nettyThreads);
         config.setEventLoopGroup(new NioEventLoopGroup());
         config.setTransportMode(TransportMode.NIO);
-        try {
-            ConfigSupport support = new ConfigSupport();
-            log.info("init the redisson client with config: {}",  support.toJSON(config));
-        }
-        catch (IOException ex){
-            log.error("parse json error:",ex);
+        // toYAML输出含password明文，改为仅记录非敏感项
+        if (log.isInfoEnabled()) {
+            log.info("init the redisson client, address:{}, codec:{}, threads:{}", address, codec, thread);
         }
         return config;
     }
@@ -173,11 +193,8 @@ public class KRedissonConfigProperties {
                 .setConnectTimeout(connectTimeout)
                 .setIdleConnectionTimeout(idleConnectionTimeout)
 //                .setPingTimeout(pingTimeout)
-//                .setPassword(password)
+                .setPassword(password)
                 .setPingConnectionInterval(pingConnectionInterval);
-        if(KdlaStringHelp.isNotEmpty(password)){
-            config.useSingleServer().setPassword(password);
-        }
         Codec codec = getCodecInstance();
         config.setCodec(codec);
         config.setThreads(thread);
@@ -188,8 +205,10 @@ public class KRedissonConfigProperties {
 
     private Config configCluster(){
         Config config = new Config();
+        //旧实现把整个逗号分隔串当单个节点地址传入，多节点配置不生效；改为逐节点添加
+        List<String> clusterNodes = splitNodes(address);
         config.useClusterServers()
-                .addNodeAddress(address)
+                .addNodeAddress(clusterNodes.toArray(new String[0]))
                 .setScanInterval(scanInterval)
                 .setSubscriptionsPerConnection(subscriptionsPerConnection)
                 .setClientName(clientName)
@@ -201,11 +220,8 @@ public class KRedissonConfigProperties {
                 .setConnectTimeout(connectTimeout)
                 .setIdleConnectionTimeout(idleConnectionTimeout)
 //                .setPingTimeout(pingTimeout)
-//                .setPassword(password)
+                .setPassword(password)
                 .setPingConnectionInterval(pingConnectionInterval);
-        if(KdlaStringHelp.isNotEmpty(password)){
-            config.useSingleServer().setPassword(password);
-        }
         Codec codec = getCodecInstance();
         config.setCodec(codec);
         config.setThreads(thread);

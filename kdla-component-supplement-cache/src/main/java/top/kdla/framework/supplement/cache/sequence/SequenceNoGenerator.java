@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StopWatch;
 import top.kdla.framework.exception.BizException;
+import top.kdla.framework.exception.LockFailException;
 import top.kdla.framework.supplement.cache.lock.KRedissonRedDisLock;
 import top.kdla.framework.supplement.cache.sequence.mapper.CodeGeneratorCfgMapper;
 import top.kdla.framework.supplement.cache.sequence.model.entity.CodeGeneratorCfg;
@@ -100,17 +101,26 @@ public class SequenceNoGenerator {
             sequenceNo = getSequenceNoFromLocalCache(code, key);
             if (sequenceNo == null) {
                 RLock lock = null;
+                boolean isLocked = false;
                 try {
                     lock = redissonRedDisLock.lock(sequenceNoLockKey + code, TimeUnit.MILLISECONDS, WAITE_TIME, LEASE_TIME);
-                    //isLocked = lock.tryLock(WAITE_TIME, LEASE_TIME, TimeUnit.MILLISECONDS);
-                } catch (Exception e) {
+                    isLocked = true;
+                } catch (LockFailException e) {
                     log.error("createNo,tryLock exception:", e);
                 }
+                if (!isLocked) {
+                    if (log.isWarnEnabled()) {
+                        log.warn("createNo failed,get lock failed");
+                    }
+                    throw new BizException("生成流水号失败");
+                }
                 try {
-                    sequenceNo = generateSequenceNo(code);
+                    if (sequenceNo == null) {
+                        sequenceNo = generateSequenceNo(code);
+                    }
                 } finally {
                     try {
-                        if (lock != null) {
+                        if (lock.isHeldByCurrentThread()) {
                             lock.unlock();
                         }
                     } catch (Exception e) {
@@ -179,8 +189,14 @@ public class SequenceNoGenerator {
                 throw new BizException("获取流水号失败");
             }
             return maxSequenceNum;
-        } catch (Exception var5) {
-            noCacheMap.clear();
+        } catch (BizException e) {
+            // 保留具体业务异常并记录日志，避免统一转通用消息吞掉根因（如溢出/规则不合法）
+            noCacheMap.remove(code);
+            log.error("[SequenceNoGenerator.generateSequenceNo]业务异常, code:{}", code, e);
+            throw e;
+        } catch (Exception e) {
+            noCacheMap.remove(code);
+            log.error("[SequenceNoGenerator.generateSequenceNo]未知异常, code:{}", code, e);
             throw new BizException("获取流水号失败");
         }
 
@@ -194,6 +210,9 @@ public class SequenceNoGenerator {
 
     private String getHeadStr(String rule) {
         String[] split = rule.split("\\" + RULE_GLIDE_SEPARATE);
+        if (split.length < 2) {
+            throw new BizException("流水号规则格式不合法，规则内容：" + rule);
+        }
         String headStr = split[0];
         String timeRule = split[1];
         String timeStr = "";
@@ -221,6 +240,9 @@ public class SequenceNoGenerator {
         }
 
         String[] split = rule.split("\\" + RULE_GLIDE_SEPARATE);
+        if (split.length < 3) {
+            throw new BizException("流水号规则格式不合法（需要3段），规则内容：" + rule);
+        }
         String lengthStr = split[2];
         if (NumberUtils.isCreatable(lengthStr)) {
             if (cfg.getIsCache() == 1) {
@@ -233,6 +255,9 @@ public class SequenceNoGenerator {
             } else {
                 returnSequence = this.generate(1, headStr, dbMaxSequenceNo, dbMaxKey, lengthStr, cfg, null);
             }
+        } else {
+            // lengthStr非合法数字时显式抛错，避免静默返回空串致根因不可追溯
+            throw new BizException("流水号规则长度段不合法（非数字），规则内容：" + rule);
         }
 
         return returnSequence;
@@ -243,25 +268,23 @@ public class SequenceNoGenerator {
         String currentMaxNo = "";
 
         for (int i = 1; i < cacheNum + 1; ++i) {
-            Long sequenceNo = new Long(dbMaxSequenceNo) + (long) i;
+            Long sequenceNo = Long.valueOf(dbMaxSequenceNo) + (long) i;
+            // 先判断日期翻越并重置计数，再做溢出检查，避免翻越当天首个号码被误判溢出
+            if (StringUtils.isNotBlank(dbMaxKey) && !dbMaxKey.equals(key)) {
+                sequenceNo = 1L;
+                dbMaxSequenceNo = "0";
+                dbMaxKey = key;
+            }
             if (sequenceNo.toString().length() > Integer.parseInt(sequenceLen)) {
                 if (log.isWarnEnabled()) {
                     log.warn("{}生成的号码已经超过最大限度，当前最大编号为{},生成号码失败", mod.getCode(), dbMaxSequenceNo);
                 }
-                break;
+                // 溢出拒绝生成并抛异常，禁止break后清零maxValue导致号码从头重复
+                throw new BizException("流水号已超过最大限度，code:" + mod.getCode() + "，当前最大编号:" + dbMaxSequenceNo);
             }
             if (StringUtils.isNotBlank(dbMaxKey)) {
-                if (dbMaxKey.equals(key)) {
-                    currentMaxNo =
-                            dbMaxKey + fillLeft(sequenceNo.toString(), DEFAULT_FILL_CHAR, Integer.parseInt(sequenceLen));
-                } else {
-                    //如果key不同了，说明时间走到了下一个节点，开始重新计数
-                    sequenceNo = 1L;
-                    dbMaxSequenceNo = "0";
-                    dbMaxKey = key;
-                    currentMaxNo =
-                            key + fillLeft(sequenceNo.toString(), DEFAULT_FILL_CHAR, Integer.parseInt(sequenceLen));
-                }
+                currentMaxNo =
+                        dbMaxKey + fillLeft(sequenceNo.toString(), DEFAULT_FILL_CHAR, Integer.parseInt(sequenceLen));
             } else {
                 currentMaxNo = fillLeft(sequenceNo.toString(), DEFAULT_FILL_CHAR, Integer.parseInt(sequenceLen));
             }
@@ -276,10 +299,10 @@ public class SequenceNoGenerator {
     }
 
     private static String fillLeft(String source, char fillChar, int len) {
-        StringBuffer ret = new StringBuffer();
         if (source == null) {
-            ret.append("");
+            source = "";
         }
+        StringBuilder ret = new StringBuilder();
 
         if (source.length() > len) {
             ret.append(source);

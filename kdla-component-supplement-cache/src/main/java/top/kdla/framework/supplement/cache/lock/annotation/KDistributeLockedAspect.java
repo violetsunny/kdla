@@ -42,7 +42,7 @@ public class KDistributeLockedAspect {
      * 如果UnblockDistributeLocked注解throwEx为true,则为获取到锁时会抛出LockFailException异常
      * key值支持spel表达式,内置参数为args(切面方法的参数数组,如args[0]表示形参中的第一个参数)
      *
-     * @throws Exception 未获取到锁异常
+     * @throws LockFailException 未获取到锁异常
      * @throws Throwable 业务方法抛出的异常
      */
     @Around(value = "pointcut(lockAction)", argNames = "jp,lockAction")
@@ -77,33 +77,45 @@ public class KDistributeLockedAspect {
         }
 
         RLock lock = null;
+        boolean locked = false;
         try {
             //key = LOCK_KEY_PREFIX + key;
             if (log.isInfoEnabled()) {
                 log.info("KDistributeLockedAspect {} 开始尝试上锁", lockKey);
             }
-            //非阻塞方法,取不到锁抛出LockFailException异常
-            lock = redissonRedDisLock.lock(lockKey, TimeUnit.MILLISECONDS, timeout, leaseTime);
-            //获取到锁
-            if (lock != null) {
+            //仅捕获加锁调用自身的失败；业务proceed不被任何catch包裹，异常原样传播
+            try {
+                lock = redissonRedDisLock.lock(lockKey, TimeUnit.MILLISECONDS, timeout, leaseTime);
+                locked = lock != null;
+            } catch (LockFailException e) {
+                locked = false;
+            }
+            if (locked) {
                 if (log.isInfoEnabled()) {
                     log.info("KDistributeLockedAspect {} 上锁成功,执行业务代码", lockKey);
                 }
                 rvt = jp.proceed();
             } else {
-                throw new LockFailException("KDistributeLockedAspect " + lockKey + " lock为空,未获取到锁");
-            }
-        } catch (Exception e) {
-            if (lockAction.throwEx()) {
-                throw new Exception("KDistributeLockedAspect " + lockKey + " 未获取到锁,请重新尝试");
-            } else {
-                if (log.isWarnEnabled()) {
-                    log.warn("KDistributeLockedAspect {} 未获取到锁", lockKey);
+                if (lockAction.throwEx()) {
+                    throw new LockFailException("KDistributeLockedAspect " + lockKey + " 未获取到锁,请重新尝试");
+                } else {
+                    if (log.isWarnEnabled()) {
+                        log.warn("KDistributeLockedAspect {} 未获取到锁", lockKey);
+                    }
                 }
             }
         } finally {
-            if (lock != null) {
-                lock.unlock();
+            //未持锁不得unlock；释放失败仅告警，不得炸掉调用方
+            if (locked && lock != null) {
+                try {
+                    if (lock.isHeldByCurrentThread()) {
+                        lock.unlock();
+                    }
+                } catch (Exception e) {
+                    if (log.isWarnEnabled()) {
+                        log.warn("unlock failed:", e);
+                    }
+                }
             }
         }
 
