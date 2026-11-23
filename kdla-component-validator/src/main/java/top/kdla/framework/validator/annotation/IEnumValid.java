@@ -11,6 +11,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -36,7 +37,10 @@ public @interface IEnumValid {
 
     Class<? extends Payload>[] payload() default { };
 
-    boolean checkForNull() default true;
+    /**
+     * 是否校验null值，默认false：null放行（JSR-303约定，强制非空场景配合@NotNull使用）
+     */
+    boolean checkForNull() default false;
 
     /**
      * 枚举校验器  实现IEnum接口
@@ -49,10 +53,12 @@ public @interface IEnumValid {
 
         @Override
         public boolean isValid(String value, ConstraintValidatorContext context) {
-            if (checkForNull && value == null) {
-                return false;
+            if (value == null) {
+                // checkForNull=true时null判非法；默认false时null放行
+                return !checkForNull;
             }
-            return Stream.of(enumClazz.getEnumConstants()).anyMatch(enumConstant -> enumConstant.getCode().equals(value));
+            // Objects.equals防枚举getCode()返回null时NPE
+            return Stream.of(enumClazz.getEnumConstants()).anyMatch(enumConstant -> Objects.equals(enumConstant.getCode(), value));
         }
 
         @Override

@@ -1,12 +1,16 @@
 package top.kdla.framework.exception;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.ObjectError;
@@ -19,12 +23,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.util.ContentCachingRequestWrapper;
-import org.yaml.snakeyaml.constructor.DuplicateKeyException;
+import org.springframework.dao.DuplicateKeyException;
 import top.kdla.framework.dto.Response;
 import top.kdla.framework.dto.exception.ErrorCode;
 
-import javax.security.sasl.AuthenticationException;
-import java.nio.file.AccessDeniedException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,30 +38,88 @@ import java.util.stream.Collectors;
 
 /**
  * 通用异常处理
+ * 
+ * <p>默认启用,可通过配置关闭:</p>
+ * <pre>{@code
+ * kdla:
+ *   exception:
+ *     handler:
+ *       enabled: false
+ * }</pre>
  *
  * @author kll
  * @since 2021-01-07 16:22
  **/
 @Slf4j
 @RestControllerAdvice
+@Order(Ordered.LOWEST_PRECEDENCE)
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+@ConditionalOnProperty(name = "kdla.exception.handler.enabled",
+                       havingValue = "true", matchIfMissing = true)
+@Import({UnifiedExceptionControllerAdvice.SecurityAccessDeniedExceptionAdvice.class,
+        UnifiedExceptionControllerAdvice.DuplicateKeyExceptionAdvice.class})
 public class UnifiedExceptionControllerAdvice {
 
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    @ExceptionHandler(AuthenticationException.class)
-    public Response handleAuthenticationException(AuthenticationException e) {
-        if (log.isWarnEnabled()) {
-            log.warn("handleAuthenticationException:{}", ExceptionUtils.getStackTrace(e));
+    /**
+     * spring-security 鉴权/认证异常专属处理。
+     * <p>
+     * 历史 bug：外层曾误将 {@code java.nio.file.AccessDeniedException}（文件 IO 异常）
+     * 当作鉴权异常处理并返回 401。现改为处理 spring-security 的
+     * {@link AccessDeniedException}，HTTP 状态码修正为 403 FORBIDDEN，
+     * 且仅在宿主 classpath 存在 spring-security 时才注册（@ConditionalOnClass），
+     * 未引入 security 的宿主不受影响。
+     * <p>
+     * 同类 bug：外层曾误绑 {@code javax.security.sasl.AuthenticationException}（SASL 异常，
+     * 与 spring-security 的 AuthenticationException 无继承关系），导致认证失败落入
+     * handleThrowable 兜底返回"系统繁忙"而非 401。现移入本内层 Advice 处理正确类型。
+     */
+    @RestControllerAdvice
+    @Order(Ordered.LOWEST_PRECEDENCE)
+    @ConditionalOnClass(AccessDeniedException.class)
+    public static class SecurityAccessDeniedExceptionAdvice {
+
+        @ResponseStatus(HttpStatus.FORBIDDEN)
+        @ExceptionHandler(AccessDeniedException.class)
+        public Response handleAccessDeniedException(AccessDeniedException e) {
+            if (log.isWarnEnabled()) {
+                log.warn("handleAccessDeniedException:{}", ExceptionUtils.getStackTrace(e));
+            }
+            return Response.buildFailure(ErrorCode.UNAUTHORIZED);
         }
-        return Response.buildFailure(ErrorCode.UNAUTHORIZED);
+
+        @ResponseStatus(HttpStatus.UNAUTHORIZED)
+        @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+        public Response handleAuthenticationException(org.springframework.security.core.AuthenticationException e) {
+            if (log.isWarnEnabled()) {
+                log.warn("handleAuthenticationException:{}", ExceptionUtils.getStackTrace(e));
+            }
+            return Response.buildFailure(ErrorCode.UNAUTHORIZED);
+        }
     }
 
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    @ExceptionHandler(AccessDeniedException.class)
-    public Response handleAccessDeniedException(AccessDeniedException e) {
-        if (log.isWarnEnabled()) {
-            log.warn("handleAccessDeniedException:{}", ExceptionUtils.getStackTrace(e));
+    /**
+     * spring-jdbc 数据重复异常专属处理。
+     * <p>
+     * DuplicateKeyException 位于 spring-jdbc（本库 provided scope，不向下游传递）：
+     * 无 spring-jdbc 的纯 web 宿主解析外层 @ExceptionHandler 方法签名时会
+     * NoClassDefFoundError 导致启动失败（本 advice 在 T 默认开启，B7 裁定）。
+     * 比照 SecurityAccessDeniedExceptionAdvice 同模式移入 @ConditionalOnClass
+     * 守护的内层 Advice，仅在宿主 classpath 存在 spring-jdbc 时注册。
+     */
+    @RestControllerAdvice
+    @Order(Ordered.LOWEST_PRECEDENCE)
+    @ConditionalOnClass(DuplicateKeyException.class)
+    public static class DuplicateKeyExceptionAdvice {
+
+        @ResponseBody
+        @ResponseStatus(HttpStatus.OK)
+        @ExceptionHandler(DuplicateKeyException.class)
+        public Response handleDuplicateKeyException(DuplicateKeyException ex) {
+            if (log.isWarnEnabled()) {
+                log.warn("DuplicateKeyException:{}", ExceptionUtils.getStackTrace(ex));
+            }
+            return Response.buildFailure(ErrorCode.DUPLICATE_KEY);
         }
-        return Response.buildFailure(ErrorCode.UNAUTHORIZED);
     }
 
     /**
@@ -147,16 +211,6 @@ public class UnifiedExceptionControllerAdvice {
 
     @ResponseBody
     @ResponseStatus(HttpStatus.OK)
-    @ExceptionHandler(DuplicateKeyException.class)
-    public Response handleDuplicateKeyException(DuplicateKeyException ex) {
-        if (log.isWarnEnabled()) {
-            log.warn("DuplicateKeyException:{}", ExceptionUtils.getStackTrace(ex));
-        }
-        return Response.buildFailure(ErrorCode.DUPLICATE_KEY.getCode(), ex.getMessage());
-    }
-
-    @ResponseBody
-    @ResponseStatus(HttpStatus.OK)
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public Response handlerMissingServletRequestParameterException(MissingServletRequestParameterException ex) {
         if (log.isWarnEnabled()) {
@@ -171,7 +225,12 @@ public class UnifiedExceptionControllerAdvice {
         String requestBody = "";
         if (request instanceof ContentCachingRequestWrapper) {
             ContentCachingRequestWrapper requestWrapper = (ContentCachingRequestWrapper) request;
-            requestBody = new String(requestWrapper.getContentAsByteArray(), requestWrapper.getCharacterEncoding());
+            // getCharacterEncoding() 可能返回 null，回退 UTF-8，避免 new String(bytes, null) 抛 NPE
+            String characterEncoding = requestWrapper.getCharacterEncoding();
+            if (characterEncoding == null) {
+                characterEncoding = StandardCharsets.UTF_8.name();
+            }
+            requestBody = new String(requestWrapper.getContentAsByteArray(), characterEncoding);
         }
         log.error("req: {},body: {},HttpMessageNotReadableException:{}", request.getRequestURI(), requestBody, ExceptionUtils.getStackTrace(ex));
         return Response.buildFailure(ErrorCode.BAD_REQUEST.getCode(), ex.getMessage());
@@ -180,33 +239,19 @@ public class UnifiedExceptionControllerAdvice {
     /**
      * 其他异常
      */
-//    @ExceptionHandler(Throwable.class)
-//    @ResponseBody
-//    public Response handleThrowable(HttpServletRequest req, Throwable exception) {
-//        log.error("handleThrowable,url:{},Throwable:{}", req.getRequestURI(), ExceptionUtils.getStackTrace(exception));
-//        String errorMessage = exception.getMessage();
-//        if (exception instanceof ConstraintViolationException) {
-//            return Response.buildFailure(ErrorCode.FAIL.getCode(), errorMessage);
-//        }
-//        if (exception instanceof BindException) {
-//            return Response.buildFailure(ErrorCode.FAIL.getCode(), errorMessage);
-//        }
-//        return Response.buildFailure(ErrorCode.SYS_ERROR.getCode(), errorMessage);
-//    }
-
-    @ExceptionHandler({Throwable.class})
+    @ExceptionHandler(Throwable.class)
     @ResponseBody
-    public Response handleThrowable(WebRequest request, Throwable exception) {
-        String uri = request.getDescription(false); // 获取请求URI
-        log.error("handleThrowable,url:{},Throwable:{}", uri, ExceptionUtils.getStackTrace(exception));
+    public Response handleThrowable(HttpServletRequest req, Throwable exception) {
+        log.error("handleThrowable,url:{},Throwable:{}", req.getRequestURI(), ExceptionUtils.getStackTrace(exception));
         String errorMessage = exception.getMessage();
-        // 剩余代码保持不变
         if (exception instanceof ConstraintViolationException) {
             return Response.buildFailure(ErrorCode.FAIL.getCode(), errorMessage);
         }
         if (exception instanceof BindException) {
             return Response.buildFailure(ErrorCode.FAIL.getCode(), errorMessage);
         }
-        return Response.buildFailure(ErrorCode.SYS_ERROR.getCode(), errorMessage);
+        // 兜底异常不把 exception.getMessage() 原样透出前端（可能含 SQL/内部路径等敏感信息），原始详情只进上方 log.error
+        return Response.buildFailure(ErrorCode.SYS_ERROR.getCode(), "系统繁忙，请稍后重试");
     }
+
 }

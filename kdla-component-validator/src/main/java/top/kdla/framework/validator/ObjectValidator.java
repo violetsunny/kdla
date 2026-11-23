@@ -8,7 +8,6 @@ import com.baidu.unbiz.fluentvalidator.ValidatorHandler;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
-import sun.misc.Unsafe;
 import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.dto.IEnum;
 import top.kdla.framework.exception.BizException;
@@ -16,6 +15,7 @@ import top.kdla.framework.exception.BizException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -36,13 +36,19 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ObjectValidator<T> extends ValidatorHandler<T> implements Validator<T> {
 
     /**
+     * 递归深度上限：超过后不再向下遍历，防止超深对象图拖垮校验
+     */
+    private static final int MAX_RECURSION_DEPTH = 16;
+
+    /**
      * 如果校验不过会抛出BizException
      *
      * @throws BizException
      */
     public <T> void getValidatorMsg(T t, Class<? extends Annotation> annotation, Object bizEnum) throws Exception {
         List<String> msg = new ArrayList<>();
-        getClassErrorMsg(t, annotation, bizEnum, msg);
+        // 深度上限 + 按对象身份(identity)去重的已访问集合，防循环引用导致StackOverflowError
+        getClassErrorMsg(t, annotation, bizEnum, msg, 0, Collections.newSetFromMap(new IdentityHashMap<Object, Boolean>()));
         if (!CollectionUtils.isEmpty(msg)) {
             throw new BizException(ErrorCode.PARAMETER_ERROR, StringUtils.join(msg, ","));
         }
@@ -59,12 +65,30 @@ public class ObjectValidator<T> extends ValidatorHandler<T> implements Validator
      *                   String message() default "{validator's value is invalid}";
      * @param bizObj     当前需要匹配的数据
      * @param msg        错误信息
+     * @param depth      当前递归深度
+     * @param visited    已访问对象集合（按引用身份判重）
      * @param <T>
      * @throws Exception
      */
-    private <T> void getClassErrorMsg(T t, Class<? extends Annotation> annotation, Object bizObj, List<String> msg) throws Exception {
-        Field[] fields = t.getClass().getDeclaredFields();
+    private <T> void getClassErrorMsg(T t, Class<? extends Annotation> annotation, Object bizObj, List<String> msg,
+                                      int depth, Set<Object> visited) throws Exception {
+        if (t == null || depth > MAX_RECURSION_DEPTH) {
+            return;
+        }
+        // 循环引用防护：同一对象只遍历一次
+        if (!visited.add(t)) {
+            return;
+        }
+        // 沿继承链向上收集字段（getDeclaredFields不含父类字段，此前父类上的校验注解全部漏检），到Object为止
+        List<Field> fields = new ArrayList<>();
+        for (Class<?> clazz = t.getClass(); clazz != null && clazz != Object.class; clazz = clazz.getSuperclass()) {
+            fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
+        }
         for (Field field : fields) {
+            // 静态字段（serialVersionUID/Logger等）不属于实例校验范围，跳过
+            if (Modifier.isStatic(field.getModifiers())) {
+                continue;
+            }
             // 设置属性可以直接的进行访问
             field.setAccessible(true);
             Object fieldObject = field.get(t);
@@ -104,28 +128,45 @@ public class ObjectValidator<T> extends ValidatorHandler<T> implements Validator
             }
 
             // 递归获取其他值 剔除常用类型
-            if (Objects.nonNull(fieldObject) && !getCommonlyClass().contains(field.getType())) {
+            if (Objects.nonNull(fieldObject) && !isCommonlyClass(field.getType())) {
                 if (fieldObject instanceof Collection) {
                     Collection coll = (Collection) fieldObject;
                     for (Object oj : coll) {
-                        getClassErrorMsg(oj, annotation, bizObj, msg);
+                        getClassErrorMsg(oj, annotation, bizObj, msg, depth + 1, visited);
                     }
                 } else if (fieldObject instanceof Map) {
                     Map map = (Map) fieldObject;
                     for (Object oj : map.values()) {
-                        getClassErrorMsg(oj, annotation, bizObj, msg);
+                        getClassErrorMsg(oj, annotation, bizObj, msg, depth + 1, visited);
                     }
                 } else if (fieldObject instanceof Object[]) {
                     Object[] objects = (Object[]) fieldObject;
                     for (Object oj : objects) {
-                        getClassErrorMsg(oj, annotation, bizObj, msg);
+                        getClassErrorMsg(oj, annotation, bizObj, msg, depth + 1, visited);
                     }
                 } else {
-                    getClassErrorMsg(fieldObject, annotation, bizObj, msg);
+                    getClassErrorMsg(fieldObject, annotation, bizObj, msg, depth + 1, visited);
                 }
             }
         }
 
+    }
+
+    /**
+     * 判断字段类型是否命中常用类型排除列表。
+     * 用isAssignableFrom匹配（此前equals精确匹配，Temporal/Enum/Number等父类型对子类不生效，
+     * 如自定义枚举、Instant仍被递归遍历）。
+     *
+     * @param type 字段声明类型
+     * @return true表示不再向下递归
+     */
+    private static boolean isCommonlyClass(Class<?> type) {
+        for (Class<?> commonlyClass : getCommonlyClass()) {
+            if (commonlyClass.isAssignableFrom(type)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -139,7 +180,7 @@ public class ObjectValidator<T> extends ValidatorHandler<T> implements Validator
                 Double.class, Byte.class, Date.class, LocalDateTime.class, LocalDate.class, LocalTime.class,
                 BigInteger.class, Short.class, Character.class, boolean.class, int.class, long.class, float.class,
                 double.class, byte.class, char.class, AtomicBoolean.class, AtomicInteger.class,
-                AtomicLong.class, Unsafe.class, ThreadLocal.class, CharSequence.class, Temporal.class, Enum.class, IEnum.class);
+                AtomicLong.class, ThreadLocal.class, CharSequence.class, Temporal.class, Enum.class, IEnum.class);
     }
 
 }
