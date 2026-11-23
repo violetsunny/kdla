@@ -55,7 +55,7 @@
         <!-- mybatis -->
         <dependency>
             <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>
@@ -79,12 +79,6 @@
                     <groupId>org.springframework</groupId>
                 </exclusion>
             </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>com.github.jsqlparser</groupId>
-            <artifactId>jsqlparser</artifactId>
-            <scope>provided</scope>
         </dependency>
 
         <!-- mybatis-spring-boot-starter的版本需要和spring-boot-starter匹配 -->
