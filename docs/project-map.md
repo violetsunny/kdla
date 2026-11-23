@@ -1,3 +1,4 @@
+<!-- Generated: 2026-11-17 | Files scanned: 367 -->
 # 项目结构地图
 
 > KDLA 基础组件框架的目录结构与模块导航。
@@ -11,7 +12,7 @@
 | 版本 | `1.0.1-SNAPSHOT` |
 | 构建工具 | Maven（无 mvnw，用系统 `mvn`） |
 | Java 编译目标 | 1.8 |
-| 发布仓库 | 公司内部 Nexus（`nexus.enncloud.cn`，settings server id `kdla-nexus`） |
+| 发布仓库 | 公司内部 Nexus（`nexus.enncloud.cn`，settings server id `maven-releases` / `maven-snapshots`） |
 | 模块数 | 13 |
 
 ## 目录树
@@ -89,7 +90,7 @@ kdla/                                   根 POM，管理全局依赖版本与发
 │
 ├── kdla-component-supplement/          业务支撑（依赖 domain/common/exception）
 │   └── src/main/java/top/kdla/framework/supplement/
-│       ├── http/                       HTTP 客户端（Vertx, Netty, KdlaHttp）
+│       ├── http/                       HTTP 客户端（Vertx, Netty, KdlaHttpClient）
 │       ├── mqtt/                       Netty / Vert.x MQTT 客户端
 │       ├── netty/                      Netty HTTP Server/Client
 │       ├── excel/                      EasyExcel 导入导出
@@ -164,11 +165,11 @@ supplement-job（聚合最多：supplement / cache / dingding / log / domain）
 
 ## 启动入口
 
-KDLA 是库项目，无可运行入口。下游应用通过 Maven 引入依赖后，通过 Spring Boot 自动配置生效（各模块 `META-INF/spring.factories`，装配矩阵见 `docs/architecture.md`）。
+KDLA 是库项目，无可运行入口。下游应用通过 Maven 引入依赖后，通过 Spring Boot 自动配置生效（各模块 `*/src/main/resources/META-INF/spring.factories`，装配矩阵见 `docs/architecture.md`）。
 
 ## 配置入口
 
-- 自动配置：各模块 `META-INF/spring.factories`（当前 7 个模块有）
+- 自动配置：各模块 `*/src/main/resources/META-INF/spring.factories`（当前 9 个模块有）
 - 配置前缀：`kdla.*`（键与默认值速查见 `docs/architecture.md`）
 
 ## 测试入口
@@ -181,7 +182,7 @@ mvn clean test
 mvn -pl kdla-component-supplement-cache -am clean test
 ```
 
-测试文件位于各模块 `src/test/java/` 下，当前 **64 个测试类 / 171 个用例**（JUnit 5 + Mockito，经 provided 作用域 `spring-boot-starter-test` 引入）。
+测试文件位于各模块 `*/src/test/java/` 下，当前 **65 个测试类 / 173 个用例**（JUnit 5 + Mockito，经 provided 作用域 `spring-boot-starter-test` 引入）。
 
 ## 版本线
 

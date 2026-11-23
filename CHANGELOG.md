@@ -12,7 +12,7 @@ All notable changes to `kdla-components` are documented here.
 
 ### 回合概览
 
-- 13 张实现票 + 收口验证，16 个 commit（fe53887..票14 修复），全仓 `mvn clean test` **171 用例全绿**（64 测试类，JDK8 target）。
+- 14 张实现票（01-13、17）+ 3 张收口票（14 验证 / 15 文档 / 16 人工验证），16 个 commit（fe53887..票14 修复），全仓 `mvn clean test` **171 用例全绿**（64 测试类，JDK8 target）。
 - 覆盖模块：model / common / exception / domain / dal / validator / log / supplement / supplement-cache / supplement-dingding / supplement-monitor（reactor、supplement-job 零改动）。
 - 明细单一真源：`.scratch/kdla-backport/`（spec、17 张票、装配矩阵、评审登记 P1-P20）。
 

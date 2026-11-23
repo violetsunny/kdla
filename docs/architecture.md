@@ -1,3 +1,4 @@
+<!-- Generated: 2026-11-17 | Files scanned: 367 -->
 # 架构说明
 
 > KDLA 基础组件框架的架构设计与核心决策解释。
@@ -102,10 +103,10 @@ graph TB
 
 ## 自动配置机制
 
-KDLA 使用 Spring Boot 2.x 的 `spring.factories` 机制（非 SB3 的 `AutoConfiguration.imports`）。各模块在 `META-INF/spring.factories` 中注册自动配置类；新增 auto-config 类必须同步登记，否则不生效。
+KDLA 使用 Spring Boot 2.x 的 `spring.factories` 机制（非 SB3 的 `AutoConfiguration.imports`）。各模块在 `*/src/main/resources/META-INF/spring.factories` 中注册自动配置类（当前 9 个模块有）；新增 auto-config 类必须同步登记，否则不生效。
 
 关键设计决策（T 侧装配契约）：
-- **T 与裁剪版参考仓不同**：T 存量下游已依赖默认开启行为，故 9 类有运行期行为的配置类 `matchIfMissing=true` 默认开，另有 3 类无开关靠 `@ConditionalOnClass` 守护；6 类有侵入性副作用的默认关
+- **T 与裁剪版参考仓不同**：T 存量下游已依赖默认开启行为，故 9 类带开关的配置类 `matchIfMissing=true` 默认开，另有 3 类无开关默认开（`DomainAutoConfigure` 无条件注册；`DingAlertConfigure`/`PrometheusAutoConfigure` 靠 `@ConditionalOnClass` 守护）；8 类有侵入性副作用的默认关
 - `UnifiedExceptionControllerAdvice` 经 spring.factories 自动注册，默认开（`kdla.exception.handler.enabled`），仅 SERVLET 应用生效
 - 所有可替换 Bean 使用 `@ConditionalOnMissingBean` 保护
 - 所有 `@ConditionalOnClass` 引用真实外部类（如 `Aspect`、`RedissonClient`、`Vertx`、`CollectorRegistry`），不引用自身模块内部类（恒真无意义）
@@ -238,9 +239,9 @@ KDLA 是库项目，几乎所有第三方依赖默认使用 `provided` scope。�
 ## 测试
 
 - 栈：JUnit 5 + Mockito（`mockito-junit-jupiter`），经 provided 作用域 `spring-boot-starter-test` 引入，不向下游传递
-- 当前 64 个测试类 / 171 个用例，分布于 model、common、exception、domain、dal、validator、supplement、supplement-cache、log 等模块
+- 当前 65 个测试类 / 173 个用例，分布于 model、common、exception、domain、dal、validator、supplement、supplement-cache、log 等模块
 - 有测试设施的模块，bugfix / 非平凡改动提交须带回归测试
-- 验证命令必须带 `-am`（`~/.m2` 中同 GAV SNAPSHOT 可能被另一仓 install 污染）：
+- 验证命令必须带 `-am`（`$HOME/.m2` 中同 GAV SNAPSHOT 可能被另一仓 install 污染）：
 
 ```bash
 mvn -pl kdla-component-common -am clean test
@@ -254,7 +255,7 @@ mvn -pl kdla-component-common -am clean test
 | K3 | dal | `BaseDo.isDeleted`（Boolean）与 MyBatis-Plus 逻辑删除不兼容，需使用 `MpBaseDo` | 已部分处理 |
 | K5 | domain | `ApplicationContextHelp` 静态方法不可 mock，强制集成测试 | 待处理 |
 
-> K2（`KdlaBizDisLockService` 死锁风险）已在 2026-08-28 修复；K4（`SequenceNoGenerator` 缺装配开关）已在 2026-09-04 修复；P1（`MachineIdHelp` 注册失败脏值撞号）已在 2026-11-16 修复（注册成功才发布静态字段，失败路径走随机回退+ERROR 告警）。
+> K2（`KdlaBizDisLockService` 死锁风险）与 K4（`SequenceNoGenerator` 缺装配开关）分别在 2026-08-28、2026-09-04 于参考仓修复，本仓经 2026-11-16 backport 回合；P1（`MachineIdHelp` 注册失败脏值撞号）2026-11-16 直接在本仓修复（注册成功才发布静态字段，失败路径走随机回退+ERROR 告警）。
 > 其余上游同源遗留 19 项（P2-P20）登记于 `docs/nit-inventory.md`，只登记不修（与参考仓保持 diff 可核验）。
 
 ## FAQ
@@ -292,4 +293,4 @@ SpEL 上下文为 `SimpleEvaluationContext.forReadOnlyDataBinding()`（防注入
 mvn deploy
 ```
 
-需公司内网/VPN，并在 `~/.m2/settings.xml` 中配置 server ID `kdla-nexus` 的凭据，指向 `nexus.enncloud.cn`。
+需公司内网/VPN，并在 `$HOME/.m2/settings.xml` 中配置 server ID `maven-releases` / `maven-snapshots` 的凭据（与根 pom `distributionManagement` 的 id 一致），指向 `nexus.enncloud.cn`。
