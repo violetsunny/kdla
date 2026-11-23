@@ -73,7 +73,7 @@
         <fastjson.version>2.0.57</fastjson.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <lombok.version>1.18.36</lombok.version>
         <hutool-all.version>5.8.36</hutool-all.version> <!-- 升级到兼容 JDK 21 的版本 -->
-        <redisson-spring-boot.version>3.20.1</redisson-spring-boot.version> <!-- 升级到兼容 JDK 21 的版本 -->
+        <redisson-spring-boot.version>3.52.0</redisson-spring-boot.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <easyexcel.version>3.3.2</easyexcel.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <transmittable.version>2.14.3</transmittable.version> <!-- 升级到兼容 JDK 21 的版本 -->
         <jpinyin.version>1.1.8</jpinyin.version> <!-- 该库较旧，未明确支持 JDK 21，需测试 -->
@@ -326,6 +326,11 @@
             <dependency>
                 <groupId>org.redisson</groupId>
                 <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>${redisson-spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-data-34</artifactId>
                 <version>${redisson-spring-boot.version}</version>
             </dependency>
 
