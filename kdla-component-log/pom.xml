@@ -146,6 +146,12 @@
             <artifactId>guava</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- JacksonUtil 运行期经 common 间接需要；provided 不透传宿主，仅本模块编译/测试期可见 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- 日志 -->
         <dependency>
