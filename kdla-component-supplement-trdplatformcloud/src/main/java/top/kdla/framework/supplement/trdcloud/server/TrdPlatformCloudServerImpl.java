@@ -37,7 +37,7 @@ import top.kdla.framework.supplement.timer.manager.impl.IotXxlJobManager;
 import top.kdla.framework.supplement.timer.manager.impl.LocalJobManager;
 import top.kdla.framework.supplement.trdcloud.utils.StringUtil;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;

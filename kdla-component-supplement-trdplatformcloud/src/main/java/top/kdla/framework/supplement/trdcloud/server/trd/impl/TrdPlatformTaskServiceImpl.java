@@ -21,7 +21,7 @@ import top.kdla.framework.supplement.trdcloud.mapper.TrdPlatformTaskMapper;
 import top.kdla.framework.supplement.trdcloud.repository.TrdPlatformTaskRepository;
 import top.kdla.framework.supplement.trdcloud.server.trd.TrdPlatformTaskService;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.List;
 
 @Service

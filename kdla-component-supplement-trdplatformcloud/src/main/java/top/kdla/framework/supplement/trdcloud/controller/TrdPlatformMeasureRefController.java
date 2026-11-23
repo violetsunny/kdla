@@ -16,8 +16,8 @@ import top.kdla.framework.supplement.trdcloud.server.trd.TrdPlatformMeasureRefSe
 import top.kdla.framework.supplement.trdcloud.vo.TrdPlatformMeasureRefAddVo;
 import top.kdla.framework.supplement.trdcloud.vo.TrdPlatformMeasureRefVo;
 
-import javax.annotation.Resource;
-import javax.validation.Valid;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import java.util.List;
 
 @Slf4j

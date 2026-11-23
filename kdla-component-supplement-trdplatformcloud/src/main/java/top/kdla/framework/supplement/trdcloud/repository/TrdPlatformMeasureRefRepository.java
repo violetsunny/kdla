@@ -9,7 +9,7 @@ import top.kdla.framework.supplement.trdcloud.converter.TrdPlatformMeasureRefBoC
 import top.kdla.framework.supplement.trdcloud.entity.TrdPlatformMeasureRefEntity;
 import top.kdla.framework.supplement.trdcloud.mapper.TrdPlatformMeasureRefMapper;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.List;
 
 @Service

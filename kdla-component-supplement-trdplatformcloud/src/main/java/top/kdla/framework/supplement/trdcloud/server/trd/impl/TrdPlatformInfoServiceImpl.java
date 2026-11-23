@@ -57,7 +57,8 @@ public class TrdPlatformInfoServiceImpl extends ServiceImpl<TrdPlatformInfoMappe
         queryWrapper.in(TrdPlatformInfoEntity::getPlatformCode, pCodes)
                 .eq(TrdPlatformInfoEntity::getIsDelete,0);
         List<TrdPlatformInfoEntity> list = trdPlatformInfoRepository.list(queryWrapper);
-        return list.stream().collect(Collectors.toMap(TrdPlatformInfoEntity::getPlatformCode, Function.identity()));
+        // 重复 platformCode 保留先值，与 getByPCode 的 getOne(wrapper,false) 容忍多行取首条语义一致
+        return list.stream().collect(Collectors.toMap(TrdPlatformInfoEntity::getPlatformCode, Function.identity(), (a, b) -> a));
     }
 
     @Override

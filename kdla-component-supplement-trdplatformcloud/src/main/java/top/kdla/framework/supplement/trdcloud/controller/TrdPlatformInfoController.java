@@ -27,8 +27,8 @@ import top.kdla.framework.supplement.trdcloud.vo.TrdPlatformInfoPageQueryVo;
 import top.kdla.framework.supplement.trdcloud.vo.TrdPlatformInfoQueryVo;
 import top.kdla.framework.supplement.trdcloud.vo.TrdPlatformInfoVo;
 
-import javax.annotation.Resource;
-import javax.validation.Valid;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import java.util.*;
 import java.util.stream.Collectors;
 

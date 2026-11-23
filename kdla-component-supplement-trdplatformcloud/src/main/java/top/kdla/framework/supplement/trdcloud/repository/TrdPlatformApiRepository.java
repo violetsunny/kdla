@@ -9,7 +9,7 @@ import top.kdla.framework.supplement.trdcloud.converter.TrdPlatformApiBoConverte
 import top.kdla.framework.supplement.trdcloud.entity.TrdPlatformApiEntity;
 import top.kdla.framework.supplement.trdcloud.mapper.TrdPlatformApiMapper;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 @Service
 public class TrdPlatformApiRepository extends ServiceImpl<TrdPlatformApiMapper, TrdPlatformApiEntity> implements IService<TrdPlatformApiEntity> {

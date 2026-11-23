@@ -22,8 +22,8 @@ import top.kdla.framework.supplement.trdcloud.vo.TrdPlatformTaskPageQueryVo;
 import top.kdla.framework.supplement.trdcloud.vo.TrdPlatformTaskQueryVo;
 import top.kdla.framework.supplement.trdcloud.vo.TrdPlatformTaskVo;
 
-import javax.annotation.Resource;
-import javax.validation.Valid;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;

@@ -16,7 +16,7 @@ import top.kdla.framework.supplement.trdcloud.converter.TrdPlatformTaskBoConvert
 import top.kdla.framework.supplement.trdcloud.entity.TrdPlatformTaskEntity;
 import top.kdla.framework.supplement.trdcloud.mapper.TrdPlatformTaskMapper;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 

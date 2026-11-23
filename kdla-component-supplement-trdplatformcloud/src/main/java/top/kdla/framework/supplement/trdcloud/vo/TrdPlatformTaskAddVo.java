@@ -10,8 +10,8 @@ import top.kdla.framework.supplement.trdcloud.entity.TrdPlatformTaskEntity;
 import top.kdla.framework.supplement.trdcloud.utils.JwtUtil;
 import top.kdla.framework.supplement.trdcloud.utils.RegexConstant;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import java.io.Serializable;
 import java.util.Date;
 

@@ -15,7 +15,7 @@ import top.kdla.framework.supplement.trdcloud.converter.TrdPlatformInfoBoConvert
 import top.kdla.framework.supplement.trdcloud.entity.TrdPlatformInfoEntity;
 import top.kdla.framework.supplement.trdcloud.mapper.TrdPlatformInfoMapper;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 

@@ -18,8 +18,8 @@ import top.kdla.framework.supplement.trdcloud.server.trd.TrdPlatformApiService;
 import top.kdla.framework.supplement.trdcloud.utils.JwtUtil;
 import top.kdla.framework.supplement.trdcloud.vo.*;
 
-import javax.annotation.Resource;
-import javax.validation.Valid;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import java.util.Objects;
 
 @Slf4j

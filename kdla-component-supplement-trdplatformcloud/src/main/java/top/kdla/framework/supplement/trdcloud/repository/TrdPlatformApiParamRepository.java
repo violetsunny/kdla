@@ -9,7 +9,7 @@ import top.kdla.framework.supplement.trdcloud.converter.TrdPlatformApiParamBoCon
 import top.kdla.framework.supplement.trdcloud.entity.TrdPlatformApiParamEntity;
 import top.kdla.framework.supplement.trdcloud.mapper.TrdPlatformApiParamMapper;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.List;
 
 @Service
