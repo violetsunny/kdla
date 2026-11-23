@@ -17,6 +17,8 @@ import org.springframework.core.annotation.Order;
 import top.kdla.framework.supplement.monitor.prometheus.PushGatewayManager;
 
 import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author kanglele
@@ -31,6 +33,9 @@ public class PrometheusPointAspect {
     private boolean service;
 
     private final PushGatewayManager pushGatewayManager;
+
+    //同名Counter只注册一次，重复调用复用实例，避免二次register抛IllegalArgumentException
+    private final Map<String, Counter> counters = new ConcurrentHashMap<>();
 
     public PrometheusPointAspect(PushGatewayManager pushGatewayManager) {
         this.pushGatewayManager = pushGatewayManager;
@@ -59,7 +64,8 @@ public class PrometheusPointAspect {
         CollectorRegistry registry = pushGatewayManager.getRegistry();
         //通过collector类下的register方法可以把测点注册到上端口中
         //Collector是测点集合，也可以同时有Counter等单独测点
-        Counter counter = Counter.build(prometheusCounter.name(), prometheusCounter.help()).labelNames("type").register(registry);
+        Counter counter = counters.computeIfAbsent(prometheusCounter.name(),
+                n -> Counter.build(n, prometheusCounter.help()).labelNames("type").register(registry));
         counter.labels(prometheusCounter.type()).inc();
         if (!service) {
             pushGatewayManager.pushAdd(counter);

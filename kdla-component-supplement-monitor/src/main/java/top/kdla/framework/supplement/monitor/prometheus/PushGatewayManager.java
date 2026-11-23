@@ -7,7 +7,6 @@ import io.prometheus.client.exporter.PushGateway;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 import java.net.InetAddress;
@@ -15,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-@Component
+//改由PrometheusAutoConfigure按第三方类条件注册，裸@Component会在缺依赖时被扫描加载即炸
 @Slf4j
 //@EnableScheduling
 public class PushGatewayManager {
