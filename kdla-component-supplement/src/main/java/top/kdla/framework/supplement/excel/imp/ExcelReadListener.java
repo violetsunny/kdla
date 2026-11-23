@@ -172,10 +172,13 @@ public class ExcelReadListener<T, R> extends AnalysisEventListener<T> {
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext context) {
-        column = context.readSheetHolder().getTempCellData().getColumnIndex();
+        //空sheet无单元格数据，getTempCellData()为null，直接取getColumnIndex()会NPE
+        if (context.readSheetHolder().getTempCellData() != null) {
+            column = context.readSheetHolder().getTempCellData().getColumnIndex();
+        }
         if (recordFunction == null) {
-            log.error("导入失败，recordHandler未设置");
-            return;
+            //静默return会整批跳过且不回调结果，缺失处理器必须显式失败
+            throw new BizException("导入失败，recordHandler未设置");
         }
         importResult.setTotalCount(totalCount);
         List<List<R>> validatedRecords = Lists.partition(validatedRecord, processCount);
@@ -197,10 +200,12 @@ public class ExcelReadListener<T, R> extends AnalysisEventListener<T> {
             }
         }
 
-        if (errors.stream().anyMatch(ExcelImportError::hasError) || importError.hasError()) {
+        //errorMessageList含解析/校验错误，errorConverter缺失时也要判失败，否则解析异常仍报success
+        if (errors.stream().anyMatch(ExcelImportError::hasError) || importError.hasError() || !errorMessageList.isEmpty()) {
             log.warn("导入数据有误");
             errors.forEach(error -> importError.merge(error));//合并数据
-            importResult.setErrorCount(importError.getErrors().size());
+            //仅解析/校验错误时无error对象，errors为null，直接size()会NPE
+            importResult.setErrorCount(importError.getErrors() == null ? 0 : importError.getErrors().size());
             importResult.setSuccess(false);
             importResult.setErrorMessage(errorMessageList);
             if (needGenerateReport) {
@@ -233,7 +238,10 @@ public class ExcelReadListener<T, R> extends AnalysisEventListener<T> {
 
     private File generateErrorReportTempFile() {
         try {
-            return File.createTempFile(reportFilePrefix, reportFileSuffix);
+            File tempFile = File.createTempFile(reportFilePrefix, reportFileSuffix);
+            //JVM退出时清理，避免临时报告文件持续累积占满磁盘
+            tempFile.deleteOnExit();
+            return tempFile;
         } catch (IOException e) {
             throw new RuntimeException("生成导入报告异常，" + e.getMessage());
         }

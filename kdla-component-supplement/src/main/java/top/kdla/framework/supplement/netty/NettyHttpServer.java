@@ -19,7 +19,6 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.kdla.framework.common.help.ThreadPoolHelp;
@@ -30,7 +29,6 @@ import java.io.File;
 import java.io.RandomAccessFile;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
@@ -51,6 +49,7 @@ public class NettyHttpServer {
     private final EventLoopGroup bossGroup;
     private final EventLoopGroup workerGroup;
     private final ServerBootstrap serverBootstrap;
+    private volatile Channel serverChannel;
 
 
     public NettyHttpServer(DispatcherServer dispatcherServer, boolean keepAlive) {
@@ -73,48 +72,58 @@ public class NettyHttpServer {
     }
 
     public void start(int port) throws Exception {
-        AtomicBoolean close = new AtomicBoolean(false);
-        ChannelFuture f = null;
+        this.serverBootstrap.group(this.bossGroup, this.workerGroup)
+                .channel(NioServerSocketChannel.class)
+                .option(ChannelOption.SO_BACKLOG, 1024)
+                .childOption(ChannelOption.SO_KEEPALIVE, this.keepAlive)
+                .childHandler(new HttpServerInitializer(this.ssl, this.server, this.servertruststore, keyStorePassword, this.dispatcherServer));
+        ChannelFuture f;
         try {
-            this.serverBootstrap.group(this.bossGroup, this.workerGroup)
-                    .channel(NioServerSocketChannel.class)
-                    .option(ChannelOption.SO_BACKLOG, 1024)
-                    .childOption(ChannelOption.SO_KEEPALIVE, this.keepAlive)
-                    .childHandler(new HttpServerInitializer(this.ssl, this.server, this.servertruststore, keyStorePassword, this.dispatcherServer));
             f = serverBootstrap.bind(port);
-            f.addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(ChannelFuture future) throws Exception {
-                    if (future.isSuccess()) {
-                        if (log.isInfoEnabled()) {
-                            log.info("服务端口{}绑定成功!", port);
-                        }
+        } catch (Exception e) {
+            workerGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully();
+            throw e;
+        }
+        this.serverChannel = f.channel();
+        f.addListener(new ChannelFutureListener() {
+            @Override
+            public void operationComplete(ChannelFuture future) throws Exception {
+                if (future.isSuccess()) {
+                    if (log.isInfoEnabled()) {
+                        log.info("服务端口{}绑定成功!", port);
                     }
-                }
-            });
-            //f.channel().closeFuture().sync();//不建议使用阻塞方式
-            f.channel().closeFuture().addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(ChannelFuture future) throws Exception {
-                    future.channel().close();
+                } else {
+                    //绑定失败(如端口被占用)显式记录错误并释放线程资源，避免失败不可见与EventLoopGroup泄漏
+                    log.error("服务端口{}绑定失败!", port, future.cause());
                     workerGroup.shutdownGracefully();
                     bossGroup.shutdownGracefully();
-                    close.set(true);
-                    if (log.isInfoEnabled()) {
-                        log.info("{} 链路关闭", future.channel().toString());
-                    }
                 }
-            });
-        } finally {
-            //TODO 应是一直开着的
-            if (!close.get()) {
-                if (f != null) {
-                    f.channel().close();
-                }
+            }
+        });
+        //服务端口须一直开着，关闭只由close()触发；此处finally立即close会使端口瞬间不可用
+        f.channel().closeFuture().addListener(new ChannelFutureListener() {
+            @Override
+            public void operationComplete(ChannelFuture future) throws Exception {
                 workerGroup.shutdownGracefully();
                 bossGroup.shutdownGracefully();
+                if (log.isInfoEnabled()) {
+                    log.info("{} 链路关闭", future.channel().toString());
+                }
             }
+        });
+    }
+
+    /**
+     * 优雅关闭服务：关闭服务端Channel并释放boss/worker线程资源。
+     * 该类非Spring Bean（由使用方new创建），@PreDestroy不生效，停止服务时必须显式调用本方法。
+     */
+    public void close() {
+        if (serverChannel != null) {
+            serverChannel.close();
         }
+        workerGroup.shutdownGracefully();
+        bossGroup.shutdownGracefully();
     }
 
     private static class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
@@ -188,7 +197,9 @@ public class NettyHttpServer {
                     Object res = dispatcherServer.doDispatch(uri, uriAttributes);
                     writeHttpResponse(msg, headValue, res, ctx, HttpResponseStatus.OK);
                 } catch (Exception e) {
-                    writeHttpResponse(msg, headValue, ExceptionUtils.getStackTrace(e), ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                    //完整堆栈仅记录在服务端日志，返回客户端通用文案，避免泄露内部实现细节
+                    log.error("GET请求处理异常, uri:{}", uri, e);
+                    writeHttpResponse(msg, headValue, "服务器内部错误", ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR);
                 }
 
             } else if (method.equals(HttpMethod.POST)) {
@@ -198,7 +209,9 @@ public class NettyHttpServer {
                     Object res = dispatcherServer.doDispatch(uri, bodyString);
                     writeHttpResponse(msg, headValue, res, ctx, HttpResponseStatus.OK);
                 } catch (Exception e) {
-                    writeHttpResponse(msg, headValue, ExceptionUtils.getStackTrace(e), ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                    //完整堆栈仅记录在服务端日志，返回客户端通用文案，避免泄露内部实现细节
+                    log.error("POST请求处理异常, uri:{}", uri, e);
+                    writeHttpResponse(msg, headValue, "服务器内部错误", ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR);
                 }
 
             } else {
@@ -270,11 +283,16 @@ public class NettyHttpServer {
                 log.info("writeHttpResponseHtml 开始写入返回数据...");
             }
             RandomAccessFile raf = new RandomAccessFile(file, "r");
+            //fail-fast校验文件可读并取真实长度；传输通道交由DefaultFileRegion(File)自管
+            long fileLength = raf.length();
+            raf.close();
             FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, status);
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html;charset=utf-8");
-            response.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, response.content().writerIndex());
+            //空content的writerIndex()恒0，客户端按0长度截断；须用真实文件长度
+            response.headers().set(HttpHeaderNames.CONTENT_LENGTH, fileLength);
             ctx.write(response);
-            ctx.write(new DefaultFileRegion(raf.getChannel(), 0, raf.length()));
+            //File构造由netty在deallocate时关闭通道，修复FileChannel三参构造的fd泄漏
+            ctx.write(new DefaultFileRegion(file, 0, fileLength));
             // 检查请求是否为 keep-alive
             boolean keepAlive = HttpUtil.isKeepAlive(request);
             // 在响应头中设置 keep-alive

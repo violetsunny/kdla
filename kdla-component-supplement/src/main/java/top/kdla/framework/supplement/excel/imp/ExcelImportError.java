@@ -30,7 +30,8 @@ public class ExcelImportError<T> extends BaseExcel {
 
 
     public void merge(ExcelImportError<T> error){
-        if(error == null){
+        //无错误的批次errors为null，直接forEach会NPE
+        if(error == null || error.getErrors() == null){
             return;
         }
         error.getErrors()

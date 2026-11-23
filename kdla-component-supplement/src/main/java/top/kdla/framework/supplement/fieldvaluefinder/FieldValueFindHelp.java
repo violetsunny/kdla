@@ -138,7 +138,8 @@ public class FieldValueFindHelp {
                 ExistPolicy existPolicy = fieldValueFind.existPolicy();
                 if (field.get(sourceObject) != null) {
                     if (ExistPolicy.KEEP_SELF.equals(existPolicy)) {
-                        break;
+                        //仅跳过当前dto，break会跳出整个循环致后续dto漏注入
+                        continue;
                     }
                     if (!ExistPolicy.USE_FROM.equals(existPolicy)) {
                         throw new IllegalArgumentException();

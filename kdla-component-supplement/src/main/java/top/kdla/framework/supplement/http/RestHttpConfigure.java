@@ -3,6 +3,7 @@ package top.kdla.framework.supplement.http;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
@@ -12,7 +13,9 @@ import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.core5.http.config.Registry;
 import org.apache.hc.core5.http.config.RegistryBuilder;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -25,6 +28,8 @@ import java.util.concurrent.TimeUnit;
 
 
 @Configuration
+@ConditionalOnClass(RestTemplate.class)
+@ConditionalOnProperty(name = "kdla.config.rest-http.enabled", havingValue = "true", matchIfMissing = false)
 @Slf4j
 public class RestHttpConfigure {
 
@@ -76,6 +81,10 @@ public class RestHttpConfigure {
         connectionManager.setMaxTotal(connectionPoolSize);
         //路由是对maxTotal的细分
         connectionManager.setDefaultMaxPerRoute(100);
+        //连接存活60s，避免复用被服务端静默断开的连接；HttpClient5的TTL由ConnectionConfig承载
+        connectionManager.setDefaultConnectionConfig(ConnectionConfig.custom()
+                .setTimeToLive(60, TimeUnit.SECONDS)
+                .build());
         RequestConfig requestConfig = RequestConfig.custom()
                 .setConnectTimeout(connectTimeout,TimeUnit.MILLISECONDS)//连接上服务器(握手成功)的时间，超出该时间抛出connect timeout
                 .setConnectionRequestTimeout(connectReqTimeout,TimeUnit.MILLISECONDS)//从连接池中获取连接的超时时间，超过该时间未拿到可用连接，会抛出org.apache.http.conn.ConnectionPoolTimeoutException: Timeout waiting for connection from pool

@@ -23,7 +23,7 @@ import org.apache.commons.io.input.CharSequenceReader;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.IntStream;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CsvUtil {
@@ -37,8 +37,8 @@ public class CsvUtil {
         }
 
         return records.stream()
-                .map(record -> Stream.iterate(0, i -> i + 1)
-                        .map(record::get)
+                .map(record -> IntStream.range(0, record.size())
+                        .mapToObj(record::get)
                         .collect(Collectors.toList()))
                 .collect(Collectors.toList());
     }

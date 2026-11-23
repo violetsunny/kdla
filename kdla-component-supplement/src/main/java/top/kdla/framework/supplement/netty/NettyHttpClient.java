@@ -25,7 +25,6 @@ import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import top.kdla.framework.common.help.ThreadPoolHelp;
 import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.BizException;
@@ -40,7 +39,8 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author kanglele
@@ -49,8 +49,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class NettyHttpClient {
 
-    @Value("${http.connectTimeout:3000}")
-    private int connectTimeout;
+    //该类非Spring Bean（由使用方new创建），@Value永不注入致connectTimeout恒0；改为显式默认值
+    private int connectTimeout = 3000;
 
     private boolean keepAlive = false;
     private boolean ssl = false;
@@ -74,21 +74,33 @@ public class NettyHttpClient {
                 .handler(new HttpClientInitializer(this.ssl, this.client, this.clienttruststore, this.keyStorePassword));
     }
 
+    public void close() {
+        workerGroup.shutdownGracefully();
+    }
+
     public NettyHttpClient setSsl(File client, File clienttruststore, String keyStorePassword) {
         this.ssl = true;
         this.client = client;
         this.clienttruststore = clienttruststore;
         this.keyStorePassword = keyStorePassword;
+        //构造器按值捕获参数建initializer，事后setSsl须重建handler否则mTLS配置不生效
+        bootstrap.handler(new HttpClientInitializer(this.ssl, this.client, this.clienttruststore, this.keyStorePassword));
+        return this;
+    }
+
+    //响应等待上限毫秒；无超时的get()在对端不回包且不断连时永久挂起调用线程
+    private long requestTimeout = 30000;
+
+    public NettyHttpClient setRequestTimeout(long requestTimeoutMillis) {
+        this.requestTimeout = requestTimeoutMillis;
         return this;
     }
 
     public String sendRequestPromise(String url, Object reqMsg, String method, Map<String, String> headers) throws Exception {
-        AtomicBoolean close = new AtomicBoolean(false);
         DefaultPromise<String> respPromise = new DefaultPromise<>(workerGroup.next());
-        ChannelFuture f = null;
         try {
             // Start the client.
-            f = bootstrap.connect();
+            ChannelFuture f = bootstrap.connect();
             OutputResultHandlerPromise outputResultHandler = new OutputResultHandlerPromise();
             outputResultHandler.setResponse(respPromise);
             // 获取返回
@@ -96,13 +108,11 @@ public class NettyHttpClient {
             // 发送http请求
             HttpRequest request = getRequestMethod(url, reqMsg, HttpMethod.valueOf(method.toUpperCase(Locale.ROOT)), headers);
             f.channel().writeAndFlush(request);
-            //f.channel().closeFuture().sync();//不建议使用阻塞方式
+            //连接在响应读完、对端关闭或异常时才关闭；finally立即close会截断响应
             f.channel().closeFuture().addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
-                    future.channel().close();
                     workerGroup.shutdownGracefully();
-                    close.set(true);
                     if (log.isInfoEnabled()) {
                         log.info("{} 链路关闭", future.channel().toString());
                     }
@@ -111,26 +121,23 @@ public class NettyHttpClient {
 
         } catch (Exception e) {
             respPromise.setFailure(e);
-        } finally {
-            if (!close.get()) {
-                if (f != null) {
-                    f.channel().close();
-                }
-                workerGroup.shutdownGracefully();
-            }
+            workerGroup.shutdownGracefully();
         }
 
         //response
-        return respPromise.get();
+        try {
+            return respPromise.get(requestTimeout, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            workerGroup.shutdownGracefully();
+            throw e;
+        }
     }
 
     public String sendRequestCompletable(String url, Object reqMsg, String method, Map<String, String> headers) throws Exception {
-        AtomicBoolean close = new AtomicBoolean(false);
         CompletableFuture<String> future = new CompletableFuture<>();
-        ChannelFuture f = null;
         try {
             // Start the client.
-            f = bootstrap.connect();
+            ChannelFuture f = bootstrap.connect();
             OutputResultHandlerCompletable outputResultHandler = new OutputResultHandlerCompletable();
             outputResultHandler.setResponse(future);
             // 获取返回
@@ -138,13 +145,11 @@ public class NettyHttpClient {
             // 发送http请求
             HttpRequest request = getRequestMethod(url, reqMsg, HttpMethod.valueOf(method.toUpperCase(Locale.ROOT)), headers);
             f.channel().writeAndFlush(request);
-            //f.channel().closeFuture().sync();//不建议使用阻塞方式
+            //连接在响应读完、对端关闭或异常时才关闭；finally立即close会截断响应
             f.channel().closeFuture().addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
-                    future.channel().close();
                     workerGroup.shutdownGracefully();
-                    close.set(true);
                     if (log.isInfoEnabled()) {
                         log.info("{} 链路关闭", future.channel().toString());
                     }
@@ -153,17 +158,16 @@ public class NettyHttpClient {
 
         } catch (Exception e) {
             future.completeExceptionally(e);
-        } finally {
-            if (!close.get()) {
-                if (f != null) {
-                    f.channel().close();
-                }
-                workerGroup.shutdownGracefully();
-            }
+            workerGroup.shutdownGracefully();
         }
 
         //response
-        return future.get();
+        try {
+            return future.get(requestTimeout, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            workerGroup.shutdownGracefully();
+            throw e;
+        }
     }
 
     private HttpResponseCallback<String> responseCallback;
@@ -174,37 +178,28 @@ public class NettyHttpClient {
     }
 
     public void sendRequestAsync(String url, Object reqMsg, String method, Map<String, String> headers) throws Exception {
-        AtomicBoolean close = new AtomicBoolean(false);
-        ChannelFuture f = null;
         try {
             // Start the client.
-            f = bootstrap.connect();
+            ChannelFuture f = bootstrap.connect();
             // 获取返回
             f.channel().pipeline().addLast(new OutputResultHandlerAsync(this.responseCallback));
             // 发送http请求
             HttpRequest request = getRequestMethod(url, reqMsg, HttpMethod.valueOf(method.toUpperCase(Locale.ROOT)), headers);
             f.channel().writeAndFlush(request);
-            //f.channel().closeFuture().sync();//不建议使用阻塞方式
+            //连接在响应读完、对端关闭或异常时才关闭；finally立即close会截断响应
             f.channel().closeFuture().addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
                     workerGroup.shutdownGracefully();
-                    close.set(true);
                     if (log.isInfoEnabled()) {
-                        log.info(future.channel().toString() + "链路关闭");
+                        log.info("{} 链路关闭", future.channel().toString());
                     }
                 }
             });
 
         } catch (Exception e) {
             this.responseCallback.onError(e);
-        } finally {
-            if (!close.get()) {
-                if (f != null) {
-                    f.channel().close();
-                }
-                workerGroup.shutdownGracefully();
-            }
+            workerGroup.shutdownGracefully();
         }
 
     }
@@ -230,7 +225,13 @@ public class NettyHttpClient {
                 //SslContext context = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build();
                 //SSLEngine sslEngine = context.newEngine(ch.alloc());
                 //生产模式
-                SSLEngine sslEngine = SslContextFactory.getClientContext(client, clienttruststore, keyStorePassword).createSSLEngine();
+                SSLEngine sslEngine;
+                if (client != null && clienttruststore != null && keyStorePassword != null) {
+                    sslEngine = SslContextFactory.getClientContext(client, clienttruststore, keyStorePassword).createSSLEngine();
+                } else {
+                    //https未提供自定义keystore时走JDK默认信任链；传null给SslContextFactory必NPE
+                    sslEngine = javax.net.ssl.SSLContext.getDefault().createSSLEngine();
+                }
                 sslEngine.setUseClientMode(true);
                 ch.pipeline().addFirst("ssl", new SslHandler(sslEngine));
             }
@@ -253,13 +254,13 @@ public class NettyHttpClient {
         InetSocketAddress inetAddress;
         //InetAddress.getByName(host).isReachable(30000);
         InetAddress address = InetAddress.getByName(host);
+        //优先取URL显式端口，缺省按协议取默认端口；否则IP分支createUnresolved(host,-1)抛port out of range，域名分支忽略显式端口
+        int port = uri.getPort() != -1 ? uri.getPort() : (this.ssl ? 443 : 80);
         if (host.equalsIgnoreCase(address.getHostAddress())) {
             // IP地址连接
-            int port = uri.getPort();
             inetAddress = InetSocketAddress.createUnresolved(host, port);
         } else {
-            // 域名连接，https默认端口是443，http默认端口是80
-            int port = this.ssl ? 443 : 80;
+            // 域名连接
             inetAddress = new InetSocketAddress(address, port);
         }
         return inetAddress;

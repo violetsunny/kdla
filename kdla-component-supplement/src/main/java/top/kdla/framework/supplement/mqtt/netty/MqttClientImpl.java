@@ -17,6 +17,8 @@ package top.kdla.framework.supplement.mqtt.netty;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.SetMultimap;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
@@ -45,14 +47,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 @SuppressWarnings({"WeakerAccess", "unused"})
 final class MqttClientImpl implements MqttClient {
 
-    private final Set<String> serverSubscriptions = new HashSet<>();
+    //以下集合被调用线程与netty event loop并发读写，HashSet/HashMultimap无同步会丢更新/CME，须用并发容器
+    private final Set<String> serverSubscriptions = ConcurrentHashMap.newKeySet();
     private final ConcurrentMap<Integer, MqttPendingUnsubscription> pendingServerUnsubscribes = new ConcurrentHashMap<>();
     private final ConcurrentMap<Integer, MqttIncomingQos2Publish> qos2PendingIncomingPublishes = new ConcurrentHashMap<>();
     private final ConcurrentMap<Integer, MqttPendingPublish> pendingPublishes = new ConcurrentHashMap<>();
-    private final HashMultimap<String, MqttSubscription> subscriptions = HashMultimap.create();
+    private final SetMultimap<String, MqttSubscription> subscriptions = Multimaps.synchronizedSetMultimap(HashMultimap.create());
     private final ConcurrentMap<Integer, MqttPendingSubscription> pendingSubscriptions = new ConcurrentHashMap<>();
-    private final Set<String> pendingSubscribeTopics = new HashSet<>();
-    private final HashMultimap<MqttHandler, MqttSubscription> handlerToSubscription = HashMultimap.create();
+    private final Set<String> pendingSubscribeTopics = ConcurrentHashMap.newKeySet();
+    private final SetMultimap<MqttHandler, MqttSubscription> handlerToSubscription = Multimaps.synchronizedSetMultimap(HashMultimap.create());
     private final AtomicInteger nextMessageId = new AtomicInteger(1);
 
     private final MqttClientConfig clientConfig;
@@ -60,6 +63,9 @@ final class MqttClientImpl implements MqttClient {
     private final MqttHandler defaultHandler;
 
     private EventLoopGroup eventLoop;
+
+    //标记eventLoop是否本类自建；外部setEventLoop注入的不由本类负责关闭
+    private boolean selfCreatedEventLoop = false;
 
     private volatile Channel channel;
 
@@ -123,6 +129,7 @@ final class MqttClientImpl implements MqttClient {
     private Future<MqttConnectResult> connect(String host, int port, boolean reconnect) {
         if (this.eventLoop == null) {
             this.eventLoop = new NioEventLoopGroup();
+            this.selfCreatedEventLoop = true;
         }
         this.host = host;
         this.port = port;
@@ -156,6 +163,8 @@ final class MqttClientImpl implements MqttClient {
                     subscriptions.clear();
                     pendingServerUnsubscribes.forEach((id, mqttPendingServerUnsubscribes) -> mqttPendingServerUnsubscribes.onChannelClosed());
                     pendingServerUnsubscribes.clear();
+                    //清空前释放存储时retain的payload引用，避免堆外内存泄漏
+                    qos2PendingIncomingPublishes.forEach((id, publish) -> publish.getIncomingPublish().release());
                     qos2PendingIncomingPublishes.clear();
                     pendingPublishes.forEach((id, mqttPendingPublish) -> mqttPendingPublish.onChannelClosed());
                     pendingPublishes.clear();
@@ -438,6 +447,10 @@ final class MqttClientImpl implements MqttClient {
             MqttMessage message = new MqttMessage(new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0));
             Objects.requireNonNull(this.sendAndFlushPacket(message)).addListener(future1 -> channel.close());
         }
+        //关闭自建eventLoop避免线程泄漏；shutdownGracefully会先处理已提交任务(含channel关闭)再终止
+        if (this.selfCreatedEventLoop && this.eventLoop != null) {
+            this.eventLoop.shutdownGracefully();
+        }
     }
 
     @Override
@@ -530,7 +543,7 @@ final class MqttClientImpl implements MqttClient {
         return pendingSubscriptions;
     }
 
-    HashMultimap<String, MqttSubscription> getSubscriptions() {
+    SetMultimap<String, MqttSubscription> getSubscriptions() {
         return subscriptions;
     }
 
@@ -538,7 +551,7 @@ final class MqttClientImpl implements MqttClient {
         return pendingSubscribeTopics;
     }
 
-    HashMultimap<MqttHandler, MqttSubscription> getHandlerToSubscription() {
+    SetMultimap<MqttHandler, MqttSubscription> getHandlerToSubscription() {
         return handlerToSubscription;
     }
 

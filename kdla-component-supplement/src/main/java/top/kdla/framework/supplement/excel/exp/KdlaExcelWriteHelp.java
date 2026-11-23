@@ -60,9 +60,14 @@ public class KdlaExcelWriteHelp<T extends BaseExcel> {
 
     public static <T> void writeSheet(File file, Map<Class<T>, Collection<T>> lists) {
         ExcelWriter writer = EasyExcel.write(file).build();
-        for (Map.Entry<Class<T>, Collection<T>> classMap : lists.entrySet()) {
-            WriteSheet sheet = EasyExcel.writerSheet("sheet1").head(classMap.getKey()).build();
-            writer.write(classMap.getValue(), sheet);
+        try {
+            for (Map.Entry<Class<T>, Collection<T>> classMap : lists.entrySet()) {
+                WriteSheet sheet = EasyExcel.writerSheet("sheet1").head(classMap.getKey()).build();
+                writer.write(classMap.getValue(), sheet);
+            }
+        } finally {
+            //finish()刷盘并释放底层资源，缺失则xlsx中央目录未写、文件损坏且句柄泄漏
+            writer.finish();
         }
     }
 

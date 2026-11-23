@@ -80,7 +80,9 @@ public class BaseHttpClient {
             log.info("BaseHttpClient.post URL:{} body:{}", url, JSON.toJSONString(body));
         }
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
-        if(headerMap.get(HttpHeaders.CONTENT_TYPE.toLowerCase()).equalsIgnoreCase(MediaType.APPLICATION_FORM_URLENCODED_VALUE)){
+        //headerMap为null或未含content-type键时，旧实现get(...)返回null再调equalsIgnoreCase会NPE；改为null安全判断
+        String contentType = headerMap == null ? null : headerMap.get(HttpHeaders.CONTENT_TYPE.toLowerCase());
+        if (MediaType.APPLICATION_FORM_URLENCODED_VALUE.equalsIgnoreCase(contentType)) {
             MultiValueMap<String, Object> req = new LinkedMultiValueMap<>();
             req.setAll(JSONObject.parseObject(JSON.toJSONString(body)));
             body = req;

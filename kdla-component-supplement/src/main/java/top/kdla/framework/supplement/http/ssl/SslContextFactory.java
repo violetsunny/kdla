@@ -11,6 +11,7 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
+import java.io.InputStream;
 import java.security.KeyStore;
 
 /**
@@ -31,23 +32,21 @@ public class SslContextFactory {
         SSLContext serverContext = null;
         try {
             KeyStore ks = KeyStore.getInstance("JKS");
-            //ts.load(SslContextFactory.class.getClassLoader().getResourceAsStream("ca\\certs"+active+"\\server.keystore"), keyStorePassword.toCharArray());
-            ks.load(FileUtil.getInputStream(server), keyStorePassword.toCharArray());
-            // Set up key manager factory to use our key store
+            try (InputStream ksIs = FileUtil.getInputStream(server)) {
+                ks.load(ksIs, keyStorePassword.toCharArray());
+            }
             KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
             kmf.init(ks, keyStorePassword.toCharArray());
-            // truststore
             KeyStore ts = KeyStore.getInstance("JKS");
-            //ts.load(SslContextFactory.class.getClassLoader().getResourceAsStream("ca\\certs"+active+"\\servertruststore.keystore"), keyStorePassword.toCharArray());
-            ts.load(FileUtil.getInputStream(servertruststore), keyStorePassword.toCharArray());
-            // set up trust manager factory to use our trust store
+            try (InputStream tsIs = FileUtil.getInputStream(servertruststore)) {
+                ts.load(tsIs, keyStorePassword.toCharArray());
+            }
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             tmf.init(ts);
-            // Initialize the SSLContext to work with our key managers.
             serverContext = SSLContext.getInstance(PROTOCOL);
             serverContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
         } catch (Exception e) {
-            throw new Error("Failed to initialize the server-side SSLContext", e);
+            throw new IllegalStateException("Failed to initialize the server-side SSLContext", e);
         }
         return serverContext;
     }
@@ -69,24 +68,22 @@ public class SslContextFactory {
     public static SSLContext getClientContext(File client, File clienttruststore, String keyStorePassword) {
         SSLContext clientContext = null;
         try {
-            // keystore
             KeyStore ks = KeyStore.getInstance("JKS");
-            //ks.load(SslContextFactory.class.getClassLoader().getResourceAsStream("ca\\certs"+active+"\\client.keystore"), keyStorePassword.toCharArray());
-            ks.load(FileUtil.getInputStream(client), keyStorePassword.toCharArray());
-            // Set up key manager factory to use our key store
+            try (InputStream ksIs = FileUtil.getInputStream(client)) {
+                ks.load(ksIs, keyStorePassword.toCharArray());
+            }
             KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
             kmf.init(ks, keyStorePassword.toCharArray());
-            // truststore
             KeyStore ts = KeyStore.getInstance("JKS");
-            //ts.load(SslContextFactory.class.getClassLoader().getResourceAsStream("ca\\certs"+active+"\\clienttruststore.keystore"), keyStorePassword.toCharArray());
-            ts.load(FileUtil.getInputStream(clienttruststore), keyStorePassword.toCharArray());
-            // set up trust manager factory to use our trust store
+            try (InputStream tsIs = FileUtil.getInputStream(clienttruststore)) {
+                ts.load(tsIs, keyStorePassword.toCharArray());
+            }
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             tmf.init(ts);
             clientContext = SSLContext.getInstance(PROTOCOL);
             clientContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
         } catch (Exception e) {
-            throw new Error("Failed to initialize the client-side SSLContext", e);
+            throw new IllegalStateException("Failed to initialize the client-side SSLContext", e);
         }
         return clientContext;
     }
