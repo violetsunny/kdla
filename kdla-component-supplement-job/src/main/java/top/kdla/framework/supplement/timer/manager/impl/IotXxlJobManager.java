@@ -13,7 +13,7 @@ import top.kdla.framework.supplement.timer.config.XxlJobConfig;
 import top.kdla.framework.supplement.timer.manager.TimeJobManagerService;
 import top.kdla.framework.supplement.timer.manager.model.XxlJobInfo;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;

@@ -23,7 +23,7 @@ import top.kdla.framework.supplement.timer.handler.IotXxlJobHandler;
 import top.kdla.framework.supplement.timer.manager.TimeJobManagerService;
 import top.kdla.framework.supplement.timer.manager.model.XxlJobInfo;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
