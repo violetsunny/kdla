@@ -136,7 +136,8 @@ public class FileChunkTransmitHelp {
             }
 
         } catch (IOException e) {
-            log.error("FileChunkTransmitHelp splitDetail IOException", e);
+            // 失败显性化：切分失败必须上抛，禁止只记日志静默吞掉
+            throw new RuntimeException("FileChunkTransmitHelp splitDetail IOException", e);
         }
     }
 
@@ -180,8 +181,8 @@ public class FileChunkTransmitHelp {
 
             // 将向量集合中的输入流合并成一个 合并流 SequenceInputStream
             sis = new SequenceInputStream(vis.elements());
-            // 声明缓冲输出流
-            bos = new BufferedOutputStream(new FileOutputStream(destPath, true));
+            // 声明缓冲输出流（append=false：覆盖写，避免目标文件已存在时旧内容污染合并结果）
+            bos = new BufferedOutputStream(new FileOutputStream(destPath, false));
 
             //拷贝
             //3、操作 (分段读取)
@@ -195,17 +196,34 @@ public class FileChunkTransmitHelp {
             //是否需要删除原路径文件
             //delFileBySrcPath(srcPaths);
         } catch (IOException e) {
-            log.error("FileChunkTransmitHelp merge IOException", e);
+            // 失败显性化：合并失败必须上抛，禁止只记日志静默吞掉
+            throw new RuntimeException("FileChunkTransmitHelp merge IOException", e);
         } finally {
-            try {
-                if (bos != null) {
-                    bos.close();
+            closeQuietly(bos);
+            if (sis != null) {
+                // SequenceInputStream.close() 会级联关闭其持有的全部子输入流
+                closeQuietly(sis);
+            } else {
+                // sis 未建立（打开子文件流中途异常）时，逐个关闭循环中已打开的流，避免句柄泄漏
+                for (InputStream in : vis) {
+                    closeQuietly(in);
                 }
-                if (sis != null) {
-                    sis.close();
-                }
-            } catch (IOException e) {
-                log.error("FileChunkTransmitHelp merge IOException", e);
+            }
+        }
+    }
+
+    /**
+     * 静默关闭流：关闭失败只记 warn，不掩盖主流程异常
+     */
+    private static void closeQuietly(Closeable closeable) {
+        if (closeable == null) {
+            return;
+        }
+        try {
+            closeable.close();
+        } catch (IOException e) {
+            if (log.isWarnEnabled()) {
+                log.warn("FileChunkTransmitHelp close stream IOException", e);
             }
         }
     }
@@ -219,16 +237,21 @@ public class FileChunkTransmitHelp {
             // 将每一个切分后的子文件使用输入流
             long beginPos = 0;
             for (String path : srcPaths) {
-                FileChannel readChannel = new RandomAccessFile(path, "r").getChannel();
-                long actualSize = readChannel.size();
-                MappedByteBuffer readBuffer = readChannel.map(FileChannel.MapMode.READ_ONLY, 0, actualSize);
-                MappedByteBuffer writeBuffer = writeChannel.map(FileChannel.MapMode.READ_WRITE, beginPos, actualSize);
-                writeBuffer.put(readBuffer);
-                //新的起点
-                beginPos += actualSize;
+                try (
+                        RandomAccessFile readRaf = new RandomAccessFile(path, "r");
+                        FileChannel readChannel = readRaf.getChannel()
+                ) {
+                    long actualSize = readChannel.size();
+                    MappedByteBuffer readBuffer = readChannel.map(FileChannel.MapMode.READ_ONLY, 0, actualSize);
+                    MappedByteBuffer writeBuffer = writeChannel.map(FileChannel.MapMode.READ_WRITE, beginPos, actualSize);
+                    writeBuffer.put(readBuffer);
+                    //新的起点
+                    beginPos += actualSize;
+                }
             }
         } catch (IOException e) {
-            log.error("FileChunkTransmitHelp merge IOException", e);
+            // 失败显性化：合并失败必须上抛，禁止只记日志静默吞掉
+            throw new RuntimeException("FileChunkTransmitHelp merge IOException", e);
         }
     }
 

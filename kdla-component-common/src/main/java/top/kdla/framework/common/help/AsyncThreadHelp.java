@@ -37,14 +37,29 @@ public class AsyncThreadHelp {
         }
     };
 
-    private static ExecutorService executorService;
-    private static SimpleTimeLimiter simpleTimeLimiter;
+    // volatile：initExecutorService 可在运行期被任意线程调用重建，保证其他线程立即可见新池引用
+    private static volatile ExecutorService executorService;
+    private static volatile SimpleTimeLimiter simpleTimeLimiter;
 
     static {
         initExecutorService(1, 100);
     }
 
-    public static void initExecutorService(int core, int max) {
+    /**
+     * 重新初始化全局线程池。
+     * <p>
+     * 注意：旧线程池仅调用 {@code shutdown()}（不等待终止），已提交的任务会继续在旧池中执行完毕，
+     * 新提交的任务进入新池。若语义要求"重建即接管"，调用方需自行处理旧池的存量任务。
+     * <p>
+     * synchronized：防止并发重建时两个线程同时 shutdown/赋值，导致池引用交错丢失。
+     *
+     * @param core 核心线程数
+     * @param max  最大线程数
+     */
+    public static synchronized void initExecutorService(int core, int max) {
+        if (executorService != null && !executorService.isShutdown()) {
+            executorService.shutdown();
+        }
         executorService = new ExecutorBuilder()
                 .setCorePoolSize(core)
                 .setMaxPoolSize(max)
@@ -53,7 +68,8 @@ public class AsyncThreadHelp {
                 .setWorkQueue(new SynchronousQueue<Runnable>())
                 .setHandler(new ThreadPoolExecutor.CallerRunsPolicy())
                 .setThreadFactory(THREAD_FACTORY)
-                .buildFinalizable();
+                // buildFinalizable 覆写 finalize（JEP421 废弃），改 build；旧池由上方显式 shutdown，线程为 daemon 不阻塞 JVM 退出
+                .build();
         simpleTimeLimiter = SimpleTimeLimiter.create(executorService);
     }
 
@@ -87,6 +103,7 @@ public class AsyncThreadHelp {
             timeUnit.sleep(timeout.longValue());
             return true;
         } catch (InterruptedException var3) {
+            Thread.currentThread().interrupt();
             return false;
         }
     }
@@ -100,6 +117,7 @@ public class AsyncThreadHelp {
             try {
                 Thread.sleep(millis);
             } catch (InterruptedException var3) {
+                Thread.currentThread().interrupt();
                 return false;
             }
         }
@@ -112,6 +130,8 @@ public class AsyncThreadHelp {
         private final List<CompletableFuture> list;
         private final Map<String, Long> cost;
         private final String taskName;
+        // 标记是否已调用 allExecuted() 完成总耗时结算（endRecord）
+        private boolean finished;
 
         public CompletableFutureBridge() {
             this("CompletableFutureExecute");
@@ -198,6 +218,7 @@ public class AsyncThreadHelp {
         public CompletableFutureBridge allExecuted() {
             CompletableFuture.allOf(ArrayUtil.toArray(list, CompletableFuture.class)).join();
             endRecord(this.taskName);
+            this.finished = true;
             return this;
         }
 
@@ -213,7 +234,17 @@ public class AsyncThreadHelp {
         public void prettyPrint() {
             StringBuilder sb = new StringBuilder();
             sb.append('\n');
-            long totalCost = cost.remove(taskName);
+            // 判空防护：重复调用 prettyPrint 时 taskName 已被 remove，直接拆箱会 NPE
+            Long removed = cost.remove(taskName);
+            long totalCost;
+            if (removed == null) {
+                totalCost = 0L;
+            } else if (!finished) {
+                // 未调用 allExecuted() 结算时，map 中存的仍是开始时间戳，换算为截至当前的耗时
+                totalCost = System.currentTimeMillis() - removed;
+            } else {
+                totalCost = removed;
+            }
             sb.append("StopWatch '").append(taskName).append("': running time = ").append(totalCost).append(" ms");
             sb.append('\n');
             if (cost.size() <= 1) {
@@ -228,7 +259,8 @@ public class AsyncThreadHelp {
                 pf.setGroupingUsed(false);
                 for (Map.Entry<String, Long> entry : cost.entrySet()) {
                     sb.append(entry.getValue()).append("\t\t");
-                    sb.append(pf.format(entry.getValue() / (double) totalCost)).append("\t\t");
+                    // totalCost 为 0 时占比按 0 处理，避免除零产生 NaN%
+                    sb.append(pf.format(totalCost == 0 ? 0D : entry.getValue() / (double) totalCost)).append("\t\t");
                     sb.append(entry.getKey()).append("\n");
                 }
             }

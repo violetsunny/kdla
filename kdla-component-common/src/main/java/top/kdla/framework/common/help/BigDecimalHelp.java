@@ -32,8 +32,9 @@ public class BigDecimalHelp {
      * @return
      */
     public static BigDecimal divide(BigDecimal bd1, BigDecimal bd2) {
-        if (BigDecimal.ZERO.equals(filter(bd2))) {
-            throw new ArithmeticException("除数不能为零");
+        // equals 会比较 scale（0.00 != ZERO），必须用 compareTo 判零；否则除数为 0.00 时漏判导致 ArithmeticException
+        if (filter(bd1).compareTo(BigDecimal.ZERO) == 0 || filter(bd2).compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO;
         }
         return filter(bd1).divide(filter(bd2), 4, BigDecimal.ROUND_HALF_UP);
     }
@@ -53,7 +54,7 @@ public class BigDecimalHelp {
     }
 
     public static BigDecimal filter(Integer val) {
-        return null == val ? new BigDecimal("0") : new BigDecimal(val);
+        return null == val ? new BigDecimal("0") : new BigDecimal(Integer.toString(val));
     }
 
     public static BigDecimal filter(BigInteger val) {
@@ -61,26 +62,25 @@ public class BigDecimalHelp {
     }
 
     public static BigDecimal filter(Double val) {
-        return null == val ? new BigDecimal("0") : new BigDecimal(val);
+        return null == val ? new BigDecimal("0") : new BigDecimal(Double.toString(val));
     }
 
     public static BigDecimal filter(Float val) {
-        return null == val ? new BigDecimal("0") : new BigDecimal(val);
+        return null == val ? new BigDecimal("0") : new BigDecimal(Float.toString(val));
     }
 
     public static BigDecimal filter(Long val) {
-        return null == val ? new BigDecimal("0") : new BigDecimal(val);
+        return null == val ? new BigDecimal("0") : BigDecimal.valueOf(val);
     }
 
     /**
      * toString() 科学计数法 1E+3
      * toEngineeringString() 工程计数法 1E3
      * toPlainString() 返回有效数字 1000
-     *
      * @param val
      * @return
      */
-    public static String toString(BigDecimal val) {
+    public static String toString(BigDecimal val){
         return val.toPlainString();
     }
 
@@ -91,7 +91,7 @@ public class BigDecimalHelp {
      * @param scale 指定后几位
      * @return
      */
-    public static BigDecimal filterScale(BigDecimal val, int scale) {
+    public static BigDecimal filterScale(BigDecimal val,int scale) {
         return null == val ? new BigDecimal("0") : val.setScale(scale, BigDecimal.ROUND_HALF_UP);
     }
 

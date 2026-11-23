@@ -70,8 +70,8 @@ public class ThreadPoolHelp {
 
     //服务器的cpu核数
     private static final Integer CPUS = Runtime.getRuntime().availableProcessors();
-    //默认阻塞队列
-    private static final BlockingQueue<Runnable> DEFAULT_WORK_QUEUE = new LinkedBlockingQueue<>(2000);
+    //默认阻塞队列容量（每个默认池独立持有有界队列，避免多池共享同一队列导致任务串扰）
+    private static final int DEFAULT_WORK_QUEUE_CAPACITY = 1024;
     //默认直接抛异常
     private static final RejectedExecutionHandler DEFAULT_HANDLER = new ThreadPoolExecutor.AbortPolicy();
     //默认工厂
@@ -89,23 +89,15 @@ public class ThreadPoolHelp {
                           RejectedExecutionHandler handler,
                           String factoryName) {
 
-        if (corePoolSize == null || corePoolSize < 0) {
-            throw new IllegalArgumentException("corePoolSize 不能为 null 或负数");
+        // null 表示未指定，getExecutorService 回退默认值；仅对显式给出的非法值快速失败
+        if (corePoolSize != null && corePoolSize < 0) {
+            throw new IllegalArgumentException("corePoolSize 不能为负数");
         }
-        if (maximumPoolSize == null || maximumPoolSize < corePoolSize) {
-            throw new IllegalArgumentException("maximumPoolSize 不能为 null 且必须大于等于 corePoolSize");
+        if (corePoolSize != null && maximumPoolSize != null && maximumPoolSize < corePoolSize) {
+            throw new IllegalArgumentException("maximumPoolSize 必须大于等于 corePoolSize");
         }
-        if (keepAliveTime == null || keepAliveTime < 0) {
-            throw new IllegalArgumentException("keepAliveTime 不能为 null 或负数");
-        }
-        if (unit == null) {
-            throw new IllegalArgumentException("unit 不能为 null");
-        }
-        if (workQueue == null) {
-            throw new IllegalArgumentException("workQueue 不能为 null");
-        }
-        if (handler == null) {
-            throw new IllegalArgumentException("handler 不能为 null");
+        if (keepAliveTime != null && keepAliveTime < 0) {
+            throw new IllegalArgumentException("keepAliveTime 不能为负数");
         }
 
         this.corePoolSize = corePoolSize;
@@ -128,7 +120,8 @@ public class ThreadPoolHelp {
                 1,
                 0L,
                 TimeUnit.SECONDS,
-                new SynchronousQueue<Runnable>(),
+                // 单线程池配 LinkedBlockingQueue 排队（串行语义）；SynchronousQueue+AbortPolicy 第二任务即拒
+                new LinkedBlockingQueue<Runnable>(),
                 DEFAULT_FACTORY,
                 DEFAULT_HANDLER);
         return TtlExecutors.getTtlExecutorService(threadPool);
@@ -160,7 +153,7 @@ public class ThreadPoolHelp {
                 initMirrorIOMaxPoolSize(),
                 0L,
                 TimeUnit.SECONDS,
-                DEFAULT_WORK_QUEUE,
+                new LinkedBlockingQueue<Runnable>(DEFAULT_WORK_QUEUE_CAPACITY),
                 DEFAULT_FACTORY,
                 DEFAULT_HANDLER);
         return TtlExecutors.getTtlExecutorService(threadPool);
@@ -197,14 +190,15 @@ public class ThreadPoolHelp {
                                               BlockingQueue<Runnable> workQueue,
                                               RejectedExecutionHandler handler,
                                               String factoryName) {
+        // 拆箱防护：Builder/无参构造路径下字段可能为 null，未显式指定时回退到与 getDefaultExecutorService 一致的默认值
         ExecutorService threadPool = new ThreadPoolExecutor(
-                corePoolSize,
-                maximumPoolSize,
-                keepAliveTime,
-                unit,
-                workQueue,
-                new SimpleThreadFactory(factoryName),
-                handler);
+                corePoolSize == null ? CPUS + 1 : corePoolSize,
+                maximumPoolSize == null ? initMirrorIOMaxPoolSize() : maximumPoolSize,
+                keepAliveTime == null ? 0L : keepAliveTime,
+                unit == null ? TimeUnit.SECONDS : unit,
+                workQueue == null ? new LinkedBlockingQueue<Runnable>(DEFAULT_WORK_QUEUE_CAPACITY) : workQueue,
+                new SimpleThreadFactory(factoryName == null ? "kdlaThreadPool" : factoryName),
+                handler == null ? DEFAULT_HANDLER : handler);
         return TtlExecutors.getTtlExecutorService(threadPool);
     }
 

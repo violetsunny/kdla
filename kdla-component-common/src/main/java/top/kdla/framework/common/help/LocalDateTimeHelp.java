@@ -119,7 +119,8 @@ public class LocalDateTimeHelp {
         } else if (String.valueOf(time).length() == 13) {
             return Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDate();
         }
-        throw new IllegalArgumentException("不支持的时间戳格式: " + time);
+        // 非 10/13 位返回 null，保持下游判空分支兼容
+        return null;
     }
 
     /**
@@ -134,7 +135,8 @@ public class LocalDateTimeHelp {
         } else if (String.valueOf(time).length() == 13) {
             return Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDateTime();
         }
-        throw new IllegalArgumentException("不支持的时间戳格式: " + time);
+        // 非 10/13 位返回 null，保持下游判空分支兼容
+        return null;
     }
 
     /**
@@ -309,7 +311,8 @@ public class LocalDateTimeHelp {
      * @return
      */
     public static Boolean isMonthNew(LocalDate date, LocalDate now) {
-        return date.getMonthValue() == now.getMonthValue();
+        // 必须同时比较年份：仅比较月份会把 2024-01 和 2025-01 误判为同月
+        return YearMonth.from(date).equals(YearMonth.from(now));
     }
 
     /**

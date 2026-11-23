@@ -1,10 +1,7 @@
 package top.kdla.framework.common.help;
 
-import org.springframework.aop.framework.AdvisedSupport;
-import org.springframework.aop.framework.AopProxy;
+import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
-
-import java.lang.reflect.Field;
 
 /**
  * @author
@@ -30,34 +27,9 @@ public class AopTargetHelp {
             //不是代理对象
             return proxy;
         }
-        if (AopUtils.isJdkDynamicProxy(proxy)) {
-            return getJdkDynamicProxyTargetObject(proxy);
-        } else { //cglib
-            return getCglibProxyTargetObject(proxy);
-        }
-    }
-
-    private static Object getCglibProxyTargetObject(Object proxy) {
         try {
-            Field h = proxy.getClass().getDeclaredField("CGLIB$CALLBACK_0");
-            h.setAccessible(true);
-            Object dynamicAdvisedInterceptor = h.get(proxy);
-            Field advised = dynamicAdvisedInterceptor.getClass().getDeclaredField("advised");
-            advised.setAccessible(true);
-            return ((AdvisedSupport) advised.get(dynamicAdvisedInterceptor)).getTargetSource().getTarget();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static Object getJdkDynamicProxyTargetObject(Object proxy) {
-        try {
-            Field h = proxy.getClass().getSuperclass().getDeclaredField("h");
-            h.setAccessible(true);
-            AopProxy aopProxy = (AopProxy) h.get(proxy);
-            Field advised = aopProxy.getClass().getDeclaredField("advised");
-            advised.setAccessible(true);
-            return ((AdvisedSupport) advised.get(aopProxy)).getTargetSource().getTarget();
+            // Spring JDK/CGLIB 代理均实现 Advised，直接取目标；反射 Proxy.h 在 JDK17+ 抛 InaccessibleObjectException
+            return ((Advised) proxy).getTargetSource().getTarget();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

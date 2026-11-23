@@ -58,10 +58,14 @@ public class StopWatchWrapperAspect {
             ob = joinPoint.proceed();
         } finally {
             sw.stop();
-            //不同的级别打印日志不同
-            if (sw.elapsed(TimeUnit.MILLISECONDS) > errorTimeOut || sw.elapsed(TimeUnit.MILLISECONDS) > warnTimeOut) {
+            //不同的级别打印日志不同：分级判断，超 error 阈值文案标 error，仅超 warn 阈值文案标 warn
+            if (sw.elapsed(TimeUnit.MILLISECONDS) > errorTimeOut) {
                 if (log.isWarnEnabled()) {
                     log.warn("{} 接口超过{}ms 运行:{}", logTitle, errorTimeOut, sw.toString());
+                }
+            } else if (sw.elapsed(TimeUnit.MILLISECONDS) > warnTimeOut) {
+                if (log.isWarnEnabled()) {
+                    log.warn("{} 接口超过{}ms 运行:{}", logTitle, warnTimeOut, sw.toString());
                 }
             } else {
                 if (log.isInfoEnabled()) {

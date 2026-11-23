@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -72,12 +73,12 @@ public class MultiThreadInvokeHelp {
      * @throws Exception
      */
     public static <T> List<T> invokeGetS(List<Supplier<T>> suppliers, Executor executor, long timeout) throws Exception {
+        List<CompletableFuture<T>> completableFutures = suppliers.stream()
+                .map(supplier -> CompletableFuture.supplyAsync(supplier, executor)).collect(Collectors.toList());
+        awaitAll(completableFutures, timeout);
         List<T> results = new ArrayList<>();
-        // 转换
-        List<CompletableFuture<T>> completableFutures = executeS(suppliers, executor);
         for (CompletableFuture<T> completableFuture : completableFutures) {
-            // 等待获取结果,get会抛出检查异常
-            results.add(completableFuture.get(timeout, TimeUnit.SECONDS));
+            results.add(completableFuture.get());
         }
         return results;
     }
@@ -106,14 +107,26 @@ public class MultiThreadInvokeHelp {
      * @throws Exception
      */
     public static <T> List<T> invokeGetS(List<Supplier<T>> suppliers, long timeout) throws Exception {
+        List<CompletableFuture<T>> completableFutures = suppliers.stream()
+                .map(CompletableFuture::supplyAsync).collect(Collectors.toList());
+        awaitAll(completableFutures, timeout);
         List<T> results = new ArrayList<>();
-        // 转换
-        List<CompletableFuture<T>> completableFutures = executeS(suppliers);
         for (CompletableFuture<T> completableFuture : completableFutures) {
-            // 等待获取结果  get会抛出检查异常  join是运行时异常
-            results.add(completableFuture.get(timeout, TimeUnit.SECONDS));
+            results.add(completableFuture.get());
         }
         return results;
+    }
+
+    /**
+     * timeout 为全部任务的总等待预算（秒）；逐个 get(timeout) 会放大为 N×timeout 且超时不取消剩余任务
+     */
+    private static <T> void awaitAll(List<CompletableFuture<T>> futures, long timeout) throws Exception {
+        try {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(timeout, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            futures.forEach(f -> f.cancel(true));
+            throw e;
+        }
     }
 
     /**

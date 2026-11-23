@@ -86,7 +86,7 @@ public class JacksonUtil {
             if (log.isWarnEnabled()) {
                 log.warn("json to bean exception", ioe);
             }
-            throw new RuntimeException(errMsg);
+            throw new RuntimeException(errMsg, ioe);
         }
     }
 
@@ -98,7 +98,7 @@ public class JacksonUtil {
             if (log.isWarnEnabled()) {
                 log.warn("json to bean exception", ioe);
             }
-            throw new RuntimeException(errMsg);
+            throw new RuntimeException(errMsg, ioe);
         }
     }
 

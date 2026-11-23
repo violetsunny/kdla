@@ -2,6 +2,7 @@ package top.kdla.framework.common.utils;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -25,7 +26,7 @@ public class Md5Util {
             // 拿到一个MD5转换器（如果想要SHA1参数换成”SHA1”）
             MessageDigest messageDigest = MessageDigest.getInstance("MD5");
             // 输入的字符串转换成字节数组
-            byte[] inputByteArray = input.getBytes();
+            byte[] inputByteArray = input.getBytes(StandardCharsets.UTF_8);
             // inputByteArray是输入字符串转换得到的字节数组
             messageDigest.update(inputByteArray);
             // 转换并返回结果，也是字节数组，包含16个元素

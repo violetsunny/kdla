@@ -12,16 +12,14 @@ public class ObjectUtil {
 
     public static byte[] ObjectToByte(Object obj) {
         byte[] bytes = null;
-        try {
+        // try-with-resources 确保流关闭；toByteArray 前必须 flush，否则 ObjectOutputStream 块缓冲区尾部字节可能丢失
+        try (ByteArrayOutputStream bo = new ByteArrayOutputStream();
+             ObjectOutputStream oo = new ObjectOutputStream(bo)) {
             // object to bytearray
-            ByteArrayOutputStream bo = new ByteArrayOutputStream();
-            ObjectOutputStream oo = new ObjectOutputStream(bo);
             oo.writeObject(obj);
+            oo.flush();
 
             bytes = bo.toByteArray();
-
-            bo.close();
-            oo.close();
         } catch (Exception e) {
             log.error("ObjectUtil ObjectToByte Exception", e);
         }

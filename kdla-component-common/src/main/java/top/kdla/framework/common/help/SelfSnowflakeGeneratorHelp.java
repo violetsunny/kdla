@@ -70,12 +70,7 @@ public class SelfSnowflakeGeneratorHelp {
      * @return 自增序列号
      */
     private static int getAutoIncreaseNumber() {
-        if (AUTO_INCREASE_NUMBER.get() >= MAX_AUTO_NUMBER) {
-            AUTO_INCREASE_NUMBER.set(MIN_AUTO_NUMBER);
-            return AUTO_INCREASE_NUMBER.get();
-        } else {
-            return AUTO_INCREASE_NUMBER.getAndIncrement();
-        }
+        return AUTO_INCREASE_NUMBER.updateAndGet(n -> n >= MAX_AUTO_NUMBER ? MIN_AUTO_NUMBER : n + 1);
     }
 
     /**

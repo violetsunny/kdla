@@ -3,6 +3,7 @@ package top.kdla.framework.common.utils;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -29,7 +30,7 @@ public class GzipUtil {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         GZIPOutputStream gunZip = new GZIPOutputStream(out);
         try {
-            gunZip.write(str.getBytes());
+            gunZip.write(str.getBytes(StandardCharsets.UTF_8));
         } finally {
             gunZip.close();
             out.close();
@@ -66,7 +67,7 @@ public class GzipUtil {
         bis.close();
         bos.flush();
         bos.close();
-        return bos.toString();
+        return bos.toString(StandardCharsets.UTF_8);
     }
 
 }

@@ -59,27 +59,46 @@ public class Sm2Util {
     }
 
     /**
+     * 生成国密公私钥对（真随机）。
+     * <p>生产环境优先使用本方法；私钥应经密钥管理设施存储与分发。
+     *
+     * @return ：返回公公私密钥(base64)，[0] 公钥、[1] 私钥
+     * @throws Exception
+     */
+    public static String[] generateSecureKeyPair() throws Exception {
+        ECGenParameterSpec sm2Spec = new ECGenParameterSpec(STD_NAME);
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(ALGORITHM, BouncyCastleProvider.PROVIDER_NAME);
+        keyPairGenerator.initialize(sm2Spec);
+        return formatKeyPair(keyPairGenerator.generateKeyPair());
+    }
+
+    /**
      * 生成国密公私钥对
      *
      * @param keySrc ：生成公私密钥的随机种子，可以任意随机。
      * @return ：返回公公私密钥(base64)，[0] 公钥、[1] 私钥
      * @throws Exception
+     * @deprecated 低熵种子播种SecureRandom，同keySrc必派生同私钥，keySrc可猜测即密钥体系全破。
+     *             仅为兼容既有数据保留，新场景使用 {@link #generateSecureKeyPair()}
      */
+    @Deprecated
     public static String[] generateKeyPair(String keySrc) throws Exception {
         SecureRandom secureRandom = new SecureRandom(keySrc.getBytes(CHARSET_UTF8));
         ECGenParameterSpec sm2Spec = new ECGenParameterSpec(STD_NAME);
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(ALGORITHM, new BouncyCastleProvider());
         keyPairGenerator.initialize(sm2Spec);
         keyPairGenerator.initialize(sm2Spec, secureRandom);
-        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        return formatKeyPair(keyPairGenerator.generateKeyPair());
+    }
+
+    private static String[] formatKeyPair(KeyPair keyPair) {
         PublicKey publicKey = keyPair.getPublic();
         PrivateKey privateKey = keyPair.getPrivate();
         String publicKeyText = new String(Base64.getEncoder().encode(publicKey.getEncoded()));
         String privateKeyText = new String(Base64.getEncoder().encode(privateKey.getEncoded()));
         // String[0] 公钥
         // String[1] 私钥
-        String[] result = {publicKeyText, privateKeyText};
-        return result;
+        return new String[]{publicKeyText, privateKeyText};
     }
 
     /**
@@ -124,7 +143,8 @@ public class Sm2Util {
         ECPrivateKeyParameters localECPrivateKeyParameters = new ECPrivateKeyParameters(sm2PriK.getD(), localECDomainParameters);
         localSM2Engine.init(false, localECPrivateKeyParameters);
         byte[] arrayOfByte3 = localSM2Engine.processBlock(encodeData, 0, encodeData.length);
-        return new String(arrayOfByte3);
+        // 显式 UTF-8，与 encrypt 侧 getBytes(UTF_8) 对齐，避免平台默认字符集导致中文乱码
+        return new String(arrayOfByte3, StandardCharsets.UTF_8);
     }
 
     /**

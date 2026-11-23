@@ -44,9 +44,9 @@ public class DateHelp {
      */
     public final static String DATE_TIME_PATTERN_2 = "yyyy-MM-dd HH:mm:ss.SSS";
     /**
-     * 时间格式(yyyy-MM-ddTHH:mm:ss.SSS)
+     * 时间格式(yyyy-MM-dd'T'HH:mm:ss.SSS)，字面 T 必须加引号，否则 joda forPattern 抛 IllegalArgumentException
      */
-    public final static String DATE_TIME_PATTERN_3 = "yyyy-MM-ddTHH:mm:ss.SSS";
+    public final static String DATE_TIME_PATTERN_3 = "yyyy-MM-dd'T'HH:mm:ss.SSS";
     /**
      * 时间格式(yyyyMMddHHmmss)
      */
@@ -109,7 +109,21 @@ public class DateHelp {
             return null;
         }
         DateTimeFormatter fmt = DateTimeFormat.forPattern(pattern);
-        return fmt.parseLocalDateTime(strDate).toDate();
+        // 纯日期 pattern（不含时间字段）走 parseLocalDate，避免 parseLocalDateTime 因缺失时间字段抛异常
+        if (containsTimeField(pattern)) {
+            return fmt.parseLocalDateTime(strDate).toDate();
+        }
+        return fmt.parseLocalDate(strDate).toDate();
+    }
+
+    /**
+     * 判断 joda pattern 是否包含时间字段（时/分/秒/毫秒）
+     */
+    private static boolean containsTimeField(String pattern) {
+        return pattern.indexOf('H') >= 0 || pattern.indexOf('h') >= 0
+                || pattern.indexOf('k') >= 0 || pattern.indexOf('K') >= 0
+                || pattern.indexOf('m') >= 0 || pattern.indexOf('s') >= 0
+                || pattern.indexOf('S') >= 0;
     }
 
     /**
