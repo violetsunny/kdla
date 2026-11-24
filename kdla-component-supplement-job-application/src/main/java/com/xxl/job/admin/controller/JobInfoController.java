@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -117,42 +118,42 @@ public class JobInfoController {
 		return xxlJobService.pageList(start, length, jobGroup, triggerStatus, jobDesc, executorHandler, author);
 	}
 	
-	@RequestMapping("/add")
+	@RequestMapping(value = "/add", method = RequestMethod.POST)
 	@ResponseBody
 	public ReturnT<String> add(HttpServletRequest request, XxlJobInfo jobInfo) {
 		validPermission(request, jobInfo.getJobGroup());
 		return xxlJobService.add(jobInfo);
 	}
 	
-	@RequestMapping("/update")
+	@RequestMapping(value = "/update", method = RequestMethod.POST)
 	@ResponseBody
 	public ReturnT<String> update(HttpServletRequest request, XxlJobInfo jobInfo) {
 		validPermission(request, jobInfo.getJobGroup());
 		return xxlJobService.update(jobInfo);
 	}
 	
-	@RequestMapping("/remove")
+	@RequestMapping(value = "/remove", method = RequestMethod.POST)
 	@ResponseBody
 	public ReturnT<String> remove(HttpServletRequest request, int id) {
 		validJobIdPermission(request, id);
 		return xxlJobService.remove(id);
 	}
 	
-	@RequestMapping("/stop")
+	@RequestMapping(value = "/stop", method = RequestMethod.POST)
 	@ResponseBody
 	public ReturnT<String> pause(HttpServletRequest request, int id) {
 		validJobIdPermission(request, id);
 		return xxlJobService.stop(id);
 	}
 	
-	@RequestMapping("/start")
+	@RequestMapping(value = "/start", method = RequestMethod.POST)
 	@ResponseBody
 	public ReturnT<String> start(HttpServletRequest request, int id) {
 		validJobIdPermission(request, id);
 		return xxlJobService.start(id);
 	}
 	
-	@RequestMapping("/trigger")
+	@RequestMapping(value = "/trigger", method = RequestMethod.POST)
 	@ResponseBody
 	public ReturnT<String> triggerJob(HttpServletRequest request, int id, String executorParam, String addressList) {
 		validJobIdPermission(request, id);

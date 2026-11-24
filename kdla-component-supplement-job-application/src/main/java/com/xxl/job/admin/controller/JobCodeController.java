@@ -10,6 +10,7 @@ import com.xxl.job.core.glue.GlueTypeEnum;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import jakarta.annotation.Resource;
@@ -53,7 +54,7 @@ public class JobCodeController {
 		return "jobcode/jobcode.index";
 	}
 	
-	@RequestMapping("/save")
+	@RequestMapping(value = "/save", method = RequestMethod.POST)
 	@ResponseBody
 	public ReturnT<String> save(HttpServletRequest request, Model model, int id, String glueSource, String glueRemark) {
 		// valid

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -71,7 +72,7 @@ public class UserController {
         return maps;
     }
 
-    @RequestMapping("/add")
+    @RequestMapping(value = "/add", method = RequestMethod.POST)
     @ResponseBody
     @PermissionLimit(adminuser = true)
     public ReturnT<String> add(XxlJobUser xxlJobUser) {
@@ -106,7 +107,7 @@ public class UserController {
         return ReturnT.SUCCESS;
     }
 
-    @RequestMapping("/update")
+    @RequestMapping(value = "/update", method = RequestMethod.POST)
     @ResponseBody
     @PermissionLimit(adminuser = true)
     public ReturnT<String> update(HttpServletRequest request, XxlJobUser xxlJobUser) {
@@ -134,7 +135,7 @@ public class UserController {
         return ReturnT.SUCCESS;
     }
 
-    @RequestMapping("/remove")
+    @RequestMapping(value = "/remove", method = RequestMethod.POST)
     @ResponseBody
     @PermissionLimit(adminuser = true)
     public ReturnT<String> remove(HttpServletRequest request, int id) {
@@ -149,7 +150,7 @@ public class UserController {
         return ReturnT.SUCCESS;
     }
 
-    @RequestMapping("/updatePwd")
+    @RequestMapping(value = "/updatePwd", method = RequestMethod.POST)
     @ResponseBody
     public ReturnT<String> updatePwd(HttpServletRequest request, String oldPassword, String password){
 

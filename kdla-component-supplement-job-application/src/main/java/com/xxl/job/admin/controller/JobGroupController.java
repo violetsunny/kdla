@@ -12,6 +12,7 @@ import com.xxl.job.core.enums.RegistryConfig;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -60,7 +61,7 @@ public class JobGroupController {
 		return maps;
 	}
 
-	@RequestMapping("/save")
+	@RequestMapping(value = "/save", method = RequestMethod.POST)
 	@ResponseBody
 	@PermissionLimit(adminuser = true)
 	public ReturnT<String> save(XxlJobGroup xxlJobGroup){
@@ -104,7 +105,7 @@ public class JobGroupController {
 		return (ret>0)?ReturnT.SUCCESS:ReturnT.FAIL;
 	}
 
-	@RequestMapping("/update")
+	@RequestMapping(value = "/update", method = RequestMethod.POST)
 	@ResponseBody
 	@PermissionLimit(adminuser = true)
 	public ReturnT<String> update(XxlJobGroup xxlJobGroup){
@@ -173,7 +174,7 @@ public class JobGroupController {
 		return appAddressMap.get(appnameParam);
 	}
 
-	@RequestMapping("/remove")
+	@RequestMapping(value = "/remove", method = RequestMethod.POST)
 	@ResponseBody
 	@PermissionLimit(adminuser = true)
 	public ReturnT<String> remove(int id){
