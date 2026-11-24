@@ -76,13 +76,13 @@ class NettyHttpClientTimeoutAndSslTest {
     }
 
     @Test
-    void sslInitializer_withoutKeystore_installsSslHandler() throws Exception {
+    void sslInitializer_withoutKeystore_installsSslHandlerWithHostnameVerification() throws Exception {
         Class<?> initializerClass = Class.forName(
                 "top.kdla.framework.supplement.netty.NettyHttpClient$HttpClientInitializer");
         Constructor<?> constructor = initializerClass.getDeclaredConstructor(
-                boolean.class, File.class, File.class, String.class);
+                boolean.class, File.class, File.class, String.class, String.class, int.class);
         constructor.setAccessible(true);
-        Object initializer = constructor.newInstance(true, null, null, null);
+        Object initializer = constructor.newInstance(true, null, null, null, "example.com", 443);
         Method initChannel = initializerClass.getDeclaredMethod("initChannel", SocketChannel.class);
         initChannel.setAccessible(true);
         NioEventLoopGroup group = new NioEventLoopGroup(1);
@@ -90,10 +90,33 @@ class NettyHttpClientTimeoutAndSslTest {
         try {
             group.register(channel).sync();
             initChannel.invoke(initializer, channel);
-            assertInstanceOf(SslHandler.class, channel.pipeline().get("ssl"));
+            SslHandler handler = (SslHandler) channel.pipeline().get("ssl");
+            assertInstanceOf(SslHandler.class, handler);
+            //安全审计D-04：JDK SSLEngine默认不做域名校验，须显式开启HTTPS端点识别
+            assertEquals("HTTPS", handler.engine().getSSLParameters().getEndpointIdentificationAlgorithm(),
+                    "须开启HTTPS端点识别防证书域名不匹配MITM");
         } finally {
             channel.close().sync();
             group.shutdownGracefully();
+        }
+    }
+
+    @Test
+    void constructor_capturesPeerHostPortForTls() throws Exception {
+        NettyHttpClient client = new NettyHttpClient("https://127.0.0.1:8443", false);
+        try {
+            Field bootstrapField = NettyHttpClient.class.getDeclaredField("bootstrap");
+            bootstrapField.setAccessible(true);
+            Bootstrap bootstrap = (Bootstrap) bootstrapField.get(client);
+            Object initializer = bootstrap.config().handler();
+            Field hostField = initializer.getClass().getDeclaredField("peerHost");
+            hostField.setAccessible(true);
+            assertEquals("127.0.0.1", hostField.get(initializer));
+            Field portField = initializer.getClass().getDeclaredField("peerPort");
+            portField.setAccessible(true);
+            assertEquals(8443, portField.getInt(initializer));
+        } finally {
+            client.close();
         }
     }
 

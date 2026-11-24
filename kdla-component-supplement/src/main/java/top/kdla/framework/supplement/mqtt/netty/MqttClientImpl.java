@@ -26,6 +26,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.mqtt.*;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
@@ -34,6 +35,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import top.kdla.framework.supplement.mqtt.MqttHandler;
 
+import javax.net.ssl.SSLParameters;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -589,7 +591,12 @@ final class MqttClientImpl implements MqttClient {
         @Override
         protected void initChannel(SocketChannel ch) throws Exception {
             if (sslContext != null) {
-                ch.pipeline().addLast(sslContext.newHandler(ch.alloc(), host, port));
+                SslHandler sslHandler = sslContext.newHandler(ch.alloc(), host, port);
+                //netty SslContext默认不开域名校验，显式开启HTTPS端点识别防MITM窃取CONNECT凭据
+                SSLParameters sslParameters = sslHandler.engine().getSSLParameters();
+                sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+                sslHandler.engine().setSSLParameters(sslParameters);
+                ch.pipeline().addLast(sslHandler);
             }
 
             ch.pipeline().addLast("mqttDecoder", new MqttDecoder(clientConfig.getMaxBytesInMessage()));

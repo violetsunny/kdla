@@ -55,6 +55,7 @@ public class SslContextFactory {
         return toNettySslContext(getServerContext(server, servertruststore, keyStorePassword), false);
     }
 
+    //产物默认不含域名校验，消费方须对SslHandler.engine()设endpointIdentificationAlgorithm("HTTPS")
     public static SslContext toNettySslContext(SSLContext javaxSslContext, boolean isClient) {
         return new JdkSslContext(javaxSslContext, isClient, isClient ? ClientAuth.NONE : ClientAuth.REQUIRE);
     }

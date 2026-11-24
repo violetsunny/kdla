@@ -13,6 +13,7 @@ import io.vertx.mqtt.MqttClientOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -40,11 +41,15 @@ public class VertxMqttConfigure {
     @Value("${kdla.mqtt.clientId:kdla-clientId}")
     private String clientId;
 
-    @Value("${kdla.mqtt.username:-1}")
+    //默认空=不带凭据；旧"-1"哨兵会被当真实用户名密码发给broker
+    @Value("${kdla.mqtt.username:}")
     private String username;
 
-    @Value("${kdla.mqtt.password:-1}")
+    @Value("${kdla.mqtt.password:}")
     private String password;
+
+    @Value("${kdla.mqtt.ssl:false}")
+    private boolean ssl;
 
     @Value("${kdla.mqtt.host:localhost}")
     private String host;
@@ -80,17 +85,27 @@ public class VertxMqttConfigure {
     @ConditionalOnMissingBean(MqttClient.class)
     public MqttClient mqttClient(Vertx vertx) {
         clientId = clientId + new Random().nextInt(10000);
-        MqttClient mqttClient = MqttClient.create(vertx, new MqttClientOptions()
-                .setClientId(clientId)
-                .setUsername(username)
-                .setPassword(password)
-                .setAckTimeout(acktimeout)
-                .setAutoKeepAlive(true));
+        MqttClient mqttClient = MqttClient.create(vertx, buildClientOptions());
 
         //连接
         connect(vertx, mqttClient);
 
         return mqttClient;
+    }
+
+    MqttClientOptions buildClientOptions() {
+        MqttClientOptions options = new MqttClientOptions()
+                .setClientId(clientId)
+                .setAckTimeout(acktimeout)
+                .setAutoKeepAlive(true)
+                .setSsl(ssl);
+        if (StringUtils.isNotBlank(username) && !"-1".equals(username)) {
+            options.setUsername(username);
+        }
+        if (StringUtils.isNotBlank(password) && !"-1".equals(password)) {
+            options.setPassword(password);
+        }
+        return options;
     }
 
     private void retryConnect(Vertx vertx, MqttClient mqttClient) {

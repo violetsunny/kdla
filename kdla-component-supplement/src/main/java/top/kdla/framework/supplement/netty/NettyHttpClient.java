@@ -31,6 +31,7 @@ import top.kdla.framework.exception.BizException;
 import top.kdla.framework.supplement.http.ssl.SslContextFactory;
 
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -57,6 +58,9 @@ public class NettyHttpClient {
     private File client;
     private File clienttruststore;
     private String keyStorePassword;
+    //TLS端点识别须用URL的host/port构造SSLEngine，getInetAddress解析后回填
+    private String peerHost;
+    private int peerPort;
 
     private final EventLoopGroup workerGroup;
     private final Bootstrap bootstrap;
@@ -71,7 +75,7 @@ public class NettyHttpClient {
                 .channel(NioSocketChannel.class)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
                 .option(ChannelOption.SO_KEEPALIVE, keepAlive)
-                .handler(new HttpClientInitializer(this.ssl, this.client, this.clienttruststore, this.keyStorePassword));
+                .handler(new HttpClientInitializer(this.ssl, this.client, this.clienttruststore, this.keyStorePassword, this.peerHost, this.peerPort));
     }
 
     public void close() {
@@ -84,7 +88,7 @@ public class NettyHttpClient {
         this.clienttruststore = clienttruststore;
         this.keyStorePassword = keyStorePassword;
         //构造器按值捕获参数建initializer，事后setSsl须重建handler否则mTLS配置不生效
-        bootstrap.handler(new HttpClientInitializer(this.ssl, this.client, this.clienttruststore, this.keyStorePassword));
+        bootstrap.handler(new HttpClientInitializer(this.ssl, this.client, this.clienttruststore, this.keyStorePassword, this.peerHost, this.peerPort));
         return this;
     }
 
@@ -209,12 +213,16 @@ public class NettyHttpClient {
         private final File client;
         private final File clienttruststore;
         private final String keyStorePassword;
+        private final String peerHost;
+        private final int peerPort;
 
-        public HttpClientInitializer(boolean ssl, File client, File clienttruststore, String keyStorePassword) {
+        public HttpClientInitializer(boolean ssl, File client, File clienttruststore, String keyStorePassword, String peerHost, int peerPort) {
             this.ssl = ssl;
             this.client = client;
             this.clienttruststore = clienttruststore;
             this.keyStorePassword = keyStorePassword;
+            this.peerHost = peerHost;
+            this.peerPort = peerPort;
         }
 
         @Override
@@ -227,12 +235,16 @@ public class NettyHttpClient {
                 //生产模式
                 SSLEngine sslEngine;
                 if (client != null && clienttruststore != null && keyStorePassword != null) {
-                    sslEngine = SslContextFactory.getClientContext(client, clienttruststore, keyStorePassword).createSSLEngine();
+                    sslEngine = SslContextFactory.getClientContext(client, clienttruststore, keyStorePassword).createSSLEngine(peerHost, peerPort);
                 } else {
                     //https未提供自定义keystore时走JDK默认信任链；传null给SslContextFactory必NPE
-                    sslEngine = javax.net.ssl.SSLContext.getDefault().createSSLEngine();
+                    sslEngine = javax.net.ssl.SSLContext.getDefault().createSSLEngine(peerHost, peerPort);
                 }
                 sslEngine.setUseClientMode(true);
+                //JDK SSLEngine默认不做域名校验，显式开启HTTPS端点识别防证书域名不匹配MITM
+                SSLParameters sslParameters = sslEngine.getSSLParameters();
+                sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+                sslEngine.setSSLParameters(sslParameters);
                 ch.pipeline().addFirst("ssl", new SslHandler(sslEngine));
             }
             ch.pipeline().addLast(new HttpClientCodec());
@@ -256,6 +268,8 @@ public class NettyHttpClient {
         InetAddress address = InetAddress.getByName(host);
         //优先取URL显式端口，缺省按协议取默认端口；否则IP分支createUnresolved(host,-1)抛port out of range，域名分支忽略显式端口
         int port = uri.getPort() != -1 ? uri.getPort() : (this.ssl ? 443 : 80);
+        this.peerHost = host;
+        this.peerPort = port;
         if (host.equalsIgnoreCase(address.getHostAddress())) {
             // IP地址连接
             inetAddress = InetSocketAddress.createUnresolved(host, port);

@@ -155,6 +155,8 @@ public class NettyHttpServer {
                 //生产模式
                 SSLEngine sslEngine = SslContextFactory.getServerContext(server, servertruststore, keyStorePassword).createSSLEngine();
                 sslEngine.setUseClientMode(false);
+                //truststore语义即mTLS，不强制客户端证书则校验静默失效
+                sslEngine.setNeedClientAuth(true);
                 ch.pipeline().addFirst("ssl", new SslHandler(sslEngine));
             }
             ch.pipeline().addLast(new HttpServerCodec());//是HttpRequestDecoder和HttpResponseEncoder的封装
