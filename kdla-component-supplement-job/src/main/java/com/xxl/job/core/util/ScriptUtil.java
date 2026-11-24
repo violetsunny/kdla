@@ -101,11 +101,18 @@ public class ScriptUtil {
             errThread.start();
 
             // process-wait
-            int exitValue = process.waitFor();      // exit code: 0=success, 1=error
+            // ponytail: 超时上限仍由 executorTimeout 控制(0=不限)；此处只保证退出前销毁子进程
+            int exitValue;
+            try {
+                exitValue = process.waitFor();      // exit code: 0=success, 1=error
 
-            // log-thread join
-            inputThread.join();
-            errThread.join();
+                // log-thread join
+                inputThread.join();
+                errThread.join();
+            } finally {
+                //超时/中断只结束等待，子进程会变孤儿继续占用执行机；正常结束时进程已退出，此调用无副作用
+                process.destroyForcibly();
+            }
 
             return exitValue;
         } catch (Exception e) {
