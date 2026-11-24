@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.xxl.job.core.biz.model.ReturnT;
 
-import javax.net.ssl.*;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
@@ -12,8 +11,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 
 /**
  * @author xuxueli 2018-11-25 00:55:31
@@ -34,37 +31,6 @@ public class XxlJobRemotingUtil {
                 requested.getBytes(StandardCharsets.UTF_8));
     }
 
-    // trust-https start
-    private static void trustAllHosts(HttpsURLConnection connection) {
-        try {
-            SSLContext sc = SSLContext.getInstance("TLS");
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            SSLSocketFactory newFactory = sc.getSocketFactory();
-
-            connection.setSSLSocketFactory(newFactory);
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-        }
-        connection.setHostnameVerifier(new HostnameVerifier() {
-            @Override
-            public boolean verify(String hostname, SSLSession session) {
-                return true;
-            }
-        });
-    }
-    private static final TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-        @Override
-        public X509Certificate[] getAcceptedIssuers() {
-            return new X509Certificate[]{};
-        }
-        @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-        }
-        @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-        }
-    }};
-    // trust-https end
 
 
     /**
@@ -85,12 +51,7 @@ public class XxlJobRemotingUtil {
             URL realUrl = new URL(url);
             connection = (HttpURLConnection) realUrl.openConnection();
 
-            // trust-https
-            boolean useHttps = url.startsWith("https");
-            if (useHttps) {
-                HttpsURLConnection https = (HttpsURLConnection) connection;
-                trustAllHosts(https);
-            }
+            // https 走 JVM 默认信任库与主机名校验；自签证书须导入 javax.net.ssl.trustStore
 
             // connection setting
             connection.setRequestMethod("POST");
