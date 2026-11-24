@@ -22,7 +22,7 @@ import top.kdla.framework.dto.Response;
 import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.*;
 import top.kdla.framework.log.LogTraceHolder;
-import top.kdla.framework.log.sanitize.LogSanitizeUtil;
+import top.kdla.framework.common.utils.LogSanitizeUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

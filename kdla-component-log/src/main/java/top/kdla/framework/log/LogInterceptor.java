@@ -9,7 +9,7 @@ import top.kdla.framework.common.constants.CommonConstants;
 import top.kdla.framework.common.help.DateHelp;
 import top.kdla.framework.common.help.SelfSnowflakeGeneratorHelp;
 import top.kdla.framework.common.utils.JacksonUtil;
-import top.kdla.framework.log.sanitize.LogSanitizeUtil;
+import top.kdla.framework.common.utils.LogSanitizeUtil;
 import top.kdla.framework.log.webfilter.KdlaHttpServletRequestWrapper;
 
 import jakarta.servlet.http.HttpServletRequest;

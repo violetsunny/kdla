@@ -32,7 +32,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
 import top.kdla.framework.common.utils.JacksonUtil;
 import top.kdla.framework.common.help.KdlaStringHelp;
-import top.kdla.framework.log.sanitize.LogSanitizeUtil;
+import top.kdla.framework.common.utils.LogSanitizeUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

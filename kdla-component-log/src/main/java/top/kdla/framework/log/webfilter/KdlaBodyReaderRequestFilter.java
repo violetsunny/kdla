@@ -6,7 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import top.kdla.framework.common.help.KdlaStringHelp;
 import top.kdla.framework.common.help.SelfSnowflakeGeneratorHelp;
-import top.kdla.framework.log.sanitize.LogSanitizeUtil;
+import top.kdla.framework.common.utils.LogSanitizeUtil;
 
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebFilter;

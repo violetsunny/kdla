@@ -1,4 +1,4 @@
-package top.kdla.framework.log.sanitize;
+package top.kdla.framework.common.utils;
 
 import org.junit.jupiter.api.Test;
 
@@ -124,5 +124,37 @@ class LogSanitizeUtilTest {
             over.append('a');
         }
         assertFalse(LogSanitizeUtil.validTraceId(over.toString()), "超过64字符拒绝");
+    }
+
+    @Test
+    void maskUrl_dingdingAccessToken() {
+        // D-11：钉钉 webhook token 在 URL query 里，不得随日志明文落盘
+        assertEquals("https://oapi.dingtalk.com/robot/send?access_token=***",
+                LogSanitizeUtil.maskUrl("https://oapi.dingtalk.com/robot/send?access_token=abc123"));
+    }
+
+    @Test
+    void maskUrl_keepsNonSensitiveParamsAndOrder() {
+        assertEquals("https://api.example.com/v1?name=ok&password=***&page=2",
+                LogSanitizeUtil.maskUrl("https://api.example.com/v1?name=ok&password=p@ss&page=2"));
+    }
+
+    @Test
+    void maskUrl_caseInsensitiveAndRepeatedParams() {
+        assertEquals("https://a.com?X-Access-Token=***&token=***",
+                LogSanitizeUtil.maskUrl("https://a.com?X-Access-Token=t1&token=t2"));
+    }
+
+    @Test
+    void maskUrl_noQueryOrNull_unchanged() {
+        assertNull(LogSanitizeUtil.maskUrl(null));
+        assertEquals("https://a.com/path", LogSanitizeUtil.maskUrl("https://a.com/path"));
+        assertEquals("https://a.com/path?", LogSanitizeUtil.maskUrl("https://a.com/path?"));
+    }
+
+    @Test
+    void maskUrl_preservesFragmentAndValuelessParam() {
+        assertEquals("https://a.com?flag&token=***#sec",
+                LogSanitizeUtil.maskUrl("https://a.com?flag&token=t#sec"));
     }
 }

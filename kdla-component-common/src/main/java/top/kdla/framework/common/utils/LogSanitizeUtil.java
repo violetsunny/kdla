@@ -1,4 +1,4 @@
-package top.kdla.framework.log.sanitize;
+package top.kdla.framework.common.utils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -13,12 +13,13 @@ import java.util.regex.Pattern;
 /**
  * 日志脱敏与截断工具。
  * <p>
- * 内部用途：仅供 kdla-component-log 模块的拦截器/切面在打印请求体、Header、响应时调用，
- * 业务代码不应直接依赖本类（后续可能随日志组件调整而不另行通知）。
+ * 框架内部共享：供 log 模块拦截器/切面与 supplement 的 HTTP 客户端/服务端打印日志时调用，
+ * 业务代码不应直接依赖本类（后续可能随框架调整而不另行通知）。
  * <p>
  * 规则：
  * <ul>
  *     <li>Header/JSON 键名命中敏感名（精确黑名单 + token/secret/credential/apikey/session/csrf/idcard 变体匹配，忽略大小写）时值替换为 ***</li>
+ *     <li>URL query 中敏感参数名（如 access_token）的值替换为 ***，防 webhook 凭据随 URL 进日志</li>
  *     <li>日志体超过 2KB（2048 字符）截断，并追加 "...(truncated, total=原始长度)"</li>
  *     <li>外来 traceId 仅允许 [A-Za-z0-9-]{1,64}，防 CRLF 伪造日志行</li>
  * </ul>
@@ -65,6 +66,43 @@ public final class LogSanitizeUtil {
             return MASK;
         }
         return headerValue;
+    }
+
+    /**
+     * URL query 参数脱敏：敏感参数名（如 access_token）的值替换为 ***，其余参数与 fragment 原样保留。
+     * 无 query 时原样返回。
+     *
+     * @param url 原始 URL，可为 null
+     * @return 脱敏后的 URL
+     */
+    public static String maskUrl(String url) {
+        if (url == null) {
+            return null;
+        }
+        int queryStart = url.indexOf('?');
+        if (queryStart < 0 || queryStart == url.length() - 1) {
+            return url;
+        }
+        int fragStart = url.indexOf('#', queryStart);
+        String query = fragStart < 0 ? url.substring(queryStart + 1) : url.substring(queryStart + 1, fragStart);
+        StringBuilder masked = new StringBuilder(url.substring(0, queryStart + 1));
+        String[] pairs = query.split("&", -1);
+        for (int i = 0; i < pairs.length; i++) {
+            if (i > 0) {
+                masked.append('&');
+            }
+            String pair = pairs[i];
+            int eq = pair.indexOf('=');
+            if (eq > 0 && isSensitive(pair.substring(0, eq))) {
+                masked.append(pair, 0, eq + 1).append(MASK);
+            } else {
+                masked.append(pair);
+            }
+        }
+        if (fragStart >= 0) {
+            masked.append(url.substring(fragStart));
+        }
+        return masked.toString();
     }
 
     /**
