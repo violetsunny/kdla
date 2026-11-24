@@ -4,7 +4,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import top.kdla.framework.common.utils.JacksonUtil;
 import top.kdla.framework.domain.ApplicationContextHelp;
 import top.kdla.framework.supplement.fieldvaluefinder.annotation.FieldValueFind;
 
@@ -111,10 +110,12 @@ public class FieldValueFindHelp {
             field.set(sourceObject, result);
             field.setAccessible(false);
         } catch (RuntimeException e) {
-            log.error("findAndInjectValue failed,dto is:{},exception is:", JacksonUtil.toJson(dto), e);
+            log.error("findAndInjectValue failed,source:{},field:{},query:{}#{},exception is:",
+                    sourceObject.getClass().getName(), field.getName(), queryClass.getName(), queryMethodName, e);
             throw e;
         } catch (Exception e) {
-            log.error("findAndInjectValue failed,dto is:{},exception is:", JacksonUtil.toJson(dto), e);
+            log.error("findAndInjectValue failed,source:{},field:{},query:{}#{},exception is:",
+                    sourceObject.getClass().getName(), field.getName(), queryClass.getName(), queryMethodName, e);
             throw new RuntimeException("FieldValueFindHelper process failed");
         }
     }
@@ -173,10 +174,14 @@ public class FieldValueFindHelp {
                 dto.getField().setAccessible(false);
             }
         } catch (RuntimeException e) {
-            log.error("findAndInjectValue failed,dtoList is:{},exception is:", JacksonUtil.toJson(dtoList), e);
+            log.error("findAndInjectValue failed,batchSize:{},query:{}#{},exception is:",
+                    dtoList.size(), dtoList.get(0).getFieldValueFind().queryClass().getName(),
+                    dtoList.get(0).getFieldValueFind().queryMethod(), e);
             throw e;
         } catch (Exception e) {
-            log.error("findAndInjectValue failed,dtoList is:{},exception is:", JacksonUtil.toJson(dtoList), e);
+            log.error("findAndInjectValue failed,batchSize:{},query:{}#{},exception is:",
+                    dtoList.size(), dtoList.get(0).getFieldValueFind().queryClass().getName(),
+                    dtoList.get(0).getFieldValueFind().queryMethod(), e);
             throw new RuntimeException("FieldValueFindHelper process failed");
         }
     }

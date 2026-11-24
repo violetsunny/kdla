@@ -24,10 +24,15 @@ import java.util.function.Predicate;
 @Getter
 public abstract class KdlaExcelReadListener<T extends BaseExcel, E extends BaseExcel> extends AnalysisEventListener<T> {
 
+    private static final int DEFAULT_MAX_ROW = 1000_0;
     /**
      * 整体Excel的解析、格式校验是否成功
      */
     private boolean success = true;
+    /**
+     * 导入行数上限，防超大文件累积致 OOM
+     */
+    private int maxRow = DEFAULT_MAX_ROW;
     /**
      * 解析后的数据
      */
@@ -56,9 +61,23 @@ public abstract class KdlaExcelReadListener<T extends BaseExcel, E extends BaseE
         this.predicateRes = predicateRes;
     }
 
+    /**
+     * 设置导入行数限制
+     *
+     * @param maxRow 最大行数
+     * @return this
+     */
+    public KdlaExcelReadListener<T, E> importRowLimit(int maxRow) {
+        this.maxRow = maxRow;
+        return this;
+    }
+
     @Override
     public void invoke(T t, AnalysisContext analysisContext) {
         if (t != null) {
+            if (dataList.size() >= maxRow) {
+                throw new RuntimeException("导入数据量超过限制 " + maxRow);
+            }
             dataList.add(t);
             E e = checkData(t);
             if (e != null) {

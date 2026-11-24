@@ -34,7 +34,8 @@ public class ExcelImpValid {
 
             //是否包含必填校验注解
             boolean isExcelValid = field.isAnnotationPresent(ExcelNotNullValid.class);
-            if (isExcelValid && Objects.isNull(fieldValue)) {
+            if (isExcelValid && (Objects.isNull(fieldValue)
+                    || (fieldValue instanceof String && StringUtils.isBlank((String) fieldValue)))) {
                 errorMessages.add(field.getAnnotation(ExcelNotNullValid.class).message());
             }
 
@@ -43,8 +44,8 @@ public class ExcelImpValid {
             if (isExcelStrValid && fieldValue != null) {
                 String cellStr = fieldValue.toString();
                 int length = field.getAnnotation(ExcelStrLengthValid.class).length();
-                if (StringUtils.isNotBlank(cellStr) && cellStr.length() > length) {
-                    errorMessages.add(field.getAnnotation(ExcelNotNullValid.class).message());
+                if (cellStr.length() > length) {
+                    errorMessages.add(field.getAnnotation(ExcelStrLengthValid.class).message());
                 }
             }
 
@@ -53,7 +54,7 @@ public class ExcelImpValid {
             if (isExcelPatternValid && fieldValue != null) {
                 String cellStr = fieldValue.toString();
                 String regexp = field.getAnnotation(ExcelPatternValid.class).regexp();
-                if (StringUtils.isNotBlank(cellStr) && !cellStr.matches(regexp)) {
+                if (!cellStr.matches(regexp)) {
                     errorMessages.add(field.getAnnotation(ExcelPatternValid.class).message());
                 }
             }
