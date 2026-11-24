@@ -75,7 +75,9 @@ public class VertxHttpConfigure {
                 .setWebSocketClosingTimeout(socketTimeout)
                 .setConnectTimeout(connectTimeout)
                 .setIdleTimeout(idleTimeout)
-                .setMaxWaitQueueSize(maxWaitQueueSize));
+                .setMaxWaitQueueSize(maxWaitQueueSize)
+                //不跟随重定向：302指向内网可绕过首跳URL校验(SSRF)，3xx原样返回由调用方校验Location后自行发起
+                .setMaxRedirects(0));
     }
 
     @Bean
@@ -94,7 +96,9 @@ public class VertxHttpConfigure {
                 .setConnectTimeout(connectTimeout)
                 .setIdleTimeout(idleTimeout)
                 .setMaxWaitQueueSize(maxWaitQueueSize)
-                .setSslHandshakeTimeout(sslHandshakeTimeout));
+                .setSslHandshakeTimeout(sslHandshakeTimeout)
+                //不跟随重定向：302指向内网可绕过首跳URL校验(SSRF)，3xx原样返回由调用方校验Location后自行发起
+                .setMaxRedirects(0));
     }
 
     @Bean

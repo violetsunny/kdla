@@ -93,6 +93,8 @@ public class RestHttpConfigure {
         return HttpClientBuilder.create()
                 .setDefaultRequestConfig(requestConfig)
                 .setConnectionManager(connectionManager)
+                //不跟随重定向：302指向内网可绕过首跳URL校验(SSRF)，3xx原样返回由调用方校验Location后自行发起
+                .disableRedirectHandling()
                 .build();
     }
 
