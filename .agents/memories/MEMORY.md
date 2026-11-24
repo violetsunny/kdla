@@ -14,6 +14,7 @@
 - Groovy SecureASTCustomizer 不拦 AttributeExpression(.@)/MethodPointerExpression(.&)/MethodReferenceExpression(::)，沙箱须显式拒绝这三类。
 - Vertx WebClient 默认 maxRedirects=16、HttpClient5 默认跟随重定向，302 指向内网绕过首跳 SSRF 校验，须显式关闭。
 - 无状态HMAC会话下spring-security默认HttpSessionCsrfTokenRepository失效；CSRF token可用HMAC(会话token)派生+$.ajaxSetup单点注入，零依赖。
+- kdla 的 .scratch/ 与 .agents/ 实际已被 git 纳管（58 文件），AGENTS.md 称未纳管是错的；审计报告明文生产 DB 口令已在 HEAD。
 
 ## 技术约定
 
