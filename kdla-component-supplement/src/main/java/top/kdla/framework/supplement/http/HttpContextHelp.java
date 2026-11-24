@@ -94,9 +94,11 @@ public class HttpContextHelp {
      *
      * @param request
      * @param response
-     * @deprecated 反射任意 Origin 且 Allow-Credentials:true，等价于对任意站点开放带凭据跨域。
-     *             仅为兼容保留；生产请使用 {@code kdla.config.cors.enabled=true} 的
-     *             CustomCorsConfig 并配置 origin 白名单。
+     * @deprecated 反射任意 Origin 且 Allow-Credentials:true，等价于对任意站点开放带凭据跨域，仅为兼容保留。
+     *             注意：{@code kdla.config.cors.enabled=true} 的 CustomCorsConfig 同样硬编码
+     *             allowCredentials=true 与 allowedOriginPatterns=ALL，并无 origin 白名单配置项，
+     *             直接启用并不更安全。生产须自定义 CorsFilter Bean 显式配置 origin 白名单；
+     *             CustomCorsConfig 带 @ConditionalOnMissingBean(CorsFilter.class)，宿主自定义后即退让。
      */
     @Deprecated
     public static void buildCors(HttpServletRequest request, HttpServletResponse response) {
