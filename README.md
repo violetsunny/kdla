@@ -95,3 +95,22 @@ top.kdla.framework.common.aspect.watch.StopWatchAutoConfigure
 
 ### JwtUtil 强制验签（kdla-component-supplement-trdplatformcloud）
 `JwtUtil.getInfoFromToken` 由"仅解码不验签"改为强制 HS256 验签 + exp 过期校验，任何失败抛 BizException，不再返回空串。下游必须配置 `kdla.trd.jwt.sign-key`，未配置或验签失败时依赖该工具的 trd 接口立即不可用。密钥按 raw UTF-8 bytes 参与签名（非 base64 解码），此假设未对真实 BladeX token 实测，接入前须用真实 token 验证。
+
+### MyBatis-Plus 分页 jsqlparser 自管（kdla-component-dal / kdla-component-supplement-trdplatformcloud）
+2.x 升级到 `mybatis-plus-spring-boot3-starter` 3.5.12，并移除根 pom 对 jsqlparser 4.7 的强制 pin。MP 3.5.12 将 jsqlparser 拆为可选模块自管，下游使用分页（PaginationInnerInterceptor）须自行引入 `com.baomidou:mybatis-plus-jsqlparser`（版本与 MP 对齐），否则分页运行期报 jsqlparser 类缺失。
+
+### Redisson 3.20.1 → 3.52.0（kdla-component-supplement-cache）
+- 排除传递依赖 `redisson-spring-data-35`，改引 `redisson-spring-data-34`（对齐 Spring Data Redis 3.4 / Boot 3.4，修复下游 RedissonAutoConfiguration AbstractMethodError）。
+- 分布式锁工厂 `KRedissonLockFactory` 改为委托 `KRedissonConfigProperties` 统一构建，支持全部 5 种 `RedisClusterType`（SINGLE/REPLICATE/MASTER_SLAVE/CLUSTER/SENTINEL）；旧工厂仅 SINGLE/REPLICATE 可用，其余静默返回空 client 列表导致锁不可用。
+- **SENTINEL 模式新实现**：必须配置 `kdla.redisson.master-name`（Redis 主节点名），缺失即 fail-fast。
+- **MASTER_SLAVE 模式 address 约定**：逗号分隔地址首节点为 master，其余为 slave（旧实现把整串地址同时当 master 与 slave，属 bug，已修）。
+- `RedissonRedLock` 保留（3.x 仅 deprecated 未移除），RedLock 多数派 quorum 语义不变。
+
+### MpBaseDo 删除（kdla-component-dal）
+2.x 删除基类 `top.kdla.framework.infra.dal.mybatis.common.MpBaseDo`（带 `@TableLogic` 逻辑删除标志，仓库内 0 引用）。下游若曾继承该类须自行迁移：无需逻辑删除可改用同包 `BaseDo`，否则迁移到 MyBatis-Plus 原生基类或自定义基类。
+
+### 死依赖与 javax 三件套清理（多模块）
+移除 14 个未使用依赖，以及 common/supplement/dingding 与根 dependencyManagement/properties 中的 javax 三件套（javax.annotation / javax.validation / javax.servlet）。2.x 全面迁移 jakarta，下游若曾传递依赖这些 javax 库须自行显式引入或迁移到 jakarta。
+
+### snakeyaml compile 块移除（根 pom）
+移除根 pom 向所有模块强注的 snakeyaml 2.3 compile 依赖块，回归 provided 约定。下游如需 snakeyaml 须自行引入（Spring Boot 3.4 经 spring-boot-starter 传递 snakeyaml 2.x）。
