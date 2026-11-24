@@ -89,7 +89,8 @@ public class CatchLogAspect {
                 return;
             }
             String traceId = traceObj.getString(CommonConstants.LOG_TRACE_ID);
-            if (StringUtils.hasText(traceId)) {
+            // 外来traceId须过格式白名单，防CRLF伪造日志行
+            if (LogSanitizeUtil.validTraceId(traceId)) {
                 MDC.put(CommonConstants.LOG_TRACE_ID, traceId);
             } else {
                 // 自定义一个
@@ -127,7 +128,7 @@ public class CatchLogAspect {
         } finally {
             sw.stop();
             if (log.isInfoEnabled()) {
-                log.info("### {} Invoke Finished, requestParam: {}, response: {}, shortSummary:{}", clazzMethodInfo, LogSanitizeUtil.truncate(JSON.toJSONString(args)), LogSanitizeUtil.truncate(JSON.toJSONString(response)), sw.shortSummary());
+                log.info("### {} Invoke Finished, requestParam: {}, response: {}, shortSummary:{}", clazzMethodInfo, LogSanitizeUtil.sanitize(JSON.toJSONString(args)), LogSanitizeUtil.sanitize(JSON.toJSONString(response)), sw.shortSummary());
             }
             // 仅本层放入traceId时才负责清理，禁止内层清掉外层的traceId
             if (!LogTraceHolder.get() && tracePutByThisLayer) {

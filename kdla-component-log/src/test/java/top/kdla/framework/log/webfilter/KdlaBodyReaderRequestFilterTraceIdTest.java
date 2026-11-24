@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -121,6 +122,24 @@ class KdlaBodyReaderRequestFilterTraceIdTest {
         filter.doFilter(request, response, chain);
 
         assertEquals("upstream-trace-1", traceInChain.get(), "请求头携带的上游traceId必须透传");
+        assertNull(MDC.get(LOG_TRACE_ID), "出口必须清理traceId");
+    }
+
+    @Test
+    void doFilter_crlfHeaderTraceId_rejectedAndSelfGenerated() throws Exception {
+        // D-12 回归：含 CRLF 的外来 traceId 旧实现直接进 MDC 可伪造日志行，修复后必须自生成
+        HttpServletRequest request = postJsonRequest();
+        String malicious = "abc\r\n2026-11-24 INFO forged-log-line";
+        when(request.getHeader(LOG_TRACE_ID)).thenReturn(malicious);
+        HttpServletResponse response = mock(HttpServletResponse.class);
+        FilterChain chain = mock(FilterChain.class);
+        AtomicReference<String> traceInChain = captureTraceInChain(chain);
+
+        filter.doFilter(request, response, chain);
+
+        assertNotNull(traceInChain.get());
+        assertFalse(traceInChain.get().contains("\r"), "非法traceId不得透传进MDC");
+        assertFalse(traceInChain.get().contains("\n"), "非法traceId不得透传进MDC");
         assertNull(MDC.get(LOG_TRACE_ID), "出口必须清理traceId");
     }
 

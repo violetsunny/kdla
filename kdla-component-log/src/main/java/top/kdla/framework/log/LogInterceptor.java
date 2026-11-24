@@ -34,7 +34,7 @@ public class LogInterceptor implements AsyncHandlerInterceptor {
                     ? ((KdlaHttpServletRequestWrapper) request).getBody() : null;
             // 打印请求信息
             if (log.isInfoEnabled()) {
-                log.info("### uri：{}, requestParam: {}, requestBody:{} ", request.getRequestURI(), JacksonUtil.toJson(request.getParameterMap()), body == null ? "<body未缓存>" : LogSanitizeUtil.truncate(body));
+                log.info("### uri：{}, requestParam: {}, requestBody:{} ", request.getRequestURI(), LogSanitizeUtil.sanitize(JacksonUtil.toJson(request.getParameterMap())), body == null ? "<body未缓存>" : LogSanitizeUtil.sanitize(body));
             }
         } catch (Exception e) {
             if (log.isWarnEnabled()) {

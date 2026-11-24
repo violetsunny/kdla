@@ -62,4 +62,18 @@ class CatchLogAspectNonJsonArgTest {
         assertEquals("trace-from-arg", MDC.get(LOG_TRACE_ID),
                 "首参JSON携带traceId时必须原样提取，成功路径行为不得改变");
     }
+
+    @Test
+    void doBefore_jsonArgWithMaliciousTraceId_generatesOwn() {
+        // D-12 同类回归：首参JSON携带含CRLF的traceId，旧实现直接进MDC，修复后必须自生成
+        JoinPoint jp = mock(JoinPoint.class);
+        when(jp.getArgs()).thenReturn(new Object[]{"{\"" + LOG_TRACE_ID + "\":\"abc\\r\\nforged\"}"});
+
+        aspect.doBefore(jp);
+
+        String traceId = MDC.get(LOG_TRACE_ID);
+        assertNotNull(traceId);
+        assertFalse(traceId.contains("\r"), "非法traceId不得进MDC");
+        assertFalse(traceId.contains("\n"), "非法traceId不得进MDC");
+    }
 }

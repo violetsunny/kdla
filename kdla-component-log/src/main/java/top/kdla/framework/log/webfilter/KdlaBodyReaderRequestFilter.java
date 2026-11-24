@@ -6,6 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import top.kdla.framework.common.help.KdlaStringHelp;
 import top.kdla.framework.common.help.SelfSnowflakeGeneratorHelp;
+import top.kdla.framework.log.sanitize.LogSanitizeUtil;
 
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebFilter;
@@ -45,7 +46,8 @@ public class KdlaBodyReaderRequestFilter implements Filter {
         // 获取trace
         if (!StringUtils.hasText(MDC.get(LOG_TRACE_ID))) {
             String traceId = request.getHeader(LOG_TRACE_ID);
-            if (StringUtils.hasText(traceId)) {
+            // 外来traceId须过格式白名单，不合法（含CRLF/超长）自生成，防伪造日志行
+            if (LogSanitizeUtil.validTraceId(traceId)) {
                 MDC.put(LOG_TRACE_ID, traceId);
             } else {
                 // 自定义一个

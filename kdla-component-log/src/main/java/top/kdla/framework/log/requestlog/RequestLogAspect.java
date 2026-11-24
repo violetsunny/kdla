@@ -159,7 +159,7 @@ public class RequestLogAspect {
                 beforeReqLog.append("\n");
             } else {
                 beforeReqLog.append(" Parameters: {}\n");
-                beforeReqArgs.add(JacksonUtil.toJson(paraMap));
+                beforeReqArgs.add(LogSanitizeUtil.sanitize(JacksonUtil.toJson(paraMap)));
             }
 
             Enumeration headers = request.getHeaderNames();
@@ -190,7 +190,7 @@ public class RequestLogAspect {
             Object result = point.proceed();
             afterReqLog.append("===Result===  {}\n");
             // 完整响应超2KB截断，防止大报文刷爆日志
-            afterReqArgs.add(LogSanitizeUtil.truncate(JacksonUtil.toJson(result)));
+            afterReqArgs.add(LogSanitizeUtil.sanitize(JacksonUtil.toJson(result)));
             var17 = result;
             var24 = false;
         } finally {
