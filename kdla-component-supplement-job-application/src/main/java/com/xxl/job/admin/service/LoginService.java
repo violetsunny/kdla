@@ -6,14 +6,20 @@ import com.xxl.job.admin.core.util.I18nUtil;
 import com.xxl.job.admin.core.util.JacksonUtil;
 import com.xxl.job.admin.dao.XxlJobUserDao;
 import com.xxl.job.core.biz.model.ReturnT;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.DigestUtils;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.math.BigInteger;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.util.HexFormat;
 
 /**
  * @author xuxueli 2019-05-04 22:13:264
@@ -26,19 +32,75 @@ public class LoginService {
     @Resource
     private XxlJobUserDao xxlJobUserDao;
 
+    // 会话 token 有效期 2H，与 Cookie maxAge 对齐
+    private static final long TOKEN_TTL_MILLIS = 2 * 60 * 60 * 1000L;
+
+    @Value("${xxl.job.login.tokenSecret:}")
+    private String tokenSecret;
+
+    private byte[] hmacKey;
+
+    @PostConstruct
+    void initHmacKey() {
+        if (tokenSecret != null && !tokenSecret.trim().isEmpty()) {
+            hmacKey = tokenSecret.getBytes(StandardCharsets.UTF_8);
+        } else {
+            // 未配置密钥时随机生成：重启后会话失效，多实例需配置共享 xxl.job.login.tokenSecret
+            hmacKey = new byte[32];
+            new SecureRandom().nextBytes(hmacKey);
+        }
+    }
+
 
     private String makeToken(XxlJobUser xxlJobUser){
-        String tokenJson = JacksonUtil.writeValueAsString(xxlJobUser);
-        String tokenHex = new BigInteger(tokenJson.getBytes(StandardCharsets.UTF_8)).toString(16);
-        return tokenHex;
+        long exp = System.currentTimeMillis() + TOKEN_TTL_MILLIS;
+        String payload = JacksonUtil.writeValueAsString(xxlJobUser) + "|" + exp;
+        byte[] payloadBytes = payload.getBytes(StandardCharsets.UTF_8);
+        return HexFormat.of().formatHex(payloadBytes) + "." + HexFormat.of().formatHex(hmac(payloadBytes));
     }
-    private XxlJobUser parseToken(String tokenHex){
-        XxlJobUser xxlJobUser = null;
-        if (tokenHex != null) {
-            String tokenJson = new String(new BigInteger(tokenHex, 16).toByteArray(), StandardCharsets.UTF_8);      // username_password(md5)
-            xxlJobUser = JacksonUtil.readValue(tokenJson, XxlJobUser.class);
+    private XxlJobUser parseToken(String token){
+        if (token == null) {
+            return null;
         }
-        return xxlJobUser;
+        int dot = token.indexOf('.');
+        if (dot <= 0 || dot == token.length() - 1) {
+            return null;
+        }
+        byte[] payloadBytes;
+        byte[] sig;
+        try {
+            payloadBytes = HexFormat.of().parseHex(token.substring(0, dot));
+            sig = HexFormat.of().parseHex(token.substring(dot + 1));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        if (!MessageDigest.isEqual(sig, hmac(payloadBytes))) {
+            return null;
+        }
+        String payload = new String(payloadBytes, StandardCharsets.UTF_8);
+        int sep = payload.lastIndexOf('|');
+        if (sep < 0) {
+            return null;
+        }
+        long exp;
+        try {
+            exp = Long.parseLong(payload.substring(sep + 1));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+        if (System.currentTimeMillis() > exp) {
+            return null;
+        }
+        return JacksonUtil.readValue(payload.substring(0, sep), XxlJobUser.class);
+    }
+    private byte[] hmac(byte[] data){
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(hmacKey, "HmacSHA256"));
+            return mac.doFinal(data);
+        } catch (Exception e) {
+            throw new IllegalStateException("会话 token HMAC 计算失败", e);
+        }
     }
 
 
@@ -62,7 +124,7 @@ public class LoginService {
         String loginToken = makeToken(xxlJobUser);
 
         // do login
-        CookieUtil.set(response, LOGIN_IDENTITY_KEY, loginToken, ifRemember);
+        CookieUtil.set(request, response, LOGIN_IDENTITY_KEY, loginToken, ifRemember);
         return ReturnT.SUCCESS;
     }
 

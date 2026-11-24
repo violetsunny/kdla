@@ -3,6 +3,8 @@ package com.xxl.job.admin.core.util;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 
 /**
  * Cookie.Util
@@ -11,49 +13,33 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 public class CookieUtil {
 
-	// 默认缓存时间,单位/秒, 2H
-	private static final int COOKIE_MAX_AGE = Integer.MAX_VALUE;
+	// 缓存时间 2H，与会话 token 过期对齐
+	private static final int COOKIE_MAX_AGE = 2 * 60 * 60;
 	// 保存路径,根路径
 	private static final String COOKIE_PATH = "/";
-	
+
 	/**
-	 * 保存
-	 *
-	 * @param response
-	 * @param key
-	 * @param value
-	 * @param ifRemember 
+	 * 保存：HttpOnly + SameSite=Lax（CSRF 缓解）+ Secure（HTTPS 时）
 	 */
-	public static void set(HttpServletResponse response, String key, String value, boolean ifRemember) {
-		int age = ifRemember?COOKIE_MAX_AGE:-1;
-		set(response, key, value, null, COOKIE_PATH, age, true);
+	public static void set(HttpServletRequest request, HttpServletResponse response, String key, String value, boolean ifRemember) {
+		int age = ifRemember ? COOKIE_MAX_AGE : -1;
+		addCookie(request, response, key, value, age);
+	}
+
+	private static void addCookie(HttpServletRequest request, HttpServletResponse response, String key, String value, int maxAge) {
+		ResponseCookie.ResponseCookieBuilder spec = ResponseCookie.from(key, value)
+				.path(COOKIE_PATH)
+				.httpOnly(true)
+				.secure(request != null && request.isSecure())
+				.sameSite("Lax");
+		if (maxAge >= 0) {
+			spec.maxAge(maxAge);
+		}
+		response.addHeader(HttpHeaders.SET_COOKIE, spec.build().toString());
 	}
 
 	/**
-	 * 保存
-	 *
-	 * @param response
-	 * @param key
-	 * @param value
-	 * @param maxAge
-	 */
-	private static void set(HttpServletResponse response, String key, String value, String domain, String path, int maxAge, boolean isHttpOnly) {
-		Cookie cookie = new Cookie(key, value);
-		if (domain != null) {
-			cookie.setDomain(domain);
-		}
-		cookie.setPath(path);
-		cookie.setMaxAge(maxAge);
-		cookie.setHttpOnly(isHttpOnly);
-		response.addCookie(cookie);
-	}
-	
-	/**
 	 * 查询value
-	 *
-	 * @param request
-	 * @param key
-	 * @return
 	 */
 	public static String getValue(HttpServletRequest request, String key) {
 		Cookie cookie = get(request, key);
@@ -63,12 +49,6 @@ public class CookieUtil {
 		return null;
 	}
 
-	/**
-	 * 查询Cookie
-	 *
-	 * @param request
-	 * @param key
-	 */
 	private static Cookie get(HttpServletRequest request, String key) {
 		Cookie[] arr_cookie = request.getCookies();
 		if (arr_cookie != null && arr_cookie.length > 0) {
@@ -80,18 +60,14 @@ public class CookieUtil {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * 删除Cookie
-	 *
-	 * @param request
-	 * @param response
-	 * @param key
 	 */
 	public static void remove(HttpServletRequest request, HttpServletResponse response, String key) {
 		Cookie cookie = get(request, key);
 		if (cookie != null) {
-			set(response, key, "", null, COOKIE_PATH, 0, true);
+			addCookie(request, response, key, "", 0);
 		}
 	}
 
