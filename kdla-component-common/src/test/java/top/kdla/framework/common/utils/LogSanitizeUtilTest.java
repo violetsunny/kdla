@@ -157,4 +157,18 @@ class LogSanitizeUtilTest {
         assertEquals("https://a.com?flag&token=***#sec",
                 LogSanitizeUtil.maskUrl("https://a.com?flag&token=t#sec"));
     }
+
+    @Test
+    void maskMobile_keepsPrefix3AndSuffix4() {
+        // D-13：员工手机号属 PII，不得明文进日志
+        assertEquals("138****8000", LogSanitizeUtil.maskMobile("13800138000"));
+    }
+
+    @Test
+    void maskMobile_shortOrNull_fullyMasked() {
+        assertEquals("***", LogSanitizeUtil.maskMobile(null));
+        assertEquals("***", LogSanitizeUtil.maskMobile(""));
+        assertEquals("***", LogSanitizeUtil.maskMobile("1234567"));
+        assertEquals("123****5678", LogSanitizeUtil.maskMobile("12345678"));
+    }
 }

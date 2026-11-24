@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.http.MediaType;
 import top.kdla.framework.common.help.RegexHelp;
+import top.kdla.framework.common.utils.LogSanitizeUtil;
 import top.kdla.framework.common.utils.ObjectUtil;
 import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.BizException;
@@ -114,17 +115,20 @@ public class VertxHttpClient {
                         String result = response.bodyAsString();
                         future.complete((T) result);
                         if (log.isDebugEnabled()) {
-                            log.debug("VertxHttpClient-send url:{} req:{} result:{}", url, JSON.toJSONString(req), result);
+                            log.debug("VertxHttpClient-send url:{} req:{} result:{}", LogSanitizeUtil.maskUrl(url),
+                                    LogSanitizeUtil.sanitize(JSON.toJSONString(req)), LogSanitizeUtil.sanitize(result));
                         }
                     } else {
                         T result = response.bodyAsJson(res);//默认json返回
                         future.complete(result);
                         if (log.isDebugEnabled()) {
-                            log.debug("VertxHttpClient-send url:{} req:{} result:{}", url, JSON.toJSONString(req), JSON.toJSONString(result));
+                            log.debug("VertxHttpClient-send url:{} req:{} result:{}", LogSanitizeUtil.maskUrl(url),
+                                    LogSanitizeUtil.sanitize(JSON.toJSONString(req)), LogSanitizeUtil.sanitize(JSON.toJSONString(result)));
                         }
                     }
                 } catch (Exception e) {
-                    log.warn("VertxHttpClient-send url:{} req:{} \n result:{}", url, JSON.toJSONString(req), response.bodyAsString());
+                    log.warn("VertxHttpClient-send url:{} req:{} \n result:{}", LogSanitizeUtil.maskUrl(url),
+                            LogSanitizeUtil.sanitize(JSON.toJSONString(req)), LogSanitizeUtil.sanitize(response.bodyAsString()));
                     //旧实现completeExceptionally(e.getCause())在cause为null时传入null，且随后throw的BizException在Vert.x事件循环线程抛出无法到达调用方；
                     //改为：cause为null时回退用e本身，异常统一通过future传递，不再在回调内throw
                     Throwable cause = e.getCause() != null ? e.getCause() : e;

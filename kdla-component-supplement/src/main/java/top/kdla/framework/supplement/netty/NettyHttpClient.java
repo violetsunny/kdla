@@ -26,6 +26,7 @@ import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.kdla.framework.common.help.ThreadPoolHelp;
+import top.kdla.framework.common.utils.LogSanitizeUtil;
 import top.kdla.framework.dto.exception.ErrorCode;
 import top.kdla.framework.exception.BizException;
 import top.kdla.framework.supplement.http.ssl.SslContextFactory;
@@ -368,8 +369,8 @@ public class NettyHttpClient {
             if (!msg.headers().isEmpty()) {
                 for (String name : msg.headers().names()) {
                     for (String value : msg.headers().getAll(name)) {
-                        if (log.isInfoEnabled()) {
-                            log.info("HEADER: {} = {}", name, value);
+                        if (log.isDebugEnabled()) {
+                            log.debug("HEADER: {} = {}", name, LogSanitizeUtil.maskHeader(name, value));
                         }
                     }
                 }
@@ -380,8 +381,8 @@ public class NettyHttpClient {
                 response.completeExceptionally(new BizException(ErrorCode.FAIL.getCode(), "调用外部接口失败", msg.decoderResult().cause()));
             } else {
                 ByteBuf buf = msg.content();
-                if (log.isInfoEnabled()) {
-                    log.info("content:{}", buf.toString(CharsetUtil.UTF_8));
+                if (log.isDebugEnabled()) {
+                    log.debug("content:{}", LogSanitizeUtil.sanitize(buf.toString(CharsetUtil.UTF_8)));
                 }
                 response.complete(buf.toString(CharsetUtil.UTF_8));
             }
@@ -407,8 +408,8 @@ public class NettyHttpClient {
             if (!msg.headers().isEmpty()) {
                 for (String name : msg.headers().names()) {
                     for (String value : msg.headers().getAll(name)) {
-                        if (log.isInfoEnabled()) {
-                            log.info("HEADER: {} = {}", name, value);
+                        if (log.isDebugEnabled()) {
+                            log.debug("HEADER: {} = {}", name, LogSanitizeUtil.maskHeader(name, value));
                         }
                     }
                 }
@@ -419,8 +420,8 @@ public class NettyHttpClient {
                 response.setFailure(new BizException(ErrorCode.FAIL.getCode(), "调用外部接口失败", msg.decoderResult().cause()));
             } else {
                 ByteBuf buf = msg.content();
-                if (log.isInfoEnabled()) {
-                    log.info("content:{}", buf.toString(CharsetUtil.UTF_8));
+                if (log.isDebugEnabled()) {
+                    log.debug("content:{}", LogSanitizeUtil.sanitize(buf.toString(CharsetUtil.UTF_8)));
                 }
                 response.setSuccess(buf.toString(CharsetUtil.UTF_8));
             }
@@ -453,8 +454,8 @@ public class NettyHttpClient {
             if (!msg.headers().isEmpty()) {
                 for (String name : msg.headers().names()) {
                     for (String value : msg.headers().getAll(name)) {
-                        if (log.isInfoEnabled()) {
-                            log.info("HEADER: {} = {}", name, value);
+                        if (log.isDebugEnabled()) {
+                            log.debug("HEADER: {} = {}", name, LogSanitizeUtil.maskHeader(name, value));
                         }
                     }
                 }
@@ -465,8 +466,8 @@ public class NettyHttpClient {
                 response.onError(new BizException(ErrorCode.FAIL.getCode(), "调用外部接口失败", msg.decoderResult().cause()));
             } else {
                 ByteBuf buf = msg.content();
-                if (log.isInfoEnabled()) {
-                    log.info("content:{}", buf.toString(CharsetUtil.UTF_8));
+                if (log.isDebugEnabled()) {
+                    log.debug("content:{}", LogSanitizeUtil.sanitize(buf.toString(CharsetUtil.UTF_8)));
                 }
                 response.onResponse(buf.toString(CharsetUtil.UTF_8));
             }

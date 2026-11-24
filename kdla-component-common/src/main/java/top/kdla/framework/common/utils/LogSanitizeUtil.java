@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
  * <ul>
  *     <li>Header/JSON 键名命中敏感名（精确黑名单 + token/secret/credential/apikey/session/csrf/idcard 变体匹配，忽略大小写）时值替换为 ***</li>
  *     <li>URL query 中敏感参数名（如 access_token）的值替换为 ***，防 webhook 凭据随 URL 进日志</li>
+ *     <li>手机号保留前 3 后 4，中间打 ****</li>
  *     <li>日志体超过 2KB（2048 字符）截断，并追加 "...(truncated, total=原始长度)"</li>
  *     <li>外来 traceId 仅允许 [A-Za-z0-9-]{1,64}，防 CRLF 伪造日志行</li>
  * </ul>
@@ -103,6 +104,19 @@ public final class LogSanitizeUtil {
             masked.append(url.substring(fragStart));
         }
         return masked.toString();
+    }
+
+    /**
+     * 手机号脱敏：保留前 3 后 4，中间替换为 ****；null 或长度不足 8 时全掩码。
+     *
+     * @param mobile 手机号，可为 null
+     * @return 脱敏后的手机号
+     */
+    public static String maskMobile(String mobile) {
+        if (mobile == null || mobile.length() < 8) {
+            return MASK;
+        }
+        return mobile.substring(0, 3) + "****" + mobile.substring(mobile.length() - 4);
     }
 
     /**

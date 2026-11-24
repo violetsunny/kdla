@@ -10,6 +10,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import top.kdla.framework.common.utils.LogSanitizeUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,7 +40,8 @@ public class BaseHttpClient {
 
     public ResponseEntity<String> get(String url, Map<String, String> headerMap, Map<String, Object> params) {
         if (log.isInfoEnabled()) {
-            log.info("BaseHttpClient.get:URL:{};params:{}", url, JSON.toJSONString(params));
+            log.info("BaseHttpClient.get:URL:{};params:{}", LogSanitizeUtil.maskUrl(url),
+                    LogSanitizeUtil.sanitize(JSON.toJSONString(params)));
         }
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         if (params != null) {
@@ -56,8 +58,8 @@ public class BaseHttpClient {
             return response;
         }
 
-        log.error("Get error: {}", response.getBody());
-        throw new RestClientException(url + " 请求异常");
+        log.error("Get error: {}", LogSanitizeUtil.sanitize(response.getBody()));
+        throw new RestClientException(LogSanitizeUtil.maskUrl(url) + " 请求异常");
     }
 
 
@@ -71,13 +73,14 @@ public class BaseHttpClient {
             return response;
         }
 
-        log.error("put error: {}", response.getBody());
-        throw new RestClientException(url + " 请求异常");
+        log.error("put error: {}", LogSanitizeUtil.sanitize(response.getBody()));
+        throw new RestClientException(LogSanitizeUtil.maskUrl(url) + " 请求异常");
     }
 
     public ResponseEntity<String> post(String url, Map<String, String> headerMap, Object body) {
         if (log.isInfoEnabled()) {
-            log.info("BaseHttpClient.post URL:{} body:{}", url, JSON.toJSONString(body));
+            log.info("BaseHttpClient.post URL:{} body:{}", LogSanitizeUtil.maskUrl(url),
+                    LogSanitizeUtil.sanitize(JSON.toJSONString(body)));
         }
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         //headerMap为null或未含content-type键时，旧实现get(...)返回null再调equalsIgnoreCase会NPE；改为null安全判断
@@ -95,8 +98,8 @@ public class BaseHttpClient {
             return response;
         }
 
-        log.error("post error: {}", response.getBody());
-        throw new RestClientException(url + " 请求异常");
+        log.error("post error: {}", LogSanitizeUtil.sanitize(response.getBody()));
+        throw new RestClientException(LogSanitizeUtil.maskUrl(url) + " 请求异常");
     }
 
 }

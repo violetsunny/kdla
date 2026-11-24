@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.kdla.framework.common.help.ThreadPoolHelp;
+import top.kdla.framework.common.utils.LogSanitizeUtil;
 import top.kdla.framework.supplement.http.ssl.SslContextFactory;
 
 import javax.net.ssl.SSLEngine;
@@ -183,14 +184,16 @@ public class NettyHttpServer {
         public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) throws Exception {
             if (log.isInfoEnabled()) {
                 log.info("客服端地址:{}", ctx.channel().remoteAddress());
-                log.info("请求数据:{}", JSONObject.toJSONString(msg));
+            }
+            if (log.isDebugEnabled()) {
+                log.debug("请求数据:{}", LogSanitizeUtil.sanitize(JSONObject.toJSONString(msg)));
             }
             HttpHeaders headers = msg.headers();
             String headValue = headers.get(HttpHeaderNames.CONTENT_TYPE.toString());
             String uri = msg.uri();
             HttpMethod method = msg.method();
             if (log.isInfoEnabled()) {
-                log.info("Uri:{} method:{} headValue:{}", uri, method, headers.toString());
+                log.info("Uri:{} method:{} headValue:{}", LogSanitizeUtil.maskUrl(uri), method, headValue);
             }
             if (method.equals(HttpMethod.GET)) {
                 QueryStringDecoder decoderQuery = new QueryStringDecoder(msg.uri());
@@ -200,7 +203,7 @@ public class NettyHttpServer {
                     writeHttpResponse(msg, headValue, res, ctx, HttpResponseStatus.OK);
                 } catch (Exception e) {
                     //完整堆栈仅记录在服务端日志，返回客户端通用文案，避免泄露内部实现细节
-                    log.error("GET请求处理异常, uri:{}", uri, e);
+                    log.error("GET请求处理异常, uri:{}", LogSanitizeUtil.maskUrl(uri), e);
                     writeHttpResponse(msg, headValue, "服务器内部错误", ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR);
                 }
 
@@ -212,7 +215,7 @@ public class NettyHttpServer {
                     writeHttpResponse(msg, headValue, res, ctx, HttpResponseStatus.OK);
                 } catch (Exception e) {
                     //完整堆栈仅记录在服务端日志，返回客户端通用文案，避免泄露内部实现细节
-                    log.error("POST请求处理异常, uri:{}", uri, e);
+                    log.error("POST请求处理异常, uri:{}", LogSanitizeUtil.maskUrl(uri), e);
                     writeHttpResponse(msg, headValue, "服务器内部错误", ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR);
                 }
 
@@ -241,6 +244,12 @@ public class NettyHttpServer {
             }
         }
 
+        private static void setSecurityHeaders(HttpHeaders headers) {
+            headers.set("X-Content-Type-Options", "nosniff");
+            headers.set(HttpHeaderNames.CACHE_CONTROL, "no-store");
+            headers.set(HttpHeaderNames.X_FRAME_OPTIONS, "DENY");
+        }
+
         private void writeHttpResponseJson(FullHttpRequest request, String res, ChannelHandlerContext ctx, HttpResponseStatus status) {
             if (log.isInfoEnabled()) {
                 log.info("writeHttpResponseJson 开始写入返回数据...");
@@ -249,6 +258,7 @@ public class NettyHttpServer {
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON + ";charset=utf-8");
             response.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
             response.headers().setInt(HttpHeaderNames.EXPIRES, 0);
+            setSecurityHeaders(response.headers());
             // 检查请求是否为 keep-alive
             boolean keepAlive = HttpUtil.isKeepAlive(request);
             // 在响应头中设置 keep-alive
@@ -269,6 +279,7 @@ public class NettyHttpServer {
             response.content().writeBytes(FileUtil.readBytes(file));
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "image/png;charset=utf-8");
             response.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, response.content().writerIndex());
+            setSecurityHeaders(response.headers());
             // 检查请求是否为 keep-alive
             boolean keepAlive = HttpUtil.isKeepAlive(request);
             // 在响应头中设置 keep-alive
@@ -292,6 +303,7 @@ public class NettyHttpServer {
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html;charset=utf-8");
             //空content的writerIndex()恒0，客户端按0长度截断；须用真实文件长度
             response.headers().set(HttpHeaderNames.CONTENT_LENGTH, fileLength);
+            setSecurityHeaders(response.headers());
             ctx.write(response);
             //File构造由netty在deallocate时关闭通道，修复FileChannel三参构造的fd泄漏
             ctx.write(new DefaultFileRegion(file, 0, fileLength));
@@ -316,6 +328,7 @@ public class NettyHttpServer {
             //2.1 设置响应头
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html;charset=utf-8");
             response.headers().set(HttpHeaderNames.CONTENT_LENGTH, byteBuf.readableBytes());
+            setSecurityHeaders(response.headers());
             // 检查请求是否为 keep-alive
             boolean keepAlive = HttpUtil.isKeepAlive(request);
             // 在响应头中设置 keep-alive
@@ -336,6 +349,7 @@ public class NettyHttpServer {
             // 设置响应头信息
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain;charset=utf-8");
             response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+            setSecurityHeaders(response.headers());
             // 将响应体写入到通道中
             // 检查请求是否为 keep-alive
             boolean keepAlive = HttpUtil.isKeepAlive(request);

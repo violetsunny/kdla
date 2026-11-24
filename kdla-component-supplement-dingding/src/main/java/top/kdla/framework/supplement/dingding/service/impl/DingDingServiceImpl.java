@@ -10,6 +10,7 @@ import io.vertx.core.http.HttpMethod;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import top.kdla.framework.common.enums.MsgTypeEnum;
+import top.kdla.framework.common.utils.LogSanitizeUtil;
 import top.kdla.framework.supplement.dingding.config.DingAlertConfigure;
 import top.kdla.framework.supplement.dingding.enums.MsgSendRespEnum;
 import top.kdla.framework.supplement.dingding.model.req.DingDingMessage;
@@ -25,6 +26,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * @author kanglele
@@ -57,7 +59,8 @@ public class DingDingServiceImpl implements DingDingService {
 //            DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
                 if (log.isInfoEnabled()) {
-                    log.info("DingDingServiceImpl.sendMessage failed#msg:{}, rest:{}", msg, JSON.toJSONString(result));
+                    log.info("DingDingServiceImpl.sendMessage failed#msg:{}, rest:{}", LogSanitizeUtil.sanitize(msg),
+                            LogSanitizeUtil.sanitize(JSON.toJSONString(result)));
                 }
                 return MsgSendRespEnum.FAIL.getCode();
             }
@@ -89,7 +92,8 @@ public class DingDingServiceImpl implements DingDingService {
 //            DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
                 if (log.isInfoEnabled()) {
-                    log.info("DingDingServiceImpl.sendMessage failed#msg:{},atMobiles:{}, rest:{}", msg, atMobiles, JSON.toJSONString(result));
+                    log.info("DingDingServiceImpl.sendMessage failed#msg:{},atMobiles:{}, rest:{}", LogSanitizeUtil.sanitize(msg),
+                            maskMobiles(atMobiles), LogSanitizeUtil.sanitize(JSON.toJSONString(result)));
                 }
                 return MsgSendRespEnum.FAIL.getCode();
             }
@@ -131,7 +135,8 @@ public class DingDingServiceImpl implements DingDingService {
 //            DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
                 if (log.isInfoEnabled()) {
-                    log.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{}, rest:{}", title, msg, JSON.toJSONString(result));
+                    log.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{}, rest:{}", LogSanitizeUtil.sanitize(title),
+                            LogSanitizeUtil.sanitize(msg), LogSanitizeUtil.sanitize(JSON.toJSONString(result)));
                 }
                 return MsgSendRespEnum.FAIL.getCode();
             }
@@ -163,7 +168,8 @@ public class DingDingServiceImpl implements DingDingService {
 //            DingDingAlertResult result = JSON.parseObject(rest, DingDingAlertResult.class);
             if (Objects.isNull(result) || !result.isSuccess()) {
                 if (log.isInfoEnabled()) {
-                    log.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{},atMobiles:{}, rest:{}", title, msg, atMobiles, JSON.toJSONString(result));
+                    log.info("DingDingServiceImpl.sendMessage failed#title:{}, msg:{},atMobiles:{}, rest:{}", LogSanitizeUtil.sanitize(title),
+                            LogSanitizeUtil.sanitize(msg), maskMobiles(atMobiles), LogSanitizeUtil.sanitize(JSON.toJSONString(result)));
                 }
                 return MsgSendRespEnum.FAIL.getCode();
             }
@@ -176,4 +182,9 @@ public class DingDingServiceImpl implements DingDingService {
 
         return MsgSendRespEnum.OK.getCode();
     }
+
+    private static List<String> maskMobiles(List<String> mobiles) {
+        return mobiles == null ? null : mobiles.stream().map(LogSanitizeUtil::maskMobile).collect(Collectors.toList());
+    }
+
 }
