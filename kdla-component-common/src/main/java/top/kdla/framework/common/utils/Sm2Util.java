@@ -7,6 +7,7 @@ package top.kdla.framework.common.utils;
 import org.bouncycastle.asn1.gm.GMNamedCurves;
 import org.bouncycastle.asn1.gm.GMObjectIdentifiers;
 import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.engines.SM2Engine;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
@@ -39,8 +40,8 @@ import java.util.Objects;
  *   可以满足电子认证服务系统等应用需求，由国家密码管理局于2010年12月17号发布。
  *   SM2采用的是ECC 256位的一种，其安全强度比RSA 2048位高，且运算速度快于RSA。
  * </pre>
- * <p>密钥编码双轨：encrypt/decrypt 用 Base64(X509/PKCS8)；sign/verify 的 String 重载用 hex 裸私钥 D / hex 裸公钥点，不可混用。
- * <p>SM2Engine 默认 C1C2C3 旧序，现行 GB/T 32918 为 C1C3C2，跨实现互通须确认模式一致。
+ * <p>密钥编码兼容：encrypt/decrypt/sign/verify 均自动识别 Base64(X509/PKCS8) 与 hex 裸公钥点/裸私钥 D，可混用。
+ * <p>密文模式：encrypt 默认 C1C3C2（现行 GB/T 32918），重载可指定 C1C2C3；decrypt 自动识别两种模式。
  *
  * @author wangMaoXiong
  * @version 1.0
@@ -104,89 +105,140 @@ public class Sm2Util {
     }
 
     /**
-     * 公钥加密
+     * 公钥加密（默认 C1C3C2，现行 GB/T 32918）
      *
      * @param data          ：被加密的数据
-     * @param publicKeyText ：公钥key文本
+     * @param publicKeyText ：公钥文本，Base64(X509) 或 hex 裸公钥点，自动识别
      * @return ：加密好的密文(base64)
      */
     public static String encrypt(String data, String publicKeyText) throws Exception {
-        PublicKey publicKey = createPublicKey(publicKeyText);
-        byte[] bytes = data.getBytes(StandardCharsets.UTF_8);
-        ECPublicKeyParameters localECPublicKeyParameters = null;
-
-        if (publicKey instanceof BCECPublicKey) {
-            BCECPublicKey localECPublicKey = (BCECPublicKey) publicKey;
-            ECParameterSpec localECParameterSpec = localECPublicKey.getParameters();
-            ECDomainParameters localECDomainParameters = new ECDomainParameters(localECParameterSpec.getCurve(),
-                    localECParameterSpec.getG(), localECParameterSpec.getN());
-            localECPublicKeyParameters = new ECPublicKeyParameters(localECPublicKey.getQ(), localECDomainParameters);
-        }
-        SM2Engine localSM2Engine = new SM2Engine();
-        localSM2Engine.init(true, new ParametersWithRandom(localECPublicKeyParameters, new SecureRandom()));
-        byte[] arrayOfByte2 = localSM2Engine.processBlock(bytes, 0, bytes.length);
-        return Base64.getEncoder().encodeToString(arrayOfByte2);
+        return encrypt(data, publicKeyText, SM2Engine.Mode.C1C3C2);
     }
 
     /**
-     * 私钥解密
+     * 公钥加密（指定密文模式）
+     *
+     * @param data          ：被加密的数据
+     * @param publicKeyText ：公钥文本，Base64(X509) 或 hex 裸公钥点，自动识别
+     * @param mode          ：C1C3C2（现行标准）或 C1C2C3（旧序，兼容对端）
+     * @return ：加密好的密文(base64)
+     */
+    public static String encrypt(String data, String publicKeyText, SM2Engine.Mode mode) throws Exception {
+        BCECPublicKey publicKey = (BCECPublicKey) createPublicKey(publicKeyText);
+        byte[] bytes = data.getBytes(StandardCharsets.UTF_8);
+        ECParameterSpec spec = publicKey.getParameters();
+        ECDomainParameters domain = new ECDomainParameters(spec.getCurve(), spec.getG(), spec.getN());
+        ECPublicKeyParameters pubParams = new ECPublicKeyParameters(publicKey.getQ(), domain);
+        SM2Engine engine = new SM2Engine(mode);
+        engine.init(true, new ParametersWithRandom(pubParams, new SecureRandom()));
+        byte[] out = engine.processBlock(bytes, 0, bytes.length);
+        return Base64.getEncoder().encodeToString(out);
+    }
+
+    /**
+     * 私钥解密（自动识别 C1C3C2/C1C2C3 两种密文模式）
      *
      * @param data           ：密文(base64)
-     * @param privateKeyText ：私钥文本
+     * @param privateKeyText ：私钥文本，Base64(PKCS8) 或 hex 裸私钥 D，自动识别
      * @return ：明文
      */
     public static String decrypt(String data, String privateKeyText) throws Exception {
-        PrivateKey privateKey = createPrivateKey(privateKeyText);
-        byte[] encodeData = Base64.getDecoder().decode(data);
-        SM2Engine localSM2Engine = new SM2Engine();
-        BCECPrivateKey sm2PriK = (BCECPrivateKey) privateKey;
-        ECParameterSpec localECParameterSpec = sm2PriK.getParameters();
-        ECDomainParameters localECDomainParameters = new ECDomainParameters(localECParameterSpec.getCurve(), localECParameterSpec.getG(), localECParameterSpec.getN());
-        ECPrivateKeyParameters localECPrivateKeyParameters = new ECPrivateKeyParameters(sm2PriK.getD(), localECDomainParameters);
-        localSM2Engine.init(false, localECPrivateKeyParameters);
-        byte[] arrayOfByte3 = localSM2Engine.processBlock(encodeData, 0, encodeData.length);
-        // 显式 UTF-8，与 encrypt 侧 getBytes(UTF_8) 对齐，避免平台默认字符集导致中文乱码
-        return new String(arrayOfByte3, StandardCharsets.UTF_8);
+        BCECPrivateKey sm2PriK = (BCECPrivateKey) createPrivateKey(privateKeyText);
+        byte[] cipher = Base64.getDecoder().decode(data);
+        ECParameterSpec spec = sm2PriK.getParameters();
+        ECDomainParameters domain = new ECDomainParameters(spec.getCurve(), spec.getG(), spec.getN());
+        ECPrivateKeyParameters privParams = new ECPrivateKeyParameters(sm2PriK.getD(), domain);
+        // C3 为 SM3 校验位，模式不符必抛 InvalidCipherTextException，据此自动识别两种模式
+        InvalidCipherTextException last = null;
+        for (SM2Engine.Mode mode : new SM2Engine.Mode[]{SM2Engine.Mode.C1C3C2, SM2Engine.Mode.C1C2C3}) {
+            try {
+                SM2Engine engine = new SM2Engine(mode);
+                engine.init(false, privParams);
+                byte[] plain = engine.processBlock(cipher, 0, cipher.length);
+                // 显式 UTF-8，与 encrypt 侧 getBytes(UTF_8) 对齐，避免平台默认字符集导致中文乱码
+                return new String(plain, StandardCharsets.UTF_8);
+            } catch (InvalidCipherTextException e) {
+                last = e;
+            }
+        }
+        throw last;
     }
 
     /**
-     * 将Base64转码的公钥串，转化为公钥对象
+     * 公钥串转公钥对象：自动识别 hex 裸公钥点（04/02/03 前缀）与 Base64(X509)
      *
-     * @param publicKeyText
-     * @return
+     * @param publicKeyText hex 裸公钥点或 Base64(X509)
+     * @return 公钥对象
      */
     private static PublicKey createPublicKey(String publicKeyText) throws Exception {
+        if (isHexRaw(publicKeyText, 130, 66)) {
+            X9ECParameters parameters = GMNamedCurves.getByOID(GMObjectIdentifiers.sm2p256v1);
+            ECPoint q = parameters.getCurve().decodePoint(Hex.decode(publicKeyText));
+            ECParameterSpec spec = new ECParameterSpec(parameters.getCurve(), parameters.getG(), parameters.getN());
+            return new BCECPublicKey("EC", new ECPublicKeySpec(q, spec), BouncyCastleProvider.CONFIGURATION);
+        }
         byte[] decode = Base64.getDecoder().decode(publicKeyText);
         X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(decode);
-        KeyFactory keyFactory = KeyFactory.getInstance(ALGORITHM, new BouncyCastleProvider());
-        PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
-        return publicKey;
+        KeyFactory keyFactory = KeyFactory.getInstance(ALGORITHM, PROVIDER);
+        return keyFactory.generatePublic(publicKeySpec);
     }
 
     /**
-     * 将Base64转码的私钥串，转化为私钥对象
+     * 私钥串转私钥对象：自动识别 hex 裸私钥 D（64 hex，32 字节零填充）与 Base64(PKCS8)
      *
-     * @param privateKeyText
-     * @return
+     * @param privateKeyText hex 裸私钥 D 或 Base64(PKCS8)
+     * @return 私钥对象
      */
     private static PrivateKey createPrivateKey(String privateKeyText) throws Exception {
+        if (isHexRaw(privateKeyText, 64)) {
+            X9ECParameters parameters = GMNamedCurves.getByOID(GMObjectIdentifiers.sm2p256v1);
+            ECParameterSpec spec = new ECParameterSpec(parameters.getCurve(), parameters.getG(), parameters.getN());
+            // signum=1：裸 D 是无符号标量，防最高位为 1 时 new BigInteger(byte[]) 解成负数
+            BigInteger d = new BigInteger(1, Hex.decode(privateKeyText));
+            return new BCECPrivateKey("EC", new ECPrivateKeySpec(d, spec), BouncyCastleProvider.CONFIGURATION);
+        }
         byte[] decode = Base64.getDecoder().decode(privateKeyText);
         PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(decode);
-        KeyFactory keyFactory = KeyFactory.getInstance(ALGORITHM, new BouncyCastleProvider());
-        PrivateKey publicKey = keyFactory.generatePrivate(pkcs8EncodedKeySpec);
-        return publicKey;
+        KeyFactory keyFactory = KeyFactory.getInstance(ALGORITHM, PROVIDER);
+        return keyFactory.generatePrivate(pkcs8EncodedKeySpec);
+    }
+
+    /**
+     * 判定是否指定长度的纯 hex 串（裸密钥编码识别用）
+     */
+    private static boolean isHexRaw(String text, int... hexLengths) {
+        if (text == null) {
+            return false;
+        }
+        boolean lenMatch = false;
+        for (int len : hexLengths) {
+            if (text.length() == len) {
+                lenMatch = true;
+                break;
+            }
+        }
+        if (!lenMatch) {
+            return false;
+        }
+        for (int i = 0; i < text.length(); i++) {
+            if (Character.digit(text.charAt(i), 16) < 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
      * 签名
      *
      * @param plainText  待签名文本
-     * @param privateKey hex 裸私钥 D（非 Base64 PKCS8，与 encrypt/decrypt 编码不同，不可混用）
-     * @return
+     * @param privateKey 私钥文本，hex 裸私钥 D 或 Base64(PKCS8)，自动识别
+     * @return 签名(base64)
      * @throws GeneralSecurityException
      */
     public static String sign(String plainText, String privateKey) throws Exception {
-        return sign(plainText,new BigInteger(Hex.decode(privateKey)));
+        BCECPrivateKey pk = (BCECPrivateKey) createPrivateKey(privateKey);
+        return sign(plainText, pk.getD());
     }
 
     public static String sign(String plainText, BigInteger privateKey) throws GeneralSecurityException {
@@ -208,13 +260,14 @@ public class Sm2Util {
      * 验签
      *
      * @param plainText 待签名文本
-     * @param signText  签名
-     * @param publicKey hex 裸公钥点（非 Base64 X509，与 encrypt/decrypt 编码不同，不可混用）
-     * @return
+     * @param signText  签名(base64)
+     * @param publicKey 公钥文本，hex 裸公钥点或 Base64(X509)，自动识别
+     * @return 验签是否通过
      * @throws GeneralSecurityException
      */
     public static boolean verify(String plainText, String signText, String publicKey) throws Exception {
-        return verify(plainText,signText,Hex.decode(publicKey));
+        BCECPublicKey pk = (BCECPublicKey) createPublicKey(publicKey);
+        return verify(plainText, signText, pk.getQ().getEncoded(false));
     }
 
     public static boolean verify(String plainText, String signText, byte[] publicKey) throws GeneralSecurityException {
