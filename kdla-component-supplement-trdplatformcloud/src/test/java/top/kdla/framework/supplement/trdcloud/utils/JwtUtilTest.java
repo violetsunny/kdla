@@ -102,4 +102,38 @@ class JwtUtilTest {
                 .isInstanceOf(BizException.class);
     }
 
+    @Test
+    void missingExpRejected() {
+        // B-12：无 exp 声明的 token 不得永久有效
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("account", "zhangsan");
+        String jwt = JWTUtil.createToken(payload, KEY.getBytes(StandardCharsets.UTF_8));
+        assertThatThrownBy(() -> JwtUtil.getInfoFromToken("Bearer " + jwt, "account"))
+                .isInstanceOf(BizException.class);
+    }
+
+    @Test
+    void nonBearerSchemeRejected() {
+        String jwt = token(System.currentTimeMillis() / 1000 + 3600);
+        assertThatThrownBy(() -> JwtUtil.getInfoFromToken("Basic " + jwt, "account"))
+                .isInstanceOf(BizException.class);
+    }
+
+    @Test
+    void lowercaseBearerAccepted() {
+        String jwt = token(System.currentTimeMillis() / 1000 + 3600);
+        assertThat(JwtUtil.getInfoFromToken("bearer " + jwt, "account")).isEqualTo("zhangsan");
+    }
+
+    @Test
+    void shortSignKeyRejected() {
+        // B-12：HS256 密钥 UTF-8 字节长度须≥32
+        MockEnvironment env = new MockEnvironment();
+        env.setProperty(KEY_PROPERTY, "short-key");
+        injectContext(env);
+        String jwt = token(System.currentTimeMillis() / 1000 + 3600);
+        assertThatThrownBy(() -> JwtUtil.getInfoFromToken("Bearer " + jwt, "account"))
+                .isInstanceOf(BizException.class);
+    }
+
 }

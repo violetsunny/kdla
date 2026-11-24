@@ -1,6 +1,7 @@
 package top.kdla.framework.supplement.trdcloud.utils;
 
 import org.apache.commons.collections4.MapUtils;
+import top.kdla.framework.exception.BizException;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -61,9 +62,11 @@ public class StringUtil {
     }
 
     /**
-     * @param message
+     * fail-closed：算法不可用或计算失败抛 BizException，绝不返回原文冒充哈希。
+     *
+     * @param message 原文
      * @param algorithm MD5-32位，SHA-256 -64位
-     * @return
+     * @return 十六进制哈希
      */
     public static String hashString(String message, String algorithm) {
         try {
@@ -71,7 +74,7 @@ public class StringUtil {
             byte[] hashedBytes = digest.digest(message.getBytes(StandardCharsets.UTF_8));
             return convertByteArrayToHexString(hashedBytes);
         } catch (Exception e) {
-            return message;
+            throw new BizException("哈希计算失败: " + algorithm);
         }
     }
 

@@ -10,7 +10,9 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.JSONPath;
 import groovy.lang.Binding;
+import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyShell;
+import groovy.util.Eval;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.codehaus.groovy.ast.expr.ConstructorCallExpression;
+import org.codehaus.groovy.ast.expr.MethodCallExpression;
+import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.control.customizers.SecureASTCustomizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -38,6 +44,14 @@ import top.kdla.framework.supplement.timer.manager.impl.LocalJobManager;
 import top.kdla.framework.supplement.trdcloud.utils.StringUtil;
 
 import jakarta.annotation.Resource;
+import java.io.File;
+import java.io.PrintStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -508,20 +522,71 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
                 .build();
     }
 
+    /**
+     * 沙箱方法名黑名单：覆盖动态接收者上的命令执行、反射、类加载与 DoS 入口
+     */
+    private static final Set<String> FORBIDDEN_METHODS = new HashSet<>(Arrays.asList(
+            "execute", "exec", "getRuntime", "exit", "halt",
+            "forName", "newInstance", "invoke", "getDeclaredMethod", "getMethod",
+            "setAccessible", "load", "loadLibrary", "eval", "evaluate",
+            "parseClass", "start", "sleep", "getMetaClass", "invokeMethod",
+            "getProperty", "setProperty", "getClass", "getClassLoader",
+            "loadClass", "defineClass", "getDeclaredField", "getField",
+            "getConstructor", "getDeclaredConstructor", "wait", "notify", "notifyAll",
+            "getenv", "getProperties"));
+
+    /**
+     * 沙箱接收者黑名单：命令执行、文件/网络 IO、反射与脚本引擎入口
+     */
+    private static final List<Class> FORBIDDEN_RECEIVER_CLASSES = Arrays.asList(
+            Runtime.class, ProcessBuilder.class, System.class, File.class,
+            Socket.class, ServerSocket.class, URL.class, URI.class,
+            Class.class, ClassLoader.class, Thread.class,
+            GroovyShell.class, GroovyClassLoader.class, Eval.class,
+            PrintStream.class, Paths.class, Files.class, sun.misc.Unsafe.class);
+
+    /**
+     * Groovy 默认导入包前缀：间接导入检查仅放行这些包内的类引用
+     */
+    private static final List<String> DEFAULT_PACKAGE_PREFIXES = Arrays.asList(
+            "java.lang.**", "java.util.**", "groovy.lang.**", "groovy.util.**");
+
     public static Object groovyShellCal(String groovyCode, Map<String, Object> bodyre) {
         // 创建一个绑定，用于存储变量
         Binding binding = new Binding();
-        // 创建一个GroovyShell，用于执行Groovy代码
-        GroovyShell shell = new GroovyShell(binding);
-
         // 设置变量
         if (bodyre != null) {
             bodyre.forEach(binding::setVariable);
         }
+        // ponytail: 编译期 AST 防线，非完整运行时沙箱；升级路径=groovy-sandbox 运行时拦截器
+        GroovyShell shell = new GroovyShell(binding, sandboxCompilerConfiguration());
+        return shell.evaluate(groovyCode);
+    }
 
-        // 执行代码
-        Object res = shell.evaluate(groovyCode);
-        return res;
+    private static CompilerConfiguration sandboxCompilerConfiguration() {
+        SecureASTCustomizer sandbox = new SecureASTCustomizer();
+        sandbox.setPackageAllowed(false);
+        sandbox.setMethodDefinitionAllowed(false);
+        sandbox.setIndirectImportCheckEnabled(true);
+        sandbox.setImportsWhitelist(Collections.emptyList());
+        sandbox.setStarImportsWhitelist(DEFAULT_PACKAGE_PREFIXES);
+        sandbox.setStaticImportsWhitelist(Collections.emptyList());
+        sandbox.setStaticStarImportsWhitelist(DEFAULT_PACKAGE_PREFIXES);
+        // 接收者黑名单覆盖方法调用/静态调用/属性访问；构造器全禁，方法名黑名单补动态接收者缺口
+        sandbox.setReceiversClassesBlackList(FORBIDDEN_RECEIVER_CLASSES);
+        sandbox.addExpressionCheckers(expr -> {
+            if (expr instanceof ConstructorCallExpression) {
+                return false;
+            }
+            if (expr instanceof MethodCallExpression call) {
+                String name = call.getMethodAsString();
+                return name != null && !FORBIDDEN_METHODS.contains(name);
+            }
+            return true;
+        });
+        CompilerConfiguration config = new CompilerConfiguration();
+        config.addCompilationCustomizers(sandbox);
+        return config;
     }
 
     @Override

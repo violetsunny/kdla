@@ -12,8 +12,8 @@ import top.kdla.framework.exception.BizException;
 import java.nio.charset.StandardCharsets;
 
 /**
- * JWT 工具：强制 HS256 验签与 exp 过期校验，任何失败抛 BizException，绝不降级放行。
- * 破坏性变更：下游必须配置 kdla.trd.jwt.sign-key，未配置或验签失败时依赖本类的 trd 接口立即不可用。
+ * JWT 工具：强制 Bearer 格式、HS256 验签、exp 声明必须存在且未过期，任何失败抛 BizException，绝不降级放行。
+ * 破坏性变更：下游必须配置 kdla.trd.jwt.sign-key（UTF-8 字节长度≥32），未配置或验签失败时依赖本类的 trd 接口立即不可用。
  * 密钥编码假设：raw UTF-8 bytes，未对真实 BladeX token 实测。
  */
 @Slf4j
@@ -43,12 +43,16 @@ public class JwtUtil {
             log.warn("JWT 验签失败");
             throw new BizException("JWT 验签失败");
         }
+        JSONObject payloads = jwt.getPayloads();
+        if (payloads == null || payloads.get("exp") == null) {
+            log.warn("JWT 缺少 exp 声明");
+            throw new BizException("JWT 缺少 exp 声明");
+        }
         if (!jwt.validate(0)) {
             log.warn("JWT 过期");
             throw new BizException("JWT 已过期或时间声明非法");
         }
-        JSONObject payloads = jwt.getPayloads();
-        return payloads == null ? null : payloads.getStr(prop);
+        return payloads.getStr(prop);
     }
 
     /**
@@ -63,6 +67,9 @@ public class JwtUtil {
         if (signKey == null || signKey.isBlank()) {
             throw new BizException("未配置 " + SIGN_KEY_PROPERTY + "，JWT 验签不可用");
         }
+        if (signKey.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new BizException(SIGN_KEY_PROPERTY + " 密钥长度不足 32 字节，不满足 HS256 最小强度");
+        }
         return signKey;
     }
 
@@ -71,7 +78,7 @@ public class JwtUtil {
             throw new BizException("auth 头为空");
         }
         String[] parts = auth.split(" ");
-        if (parts.length < 2 || parts[1].isEmpty()) {
+        if (parts.length < 2 || parts[1].isEmpty() || !"Bearer".equalsIgnoreCase(parts[0])) {
             throw new BizException("auth 头格式非法，应为 Bearer <token>");
         }
         return parts[1];

@@ -89,6 +89,16 @@ class LogSanitizeUtilTest {
     }
 
     @Test
+    void maskJson_appKeyAndAppSecret_masked() {
+        // B-04：三方平台 configJson 的 appKey/appSecret 不得明文返回或落日志
+        String json = "{\"baseUrl\":\"https://x.example\",\"appKey\":\"ak-123\",\"appSecret\":\"s3cr3t\"}";
+        String masked = LogSanitizeUtil.maskJson(json);
+        assertFalse(masked.contains("ak-123"), "appKey 值必须掩码");
+        assertFalse(masked.contains("s3cr3t"), "appSecret 值必须掩码");
+        assertTrue(masked.contains("https://x.example"), "非敏感字段保留");
+    }
+
+    @Test
     void maskJson_nonJsonOrScalar_unchanged() {
         assertNull(LogSanitizeUtil.maskJson(null));
         assertEquals("plain text body", LogSanitizeUtil.maskJson("plain text body"));

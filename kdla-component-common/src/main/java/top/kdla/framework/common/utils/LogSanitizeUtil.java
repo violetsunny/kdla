@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  * <p>
  * 规则：
  * <ul>
- *     <li>Header/JSON 键名命中敏感名（精确黑名单 + token/secret/credential/apikey/session/csrf/idcard 变体匹配，忽略大小写）时值替换为 ***</li>
+ *     <li>Header/JSON 键名命中敏感名（精确黑名单 + token/secret/credential/apikey/appkey/session/csrf/idcard 变体匹配，忽略大小写）时值替换为 ***</li>
  *     <li>URL query 中敏感参数名（如 access_token）的值替换为 ***，防 webhook 凭据随 URL 进日志</li>
  *     <li>手机号保留前 3 后 4，中间打 ****</li>
  *     <li>日志体超过 2KB（2048 字符）截断，并追加 "...(truncated, total=原始长度)"</li>
@@ -207,6 +207,7 @@ public final class LogSanitizeUtil {
                 || lower.contains("secret")
                 || lower.contains("credential")
                 || lower.contains("apikey")
+                || lower.contains("appkey")
                 || lower.contains("api-key")
                 || lower.contains("session")
                 || lower.contains("csrf")

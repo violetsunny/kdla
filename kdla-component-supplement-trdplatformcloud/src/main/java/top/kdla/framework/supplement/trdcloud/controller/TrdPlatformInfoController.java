@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import top.kdla.framework.common.utils.LogSanitizeUtil;
 import top.kdla.framework.dto.MultiResponse;
 import top.kdla.framework.dto.PageResponse;
 import top.kdla.framework.dto.SingleResponse;
@@ -53,6 +54,7 @@ public class TrdPlatformInfoController {
         trdPlatformInfoVo.setCreateTime(DateUtil.format(entity.getCreateTime(), "yyyy-MM-dd HH:mm:ss"));
         trdPlatformInfoVo.setUpdateTime(DateUtil.format(entity.getUpdateTime(), "yyyy-MM-dd HH:mm:ss"));
         trdPlatformInfoVo.setPSource(StringUtils.isNotBlank(trdPlatformInfoVo.getPSource()) ? trdPlatformInfoVo.getPSource() : ModelSourceEnum.CUSTOM.getCode());
+        trdPlatformInfoVo.setConfigJson(LogSanitizeUtil.maskJson(trdPlatformInfoVo.getConfigJson()));
         return SingleResponse.buildSuccess(trdPlatformInfoVo);
     }
 
@@ -71,6 +73,7 @@ public class TrdPlatformInfoController {
             trdPlatformInfoVo.setCreateTime(DateUtil.format(bo.getCreateTime(), "yyyy-MM-dd HH:mm:ss"));
             trdPlatformInfoVo.setUpdateTime(DateUtil.format(bo.getUpdateTime(), "yyyy-MM-dd HH:mm:ss"));
             trdPlatformInfoVo.setPSource(StringUtils.isNotBlank(bo.getPlatformSource()) ? bo.getPlatformSource() : ModelSourceEnum.CUSTOM.getCode());
+            trdPlatformInfoVo.setConfigJson(LogSanitizeUtil.maskJson(trdPlatformInfoVo.getConfigJson()));
             trdPlatformInfoVoList.add(trdPlatformInfoVo);
         });
         return PageResponse.of(trdPlatformInfoVoList, page.getTotalCount(), page.getPageSize(), page.getPageNum());
@@ -91,6 +94,7 @@ public class TrdPlatformInfoController {
             trdPlatformInfoVo.setCreateTime(DateUtil.format(bo.getCreateTime(), "yyyy-MM-dd HH:mm:ss"));
             trdPlatformInfoVo.setUpdateTime(DateUtil.format(bo.getUpdateTime(), "yyyy-MM-dd HH:mm:ss"));
             trdPlatformInfoVo.setPSource(StringUtils.isNotBlank(bo.getPlatformSource()) ? bo.getPlatformSource() : ModelSourceEnum.CUSTOM.getCode());
+            trdPlatformInfoVo.setConfigJson(LogSanitizeUtil.maskJson(trdPlatformInfoVo.getConfigJson()));
             trdPlatformInfoVoList.add(trdPlatformInfoVo);
         });
         return MultiResponse.buildSuccess(trdPlatformInfoVoList);
