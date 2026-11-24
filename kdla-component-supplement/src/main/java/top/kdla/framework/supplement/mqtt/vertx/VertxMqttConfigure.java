@@ -8,6 +8,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.net.JksOptions;
 import io.vertx.mqtt.MqttClient;
 import io.vertx.mqtt.MqttClientOptions;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,9 @@ import java.util.stream.IntStream;
 @Slf4j
 public class VertxMqttConfigure {
 
+    //Vertx net/MQTT 客户端默认算法为 null 即不校验 hostname，须显式置 HTTPS
+    private static final String HOSTNAME_VERIFICATION_ALGORITHM = "HTTPS";
+
     @Value("${kdla.mqtt.clientId:kdla-clientId}")
     private String clientId;
 
@@ -50,6 +54,16 @@ public class VertxMqttConfigure {
 
     @Value("${kdla.mqtt.ssl:false}")
     private boolean ssl;
+
+    //私有 CA broker 的信任库（JKS）；留空则用 JVM 默认信任库，绝不 trust-all
+    @Value("${kdla.mqtt.ssl.truststore:}")
+    private String truststore;
+
+    @Value("${kdla.mqtt.ssl.truststore-password:}")
+    private String truststorePassword;
+
+    @Value("${kdla.mqtt.ssl.verify-host:true}")
+    private boolean verifyHost;
 
     @Value("${kdla.mqtt.host:localhost}")
     private String host;
@@ -98,7 +112,16 @@ public class VertxMqttConfigure {
                 .setClientId(clientId)
                 .setAckTimeout(acktimeout)
                 .setAutoKeepAlive(true)
-                .setSsl(ssl);
+                .setSsl(ssl)
+                .setHostnameVerificationAlgorithm(verifyHost ? HOSTNAME_VERIFICATION_ALGORITHM : "");
+        // ponytail: 信任库仅支持 JKS（与 SslContextFactory 一致）；升级路径 PEM/PKCS12 走 setPemTrustOptions/setPfxTrustOptions
+        if (ssl && StringUtils.isNotBlank(truststore)) {
+            JksOptions trustOptions = new JksOptions().setPath(truststore);
+            if (StringUtils.isNotBlank(truststorePassword)) {
+                trustOptions.setPassword(truststorePassword);
+            }
+            options.setTrustStoreOptions(trustOptions);
+        }
         if (StringUtils.isNotBlank(username) && !"-1".equals(username)) {
             options.setUsername(username);
         }
