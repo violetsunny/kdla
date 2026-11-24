@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.commons.lang3.StringUtils;
 import top.kdla.framework.infra.dal.mybatis.common.DoConstants;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -26,7 +27,11 @@ public class IPageQuery<T> {
     }
 
     public IPage<T> mapPage(Map<String, Object> params, String defaultOrderField, boolean isAsc) {
-        //分页参数（容错解析：非String/非数字/负数一律回退默认值，limit加上限）
+        //params允许为null，与PlusPageQuery一致（此前直接get/put抛NPE）
+        if (params == null) {
+            params = new HashMap<>();
+        }
+        //分页参数（容错解析：非String/非数字/负数/0一律回退默认值，limit加上限）
         long curPage = parsePagingValue(params.get(DoConstants.PAGE), 1);
         long limit = parsePagingValue(params.get(DoConstants.LIMIT), 10);
         if (limit > MAX_LIMIT) {
@@ -41,8 +46,11 @@ public class IPageQuery<T> {
 
         //排序字段
         //防止SQL注入（因为sidx、order是通过拼接SQL实现排序的，会有SQL注入风险）
-        String orderField = SqlFilter.sqlInject((String)params.get(DoConstants.ORDER_FIELD));
-        String order = (String)params.get(DoConstants.ORDER);
+        //sidx/order容错：非String（JSON对象/数组绑定为Map/List）按缺省处理，此前硬转抛ClassCastException
+        Object orderFieldValue = params.get(DoConstants.ORDER_FIELD);
+        String orderField = SqlFilter.sqlInject(orderFieldValue instanceof String ? (String) orderFieldValue : null);
+        Object orderValue = params.get(DoConstants.ORDER);
+        String order = orderValue instanceof String ? (String) orderValue : null;
 
         //前端字段排序
         if (StringUtils.isNotEmpty(orderField) && StringUtils.isNotEmpty(order)) {
@@ -70,7 +78,7 @@ public class IPageQuery<T> {
 
     /**
      * 分页参数容错解析：值可能是String/Integer等任意类型，统一String.valueOf后try-parse，
-     * 解析失败或为负数时回退默认值（此前(String)强转+parseLong无防护，类型不符抛ClassCastException、非数字抛NumberFormatException）
+     * 解析失败、负数或0时回退默认值（0与PlusPageQuery对齐；此前(String)强转+parseLong无防护，类型不符抛ClassCastException、非数字抛NumberFormatException）
      *
      * @param value        原始参数值，可为null
      * @param defaultValue 回退默认值
@@ -82,7 +90,7 @@ public class IPageQuery<T> {
         }
         try {
             long parsed = Long.parseLong(String.valueOf(value).trim());
-            return parsed < 0 ? defaultValue : parsed;
+            return parsed <= 0 ? defaultValue : parsed;
         } catch (NumberFormatException e) {
             return defaultValue;
         }

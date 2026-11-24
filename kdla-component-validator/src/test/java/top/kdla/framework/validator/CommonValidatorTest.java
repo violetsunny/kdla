@@ -1,5 +1,8 @@
 package top.kdla.framework.validator;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import org.junit.jupiter.api.Test;
 import top.kdla.framework.exception.BizException;
 
@@ -34,5 +37,24 @@ class CommonValidatorTest {
         CommonValidator validator = new CommonValidator();
         assertThrows(BizException.class, () -> validator.defaultValidate(null),
                 "null入参必须抛BizException（原有行为保持）");
+    }
+
+    @Test
+    void construction_isLazy_noFactoryUntilFirstValidate() throws Exception {
+        CommonValidator validator = new CommonValidator();
+        java.lang.reflect.Field factoryField = CommonValidator.class.getDeclaredField("factory");
+        factoryField.setAccessible(true);
+        // 修复前：实例初始化块急建factory（且无factory字段，反射直接NoSuchFieldException）
+        assertNull(factoryField.get(validator), "构造时不得建factory");
+        validator.defaultValidate(new Object());
+        assertNotNull(factoryField.get(validator), "首次校验才懒加载factory");
+    }
+
+    @Test
+    void close_thenValidate_reinitializes() {
+        CommonValidator validator = new CommonValidator();
+        validator.defaultValidate(new Object());
+        validator.close();
+        assertDoesNotThrow(() -> validator.defaultValidate(new Object()), "close后再校验须重新懒加载");
     }
 }

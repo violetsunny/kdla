@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ObjectValidator<T> extends ValidatorHandler<T> implements Validator<T> {
 
     /**
-     * 递归深度上限：超过后不再向下遍历，防止超深对象图拖垮校验
+     * 递归深度上限：超过即拒绝校验（fail-closed），防超深对象图拖垮校验或绕过深层注解
      */
     private static final int MAX_RECURSION_DEPTH = 16;
 
@@ -72,8 +72,12 @@ public class ObjectValidator<T> extends ValidatorHandler<T> implements Validator
      */
     private <T> void getClassErrorMsg(T t, Class<? extends Annotation> annotation, Object bizObj, List<String> msg,
                                       int depth, Set<Object> visited) throws Exception {
-        if (t == null || depth > MAX_RECURSION_DEPTH) {
+        if (t == null) {
             return;
+        }
+        //超深fail-closed：此前静默return使深层注解校验被绕过，改为拒绝
+        if (depth > MAX_RECURSION_DEPTH) {
+            throw new BizException(ErrorCode.PARAMETER_ERROR, "对象层级过深，超过校验深度上限" + MAX_RECURSION_DEPTH);
         }
         // 循环引用防护：同一对象只遍历一次
         if (!visited.add(t)) {

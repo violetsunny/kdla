@@ -16,10 +16,18 @@ import java.util.Set;
  * @since 2021/7/9 14:15
  */
 public class ValidatorUtils {
-    private static Validator validator;
+    private static volatile Validator validator;
 
-    static {
-        validator = Validation.buildDefaultValidatorFactory().getValidator();
+    //懒加载：此前静态块类加载即建factory，无实现时ExceptionInInitializerError
+    private static Validator validator() {
+        if (validator == null) {
+            synchronized (ValidatorUtils.class) {
+                if (validator == null) {
+                    validator = Validation.buildDefaultValidatorFactory().getValidator();
+                }
+            }
+        }
+        return validator;
     }
 
     /**
@@ -30,7 +38,7 @@ public class ValidatorUtils {
      * @throws BizException 校验不通过，则报BizException异常
      */
     public static void validate(Object object, Class<?>... groups) throws BizException {
-        Set<ConstraintViolation<Object>> constraintViolations = validator.validate(object, groups);
+        Set<ConstraintViolation<Object>> constraintViolations = validator().validate(object, groups);
         if (!constraintViolations.isEmpty()) {
             StringBuilder msg = new StringBuilder();
             for (ConstraintViolation<Object> constraint : constraintViolations) {
@@ -47,7 +55,7 @@ public class ValidatorUtils {
      * @throws BizException 校验不通过，则报BizException异常
      */
     public static void validate(Object object) throws BizException {
-        Set<ConstraintViolation<Object>> constraintViolations = validator.validate(object);
+        Set<ConstraintViolation<Object>> constraintViolations = validator().validate(object);
         if (!constraintViolations.isEmpty()) {
             StringBuilder msg = new StringBuilder();
             for (ConstraintViolation<Object> constraint : constraintViolations) {

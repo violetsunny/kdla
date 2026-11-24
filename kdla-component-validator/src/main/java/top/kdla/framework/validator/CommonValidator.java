@@ -23,26 +23,46 @@ import java.util.stream.Collectors;
  *
  * @author kll
  */
-public class CommonValidator {
+public class CommonValidator implements AutoCloseable {
 
-    protected Validator validator;
+    protected volatile Validator validator;
 
-    {
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        validator = factory.getValidator();
-    }
+    private ValidatorFactory factory;
 
     public <T> void defaultValidate(T t) {
         if (null == t) {
             throw new BizException(ErrorCode.PARAMETER_ERROR.getCode(), "请求参数错误,提示信息: %s", "请求对象为null");
         }
 
+        //懒加载：此前实例初始化块急建factory，下游只有validation-api无实现时构造即NoProviderFoundException
+        if (validator == null) {
+            synchronized (this) {
+                if (validator == null) {
+                    factory = Validation.buildDefaultValidatorFactory();
+                    validator = factory.getValidator();
+                }
+            }
+        }
         Set<ConstraintViolation<T>> violations = validator.validate(t);
         if (!violations.isEmpty()) {
             List<String> errors = violations.stream()
                 .map(v -> v.getPropertyPath() + ": " + v.getMessage())
                 .collect(Collectors.toList());
             throw new BizException(ErrorCode.PARAMETER_ERROR.getCode(), "请求参数错误,提示信息: %s", errors);
+        }
+    }
+
+    /**
+     * 释放ValidatorFactory（Spring Bean销毁时回调），此后再校验会重新懒加载
+     */
+    @Override
+    public void close() {
+        synchronized (this) {
+            if (factory != null) {
+                factory.close();
+                factory = null;
+                validator = null;
+            }
         }
     }
 

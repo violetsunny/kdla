@@ -66,4 +66,13 @@ class PlusPageQueryTest {
 
         assertTrue(params.get(DoConstants.PAGE) instanceof IPage, "非null params必须放入分页对象");
     }
+
+    @Test
+    void pageSizeOverCap_cappedTo500() {
+        PlusPageQuery<Object> query = new PlusPageQuery<>(1, Long.MAX_VALUE, null, null);
+
+        // 修复前：pageSize无上限 → LIMIT Long.MAX_VALUE 全表扫描DoS
+        assertEquals(500, query.getPage().getSize(), "pageSize必须封顶500");
+        assertEquals(500, query.getPage("id", false).getSize(), "带默认排序的重载同样封顶");
+    }
 }

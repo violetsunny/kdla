@@ -1,6 +1,9 @@
 package top.kdla.framework.infra.dal.mybatis.util;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import java.util.List;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import top.kdla.framework.infra.dal.mybatis.common.DoConstants;
 
@@ -71,6 +74,38 @@ class IPageQueryTest {
     void absentValues_useDefaults() {
         IPage<Object> page = query.mapPage(new HashMap<>());
 
+        assertEquals(1, page.getCurrent());
+        assertEquals(10, page.getSize());
+    }
+
+    @Test
+    void zeroValues_fallbackToDefault() {
+        Map<String, Object> params = new HashMap<>();
+        params.put(DoConstants.PAGE, 0);
+        params.put(DoConstants.LIMIT, 0);
+
+        IPage<Object> page = query.mapPage(params);
+
+        // 修复前：limit=0透传→空页，与PlusPageQuery（0回退10）不一致
+        assertEquals(1, page.getCurrent(), "页码0必须回退默认");
+        assertEquals(10, page.getSize(), "页大小0必须回退默认");
+    }
+
+    @Test
+    void nonStringOrderValues_noClassCastException() {
+        Map<String, Object> params = new HashMap<>();
+        // 修复前：(String)强转Map/List抛ClassCastException 500
+        params.put(DoConstants.ORDER_FIELD, Map.of("col", "name"));
+        params.put(DoConstants.ORDER, List.of("asc"));
+
+        IPage<Object> page = assertDoesNotThrow(() -> query.mapPage(params));
+        assertTrue(page.orders().isEmpty(), "非字符串排序参数须按缺省处理");
+    }
+
+    @Test
+    void nullParams_noNPE() {
+        // 修复前：params.get直接NPE
+        IPage<Object> page = assertDoesNotThrow(() -> query.mapPage(null));
         assertEquals(1, page.getCurrent());
         assertEquals(10, page.getSize());
     }

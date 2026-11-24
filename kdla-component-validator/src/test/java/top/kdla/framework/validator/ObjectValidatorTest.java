@@ -96,11 +96,25 @@ class ObjectValidatorTest {
     }
 
     @Test
-    void deepChain_boundedByDepthLimit() {
-        // 2万层链式对象：修复前无深度上限，递归到底StackOverflowError；修复后深度16封顶
+    void deepChain_failClosedBeyondDepthLimit() {
+        // 2万层链式对象：修复前超深静默放行（fail-open，深层注解被绕过）；修复后超深拒绝
         Node head = new Node();
         Node cur = head;
         for (int i = 0; i < 20000; i++) {
+            cur.next = new Node();
+            cur = cur.next;
+        }
+        BizException e = assertThrows(BizException.class,
+                () -> validator.getValidatorMsg(head, CheckPresent.class, "biz"));
+        assertTrue(e.getMessage().contains("层级过深"), "超深必须拒绝，实际=" + e.getMessage());
+    }
+
+    @Test
+    void chainAtDepthLimit_passes() {
+        // 17个节点对应深度0..16，恰在上限内，必须放行
+        Node head = new Node();
+        Node cur = head;
+        for (int i = 0; i < 16; i++) {
             cur.next = new Node();
             cur = cur.next;
         }

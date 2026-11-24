@@ -1,6 +1,9 @@
 package top.kdla.framework.validator.config;
 
+import org.hibernate.validator.HibernateValidator;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import top.kdla.framework.validator.CommonValidator;
@@ -52,6 +55,23 @@ class ValidatorAutoConfigureRegistrationTest {
                 .run(context -> {
                     assertThat(context).hasSingleBean(CommonValidator.class);
                     assertThat(context.getBean(CommonValidator.class)).isSameAs(userBean);
+                });
+    }
+
+    @Test
+    void conditionGuardsImplementationNotApi() {
+        ConditionalOnClass cond = ValidatorAutoConfigure.class.getAnnotation(ConditionalOnClass.class);
+        // 修复前：value={jakarta.validation.Validator.class}守API，下游无实现时启动失败
+        assertThat(cond.name()).contains("org.hibernate.validator.HibernateValidator");
+        assertThat(cond.value()).isEmpty();
+    }
+
+    @Test
+    void noHibernateImplementation_autoConfigureBacksOff() {
+        runner.withClassLoader(new FilteredClassLoader(HibernateValidator.class))
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context).doesNotHaveBean(CommonValidator.class);
                 });
     }
 }

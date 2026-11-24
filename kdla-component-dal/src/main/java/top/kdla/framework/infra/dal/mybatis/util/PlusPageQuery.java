@@ -22,6 +22,11 @@ import java.util.Map;
 public class PlusPageQuery<T> {
 
     /**
+     * 每页条数上限，与IPageQuery对齐，防止超大pageSize拖垮数据库
+     */
+    private static final long MAX_LIMIT = 500;
+
+    /**
      * 页码
      */
     private long pageNum;
@@ -70,7 +75,7 @@ public class PlusPageQuery<T> {
             curPage = this.getPageNum();
         }
         if (this.getPageSize() > 0) {
-            limit = this.getPageSize();
+            limit = Math.min(this.getPageSize(), MAX_LIMIT);
         }
 
         //分页对象
@@ -119,7 +124,7 @@ public class PlusPageQuery<T> {
             curPage = this.getPageNum();
         }
         if (this.getPageSize() > 0) {
-            limit = this.getPageSize();
+            limit = Math.min(this.getPageSize(), MAX_LIMIT);
         }
 
         //分页对象
