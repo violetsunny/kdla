@@ -45,28 +45,35 @@ public class JdkSerializeTool {
 
 
     /**
-     * 将byte[] -->Object
-     *
-     * @param bytes
-     * @return
+     * 将byte[] -->Object，默认按 clazz 与内嵌 xxl-job 模型构造 JEP 290 白名单过滤。
+     * 被拒绝的类不会实例化，返回 null（fail-closed）。下游自有类型请改用带 filter 的重载。
      */
     public static  <T> Object deserialize(byte[] bytes, Class<T> clazz) {
-        ByteArrayInputStream bais = null;
-        try {
-            // 反序列化
-            bais = new ByteArrayInputStream(bytes);
-            ObjectInputStream ois = new ObjectInputStream(bais);
+        return deserialize(bytes, clazz, defaultFilter(clazz));
+    }
+
+    /**
+     * 带 ObjectInputFilter 的反序列化（JEP 290）；filter 为 null 时不过滤，仅限可信字节。
+     */
+    public static <T> Object deserialize(byte[] bytes, Class<T> clazz, ObjectInputFilter filter) {
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+             ObjectInputStream ois = new ObjectInputStream(bais)) {
+            if (filter != null) {
+                ois.setObjectInputFilter(filter);
+            }
             return ois.readObject();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
-        } finally {
-            try {
-                bais.close();
-            } catch (IOException e) {
-                logger.error(e.getMessage(), e);
-            }
         }
         return null;
+    }
+
+    // ponytail: 白名单 = java.base + 调用方声明类型 + com.xxl.job.**；升级路径为下游显式传入更窄的 filter。
+    private static ObjectInputFilter defaultFilter(Class<?> clazz) {
+        String expected = (clazz == null || clazz.isArray()) ? "" : clazz.getName() + ";";
+        return ObjectInputFilter.Config.createFilter(
+                "maxdepth=20;maxarray=100000;maxbytes=10485760;maxrefs=100000;java.base/*;"
+                        + expected + "com.xxl.job.**;!*");
     }
 
 
