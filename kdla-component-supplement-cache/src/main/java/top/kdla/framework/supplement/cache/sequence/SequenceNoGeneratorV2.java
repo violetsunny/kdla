@@ -16,6 +16,7 @@ import top.kdla.framework.supplement.cache.sequence.model.rules.random.RandomTyp
 import top.kdla.framework.supplement.cache.sequence.model.rules.random.RandomTypeRule;
 import top.kdla.framework.supplement.cache.sequence.model.rules.sequence.SequenceTypeRule;
 
+import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -315,7 +316,8 @@ public class SequenceNoGeneratorV2 {
             throw new BizException("随机字符池不能为空");
         }
         StringBuilder sb = new StringBuilder();
-        Random random = new Random();
+        // 业务编号随机段须不可预测，java.util.Random 为 48-bit LCG 可被恢复种子
+        SecureRandom random = new SecureRandom();
         int i = 1;
         while (randomTypeRule.getSize() >= i) {
             sb.append(poolList.get(random.nextInt(poolList.size())));

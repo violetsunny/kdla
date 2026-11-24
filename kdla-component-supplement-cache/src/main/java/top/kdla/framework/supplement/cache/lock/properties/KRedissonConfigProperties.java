@@ -6,6 +6,7 @@ package top.kdla.framework.supplement.cache.lock.properties;
 
 import io.netty.channel.nio.NioEventLoopGroup;
 import lombok.Data;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
@@ -49,6 +50,7 @@ public class KRedissonConfigProperties {
     private int reconnectionTimeout=3000;
     private int failedAttempts=3;
     //multi nodes, password split by comma(,)
+    @ToString.Exclude
     private String password = null;
     private int subscriptionsPerConnection=5;
     private String clientName=null;

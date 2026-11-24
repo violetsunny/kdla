@@ -7,6 +7,7 @@ import top.kdla.framework.supplement.cache.lock.RedisClusterType;
 import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * 回归测试：密码须在各模式自己的配置链内联设置。
@@ -78,5 +79,12 @@ class KRedissonConfigPropertiesPasswordTest {
 
         assertEquals("secret", config.useSentinelServers().getPassword(), "密码须落在哨兵配置上");
         assertEquals("mymaster", config.useSentinelServers().getMasterName(), "masterName须落在哨兵配置上");
+    }
+
+    @Test
+    void toString_excludesPassword() {
+        // 安全回归：@Data toString 旧实现含 password 明文，@ToString.Exclude 后不得泄露
+        KRedissonConfigProperties p = props(RedisClusterType.SINGLE, "127.0.0.1:6379");
+        assertFalse(p.toString().contains("secret"), "toString 不得泄露 password");
     }
 }
