@@ -39,6 +39,8 @@ import java.util.Objects;
  *   可以满足电子认证服务系统等应用需求，由国家密码管理局于2010年12月17号发布。
  *   SM2采用的是ECC 256位的一种，其安全强度比RSA 2048位高，且运算速度快于RSA。
  * </pre>
+ * <p>密钥编码双轨：encrypt/decrypt 用 Base64(X509/PKCS8)；sign/verify 的 String 重载用 hex 裸私钥 D / hex 裸公钥点，不可混用。
+ * <p>SM2Engine 默认 C1C2C3 旧序，现行 GB/T 32918 为 C1C3C2，跨实现互通须确认模式一致。
  *
  * @author wangMaoXiong
  * @version 1.0
@@ -179,7 +181,7 @@ public class Sm2Util {
      * 签名
      *
      * @param plainText  待签名文本
-     * @param privateKey 私钥
+     * @param privateKey hex 裸私钥 D（非 Base64 PKCS8，与 encrypt/decrypt 编码不同，不可混用）
      * @return
      * @throws GeneralSecurityException
      */
@@ -207,7 +209,7 @@ public class Sm2Util {
      *
      * @param plainText 待签名文本
      * @param signText  签名
-     * @param publicKey 公钥
+     * @param publicKey hex 裸公钥点（非 Base64 X509，与 encrypt/decrypt 编码不同，不可混用）
      * @return
      * @throws GeneralSecurityException
      */
