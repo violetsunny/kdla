@@ -1,0 +1,26 @@
+
+[files]
+  OK   AGENTS.md 存在
+  OK   README.md 存在
+  OK   CHANGELOG.md 存在
+  OK   docs/project-map.md 存在
+  OK   docs/architecture.md 存在
+
+[links]
+  OK   本地 Markdown 链接全部可解析
+
+[paths]
+  OK   反引号引用的仓库路径全部存在
+
+[freshness]
+  OK   docs/project-map.md 新鲜度 0 天（阈值 90 内）
+  OK   docs/architecture.md 新鲜度 0 天（阈值 90 内）
+
+[delete-zone]
+  OK   AGENTS.md 未登记删除区（无有意删除项时无需该节）
+
+[orphans]
+  OK   docs/project-map.md 被入口文档引用
+  OK   docs/architecture.md 被入口文档引用
+
+审计通过：0 个完整性错误，0 个警告。WARN 须逐条人工复核或写入执行摘要。

@@ -1,3 +1,12 @@
+// 会话绑定 CSRF token：所有 jQuery AJAX（含 $.post 与 DataTables）统一注入，服务端 PermissionInterceptor 校验
+$.ajaxSetup({
+	beforeSend: function (xhr) {
+		if (typeof csrf_token !== 'undefined' && csrf_token) {
+			xhr.setRequestHeader('X-CSRF-TOKEN', csrf_token);
+		}
+	}
+});
+
 $(function(){
 
 	// logout

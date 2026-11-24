@@ -2,6 +2,7 @@ package com.xxl.job.admin.controller.interceptor;
 
 import com.xxl.job.admin.controller.annotation.PermissionLimit;
 import com.xxl.job.admin.core.model.XxlJobUser;
+import com.xxl.job.admin.core.util.CookieUtil;
 import com.xxl.job.admin.core.util.I18nUtil;
 import com.xxl.job.admin.service.LoginService;
 import com.xxl.job.admin.controller.JobInfoController;
@@ -43,6 +44,7 @@ public class PermissionInterceptor implements AsyncHandlerInterceptor {
 			needAdminuser = permission.adminuser();
 		}
 
+		boolean machineAuth = false;
 		if (needLogin) {
 			XxlJobUser loginUser = loginService.ifLogin(request, response);
 			if (loginUser == null && !needAdminuser && method.getBeanType() == JobInfoController.class) {
@@ -54,6 +56,7 @@ public class PermissionInterceptor implements AsyncHandlerInterceptor {
 					loginUser = new XxlJobUser();
 					loginUser.setUsername("xxl-job-machine");
 					loginUser.setRole(1);
+					machineAuth = true;
 				}
 			}
 			if (loginUser == null) {
@@ -67,6 +70,22 @@ public class PermissionInterceptor implements AsyncHandlerInterceptor {
 			request.setAttribute(LoginService.LOGIN_IDENTITY_KEY, loginUser);
 		}
 
+		// CSRF：浏览器会话的变更请求须带会话绑定 token；安全方法、无 cookie 的匿名请求(login)与机器调用豁免。
+		// 仅 accessToken 校验通过才豁免，伪造 token 头不能绕过（此时仍走 cookie 鉴权）
+		if (!machineAuth && isStateChanging(request.getMethod())) {
+			String cookieToken = CookieUtil.getValue(request, LoginService.LOGIN_IDENTITY_KEY);
+			if (cookieToken != null
+					&& !loginService.validCsrfToken(cookieToken, request.getHeader(LoginService.CSRF_HEADER))) {
+				response.setStatus(403);
+				return false;
+			}
+		}
+
 		return true;	// proceed with the next interceptor
+	}
+
+	private static boolean isStateChanging(String method) {
+		return "POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)
+				|| "PATCH".equalsIgnoreCase(method) || "DELETE".equalsIgnoreCase(method);
 	}
 }

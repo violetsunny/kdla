@@ -31,6 +31,8 @@ public class LoginService {
 
     public static final String LOGIN_IDENTITY_KEY = "XXL_JOB_LOGIN_IDENTITY";
 
+    public static final String CSRF_HEADER = "X-CSRF-TOKEN";
+
     @Resource
     private XxlJobUserDao xxlJobUserDao;
 
@@ -109,6 +111,22 @@ public class LoginService {
         } catch (Exception e) {
             throw new IllegalStateException("会话 token HMAC 计算失败", e);
         }
+    }
+
+    /**
+     * 会话绑定 CSRF token：hex(HMAC("csrf|" + 会话token))。域分隔前缀避免与会话签名混用。
+     * ponytail: 会话期内固定，非一次性；一次性 token 需服务端存 nonce，与现有无状态会话冲突
+     */
+    public String makeCsrfToken(String cookieToken) {
+        return HexFormat.of().formatHex(hmac(("csrf|" + cookieToken).getBytes(StandardCharsets.UTF_8)));
+    }
+
+    public boolean validCsrfToken(String cookieToken, String presented) {
+        if (cookieToken == null || presented == null || presented.isEmpty()) {
+            return false;
+        }
+        return MessageDigest.isEqual(makeCsrfToken(cookieToken).getBytes(StandardCharsets.UTF_8),
+                presented.getBytes(StandardCharsets.UTF_8));
     }
 
 

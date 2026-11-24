@@ -60,6 +60,7 @@
     <script>
 		var base_url = '${request.contextPath}';
         var I18n = ${I18nUtil.getMultString()};
+        var csrf_token = '${csrfToken!''}';
 	</script>
 
 </#macro>

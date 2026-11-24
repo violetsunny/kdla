@@ -1,0 +1,31 @@
+
+[files]
+  OK   AGENTS.md 存在
+  OK   README.md 存在
+  OK   CHANGELOG.md 存在
+  OK   docs/project-map.md 存在
+  OK   docs/architecture.md 存在
+
+[links]
+  OK   本地 Markdown 链接全部可解析
+
+[paths]
+  FAIL 引用路径不存在：AGENTS.md -> docs/adr/
+  FAIL 引用路径不存在：docs/architecture.md -> META-INF/spring.factories
+  FAIL 引用路径不存在：docs/architecture.md -> ~/.m2
+  FAIL 引用路径不存在：docs/architecture.md -> ~/.m2/settings.xml
+  FAIL 引用路径不存在：docs/project-map.md -> META-INF/spring.factories
+  FAIL 引用路径不存在：docs/project-map.md -> src/test/java/
+
+[freshness]
+  WARN docs/project-map.md 首行缺少新鲜度头 <!-- Generated: YYYY-MM-DD | Files scanned: N -->
+  WARN docs/architecture.md 首行缺少新鲜度头 <!-- Generated: YYYY-MM-DD | Files scanned: N -->
+
+[delete-zone]
+  OK   AGENTS.md 未登记删除区（无有意删除项时无需该节）
+
+[orphans]
+  OK   docs/project-map.md 被入口文档引用
+  OK   docs/architecture.md 被入口文档引用
+
+审计失败：6 个完整性错误，2 个警告。先修复 FAIL 再进入语义核查。
