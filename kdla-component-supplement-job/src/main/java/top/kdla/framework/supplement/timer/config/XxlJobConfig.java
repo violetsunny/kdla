@@ -48,6 +48,10 @@ public class XxlJobConfig {
         this.adminAddresses = adminAddresses;
     }
 
+    public String getAccessToken() {
+        return accessToken;
+    }
+
     @Bean
     @ConditionalOnProperty(prefix = "xxl.enabled", name = "xxl", havingValue = "true")
     public IotXxlJobSpringExecutor xxlJobExecutor() {

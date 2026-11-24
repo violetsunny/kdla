@@ -1,6 +1,5 @@
 package com.xxl.job.admin.controller;
 
-import com.xxl.job.admin.controller.annotation.PermissionLimit;
 import com.xxl.job.admin.core.exception.XxlJobException;
 import com.xxl.job.admin.core.model.XxlJobGroup;
 import com.xxl.job.admin.core.model.XxlJobInfo;
@@ -13,6 +12,7 @@ import com.xxl.job.admin.core.thread.JobTriggerPoolHelper;
 import com.xxl.job.admin.core.trigger.TriggerTypeEnum;
 import com.xxl.job.admin.core.util.I18nUtil;
 import com.xxl.job.admin.dao.XxlJobGroupDao;
+import com.xxl.job.admin.dao.XxlJobInfoDao;
 import com.xxl.job.admin.service.LoginService;
 import com.xxl.job.admin.service.XxlJobService;
 import com.xxl.job.core.biz.model.ReturnT;
@@ -44,6 +44,8 @@ public class JobInfoController {
 	private XxlJobGroupDao xxlJobGroupDao;
 	@Resource
 	private XxlJobService xxlJobService;
+	@Resource
+	private XxlJobInfoDao xxlJobInfoDao;
 	
 	@RequestMapping
 	public String index(HttpServletRequest request, Model model, @RequestParam(required = false, defaultValue = "-1") int jobGroup) {
@@ -96,57 +98,64 @@ public class JobInfoController {
 			throw new RuntimeException(I18nUtil.getString("system_permission_limit") + "[username="+ loginUser.getUsername() +"]");
 		}
 	}
+
+	private void validJobIdPermission(HttpServletRequest request, int id) {
+		XxlJobInfo jobInfo = xxlJobInfoDao.loadById(id);
+		if (jobInfo == null) {
+			throw new RuntimeException(I18nUtil.getString("jobinfo_glue_jobid_unvalid"));
+		}
+		validPermission(request, jobInfo.getJobGroup());
+	}
 	
 	@RequestMapping("/pageList")
 	@ResponseBody
-	@PermissionLimit(limit = false)
-	public Map<String, Object> pageList(@RequestParam(required = false, defaultValue = "0") int start,  
+	public Map<String, Object> pageList(HttpServletRequest request, @RequestParam(required = false, defaultValue = "0") int start,  
 			@RequestParam(required = false, defaultValue = "10") int length,
 			int jobGroup, int triggerStatus, String jobDesc, String executorHandler, String author) {
+		validPermission(request, jobGroup);
 		
 		return xxlJobService.pageList(start, length, jobGroup, triggerStatus, jobDesc, executorHandler, author);
 	}
 	
 	@RequestMapping("/add")
 	@ResponseBody
-	@PermissionLimit(limit = false)
-	public ReturnT<String> add(XxlJobInfo jobInfo) {
+	public ReturnT<String> add(HttpServletRequest request, XxlJobInfo jobInfo) {
+		validPermission(request, jobInfo.getJobGroup());
 		return xxlJobService.add(jobInfo);
 	}
 	
 	@RequestMapping("/update")
 	@ResponseBody
-	@PermissionLimit(limit = false)
-	public ReturnT<String> update(XxlJobInfo jobInfo) {
+	public ReturnT<String> update(HttpServletRequest request, XxlJobInfo jobInfo) {
+		validPermission(request, jobInfo.getJobGroup());
 		return xxlJobService.update(jobInfo);
 	}
 	
 	@RequestMapping("/remove")
 	@ResponseBody
-	@PermissionLimit(limit = false)
-	public ReturnT<String> remove(int id) {
+	public ReturnT<String> remove(HttpServletRequest request, int id) {
+		validJobIdPermission(request, id);
 		return xxlJobService.remove(id);
 	}
 	
 	@RequestMapping("/stop")
 	@ResponseBody
-	@PermissionLimit(limit = false)
-	public ReturnT<String> pause(int id) {
+	public ReturnT<String> pause(HttpServletRequest request, int id) {
+		validJobIdPermission(request, id);
 		return xxlJobService.stop(id);
 	}
 	
 	@RequestMapping("/start")
 	@ResponseBody
-	@PermissionLimit(limit = false)
-	public ReturnT<String> start(int id) {
+	public ReturnT<String> start(HttpServletRequest request, int id) {
+		validJobIdPermission(request, id);
 		return xxlJobService.start(id);
 	}
 	
 	@RequestMapping("/trigger")
 	@ResponseBody
-	@PermissionLimit(limit = false)
-	//@PermissionLimit(limit = false)
-	public ReturnT<String> triggerJob(int id, String executorParam, String addressList) {
+	public ReturnT<String> triggerJob(HttpServletRequest request, int id, String executorParam, String addressList) {
+		validJobIdPermission(request, id);
 		// force cover job param
 		if (executorParam == null) {
 			executorParam = "";
@@ -157,7 +166,6 @@ public class JobInfoController {
 	}
 
 	@RequestMapping("/nextTriggerTime")
-	@PermissionLimit(limit = false)
 	@ResponseBody
 	public ReturnT<List<String>> nextTriggerTime(String scheduleType, String scheduleConf) {
 

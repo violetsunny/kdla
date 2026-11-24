@@ -55,7 +55,7 @@ public class JobCodeController {
 	
 	@RequestMapping("/save")
 	@ResponseBody
-	public ReturnT<String> save(Model model, int id, String glueSource, String glueRemark) {
+	public ReturnT<String> save(HttpServletRequest request, Model model, int id, String glueSource, String glueRemark) {
 		// valid
 		if (glueRemark==null) {
 			return new ReturnT<String>(500, (I18nUtil.getString("system_please_input") + I18nUtil.getString("jobinfo_glue_remark")) );
@@ -67,6 +67,7 @@ public class JobCodeController {
 		if (exists_jobInfo == null) {
 			return new ReturnT<String>(500, I18nUtil.getString("jobinfo_glue_jobid_unvalid"));
 		}
+		JobInfoController.validPermission(request, exists_jobInfo.getJobGroup());
 		
 		// update new code
 		exists_jobInfo.setGlueSource(glueSource);

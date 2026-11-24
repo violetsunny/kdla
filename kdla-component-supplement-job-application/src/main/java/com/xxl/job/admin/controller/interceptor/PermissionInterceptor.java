@@ -4,6 +4,9 @@ import com.xxl.job.admin.controller.annotation.PermissionLimit;
 import com.xxl.job.admin.core.model.XxlJobUser;
 import com.xxl.job.admin.core.util.I18nUtil;
 import com.xxl.job.admin.service.LoginService;
+import com.xxl.job.admin.controller.JobInfoController;
+import com.xxl.job.admin.core.conf.XxlJobAdminConfig;
+import com.xxl.job.core.util.XxlJobRemotingUtil;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.AsyncHandlerInterceptor;
@@ -42,6 +45,17 @@ public class PermissionInterceptor implements AsyncHandlerInterceptor {
 
 		if (needLogin) {
 			XxlJobUser loginUser = loginService.ifLogin(request, response);
+			if (loginUser == null && !needAdminuser && method.getBeanType() == JobInfoController.class) {
+				// 机器调用（执行器/管理端 RPC）：XXL-JOB-ACCESS-TOKEN 鉴权，仅限 jobinfo 接口，合成管理员身份
+				XxlJobAdminConfig adminConfig = XxlJobAdminConfig.getAdminConfig();
+				String configuredToken = adminConfig != null ? adminConfig.getAccessToken() : null;
+				String token = request.getHeader(XxlJobRemotingUtil.XXL_JOB_ACCESS_TOKEN);
+				if (XxlJobRemotingUtil.validAccessToken(configuredToken, token)) {
+					loginUser = new XxlJobUser();
+					loginUser.setUsername("xxl-job-machine");
+					loginUser.setRole(1);
+				}
+			}
 			if (loginUser == null) {
 				response.setStatus(302);
 				response.setHeader("location", request.getContextPath()+"/toLogin");

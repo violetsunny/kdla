@@ -1,6 +1,7 @@
 package top.kdla.framework.supplement.timer.manager.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.xxl.job.core.util.XxlJobRemotingUtil;
 import io.vertx.core.http.HttpMethod;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,15 @@ public class IotXxlJobManager implements TimeJobManagerService {
     @Resource
     private VertxHttpClient vertxHttpClient;
 
+    private Map<String, String> authHeaders() {
+        Map<String, String> headers = new HashMap<>();
+        String token = xxlJobConfig.getAccessToken();
+        if (token != null && !token.trim().isEmpty()) {
+            headers.put(XxlJobRemotingUtil.XXL_JOB_ACCESS_TOKEN, token);
+        }
+        return headers;
+    }
+
     @Override
     public String register(String name, String cron, String handler, String param) {
         String taskId = this.addJob(name, cron, handler, param);
@@ -50,7 +60,7 @@ public class IotXxlJobManager implements TimeJobManagerService {
         String url = xxlJobConfig.getAdminAddresses() + XxlJobUrlConstants.ADD_JOB;
 
         //String body = HttpUtil.createPost(url).form(JSONUtil.toBean(jsonStr, Map.class)).execute().body();
-        CompletableFuture<JSONObject> futureRes = vertxHttpClient.sendRequest(HttpMethod.POST, url, null, xxlJobInfo, JSONObject.class);
+        CompletableFuture<JSONObject> futureRes = vertxHttpClient.sendRequest(HttpMethod.POST, url, authHeaders(), xxlJobInfo, JSONObject.class);
         JSONObject jsonObject = futureRes.get();
         if (jsonObject.getIntValue("code") == 200) {
             return jsonObject.getString("content");
@@ -66,7 +76,7 @@ public class IotXxlJobManager implements TimeJobManagerService {
         String url = xxlJobConfig.getAdminAddresses() + XxlJobUrlConstants.REMOVE_JOB;
         Map<String, Object> stringObjectMap = new HashMap<>();
         stringObjectMap.put("id", Integer.valueOf(id));
-        CompletableFuture<JSONObject> futureRes = vertxHttpClient.sendRequest(HttpMethod.POST, url, null, stringObjectMap, JSONObject.class);
+        CompletableFuture<JSONObject> futureRes = vertxHttpClient.sendRequest(HttpMethod.POST, url, authHeaders(), stringObjectMap, JSONObject.class);
         JSONObject jsonObject = futureRes.get();
         //String body = HttpUtil.createPost(url).form("id", Integer.valueOf(id)).execute().body();
         if (jsonObject.getIntValue("code") == 200) {
@@ -83,7 +93,7 @@ public class IotXxlJobManager implements TimeJobManagerService {
         String url = xxlJobConfig.getAdminAddresses() + XxlJobUrlConstants.START_JOB;
         Map<String, Object> stringObjectMap = new HashMap<>();
         stringObjectMap.put("id", Integer.valueOf(id));
-        CompletableFuture<JSONObject> futureRes = vertxHttpClient.sendRequest(HttpMethod.POST, url, null, stringObjectMap, JSONObject.class);
+        CompletableFuture<JSONObject> futureRes = vertxHttpClient.sendRequest(HttpMethod.POST, url, authHeaders(), stringObjectMap, JSONObject.class);
         JSONObject jsonObject = futureRes.get();
         //String body = HttpUtil.createPost(url).form("id", Integer.valueOf(id)).execute().body();
         if (jsonObject.getIntValue("code") == 200) {
@@ -100,7 +110,7 @@ public class IotXxlJobManager implements TimeJobManagerService {
         String url = xxlJobConfig.getAdminAddresses() + XxlJobUrlConstants.STOP_JOB;
         Map<String, Object> stringObjectMap = new HashMap<>();
         stringObjectMap.put("id", Integer.valueOf(id));
-        CompletableFuture<JSONObject> futureRes = vertxHttpClient.sendRequest(HttpMethod.POST, url, null, stringObjectMap, JSONObject.class);
+        CompletableFuture<JSONObject> futureRes = vertxHttpClient.sendRequest(HttpMethod.POST, url, authHeaders(), stringObjectMap, JSONObject.class);
         JSONObject jsonObject = futureRes.get();
         //String body = HttpUtil.createPost(url).form("id", Integer.valueOf(id)).execute().body();
         if (jsonObject.getIntValue("code") == 200) {
@@ -120,7 +130,7 @@ public class IotXxlJobManager implements TimeJobManagerService {
         stringObjectMap.put("start", start);
         stringObjectMap.put("length", length);
         stringObjectMap.put("triggerStatus", triggerStatus);
-        CompletableFuture<JSONObject> futureRes = vertxHttpClient.sendRequest(HttpMethod.POST, url, null, stringObjectMap, JSONObject.class);
+        CompletableFuture<JSONObject> futureRes = vertxHttpClient.sendRequest(HttpMethod.POST, url, authHeaders(), stringObjectMap, JSONObject.class);
         return futureRes.get();
         //String body = HttpUtil.createPost(url).form("jobGroup", 2, "start", start, "length", length, "triggerStatus", triggerStatus).execute().body();
     }
