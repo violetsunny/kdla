@@ -11,8 +11,13 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.util.ConcurrentReferenceHashMap;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.ObjectInput;
+import java.io.ObjectInputFilter;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
@@ -25,6 +30,41 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public class SerializeUtil {
+
+    /**
+     * OBJECT 分支原生反序列化的默认 JEP 290 过滤：仅放行 java.base 与 top.kdla，并限制深度/数组/字节/引用数。
+     * 下游自有 Serializable 类型须调 {@link #setObjectInputFilter} 放宽；置 null 关闭过滤（仅限可信字节）。
+     */
+    private static volatile ObjectInputFilter objectInputFilter = ObjectInputFilter.Config.createFilter(
+            "maxdepth=20;maxarray=10000;maxbytes=1048576;maxrefs=10000;java.base/*;top.kdla.**;!*");
+
+    /** JSON 分支允许 loadClass 的包前缀，默认仅框架自身；下游 POJO 须调 {@link #setJsonClassPrefixes} 放宽。 */
+    private static volatile List<String> jsonClassPrefixes = List.of("top.kdla.");
+
+    public static ObjectInputFilter getObjectInputFilter() {
+        return objectInputFilter;
+    }
+
+    public static void setObjectInputFilter(ObjectInputFilter filter) {
+        objectInputFilter = filter;
+    }
+
+    public static List<String> getJsonClassPrefixes() {
+        return jsonClassPrefixes;
+    }
+
+    public static void setJsonClassPrefixes(List<String> prefixes) {
+        jsonClassPrefixes = prefixes == null ? List.of() : List.copyOf(prefixes);
+    }
+
+    static boolean isJsonClassAllowed(String className) {
+        for (String prefix : jsonClassPrefixes) {
+            if (className.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     @SneakyThrows
     public static String readNullableUTF(ObjectInput in) {
@@ -406,16 +446,34 @@ public class SerializeUtil {
             }
         },
         OBJECT(0x0E, Serializable.class) {
+            // ponytail: 改为长度前缀字节块 + 自建过滤流。JDK 禁止读取中途 setObjectInputFilter，
+            // 而唯一入口 Externalizable.readExternal 必然处于读取中，故无法借用外层流过滤。
+            // 代价：OBJECT 分支线格式变更（旧数据不可读）、失去跨对象引用共享。升级路径：下游统一改用 JSON 传输。
             @Override
             @SneakyThrows
             Object read(ObjectInput input) {
-                return input.readObject();
+                int len = input.readInt();
+                byte[] bytes = new byte[len];
+                input.readFully(bytes);
+                ObjectInputFilter filter = SerializeUtil.getObjectInputFilter();
+                try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
+                    if (filter != null) {
+                        ois.setObjectInputFilter(filter);
+                    }
+                    return ois.readObject();
+                }
             }
 
             @Override
             @SneakyThrows
             void write(Object value, ObjectOutput input) {
-                input.writeObject(value);
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                try (ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+                    oos.writeObject(value);
+                }
+                byte[] bytes = bos.toByteArray();
+                input.writeInt(bytes.length);
+                input.write(bytes);
             }
         },
         LIST(0x0F, List.class) {
@@ -569,6 +627,10 @@ public class SerializeUtil {
             @SneakyThrows
             Object read(ObjectInput input) {
                 String clazz = input.readUTF();
+                // 校验须在 clazzCache 命中之前，否则缓存预热后白名单被绕过
+                if (!SerializeUtil.isJsonClassAllowed(clazz)) {
+                    throw new SecurityException("SerializeUtil JSON class not allowed: " + clazz);
+                }
                 Class<?> tClass = clazzCache.computeIfAbsent(clazz, this::loadClass);
                 int len = input.readInt();
                 byte[] jsonByte = new byte[len];
