@@ -138,6 +138,9 @@ public class KRedissonConfigProperties {
                 throw new IllegalArgumentException("SENTINEL模式必须配置 kdla.redisson.master-name（Redis主节点名）");
             }
             clients.add(Redisson.create(configSentinel()));
+        }else{
+            //type为null/未知时fail fast，杜绝静默返回空client列表导致零节点RedLock锁失效
+            throw new IllegalArgumentException("不支持的 kdla.redisson.type: " + type);
         }
 
         return clients;
@@ -205,6 +208,7 @@ public class KRedissonConfigProperties {
         Codec codec = getCodecInstance();
         config.setCodec(codec);
         config.setThreads(thread);
+        config.setNettyThreads(nettyThreads);
         config.setEventLoopGroup(new NioEventLoopGroup());
         config.setTransportMode(TransportMode.NIO);
         if (log.isInfoEnabled()) {
@@ -234,6 +238,7 @@ public class KRedissonConfigProperties {
         Codec codec = getCodecInstance();
         config.setCodec(codec);
         config.setThreads(thread);
+        config.setNettyThreads(nettyThreads);
         config.setEventLoopGroup(new NioEventLoopGroup());
         config.setTransportMode(TransportMode.NIO);
         if (log.isInfoEnabled()) {

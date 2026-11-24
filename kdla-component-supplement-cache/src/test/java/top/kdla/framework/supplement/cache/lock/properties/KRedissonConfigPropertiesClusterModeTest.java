@@ -66,4 +66,20 @@ class KRedissonConfigPropertiesClusterModeTest {
         assertThat(config.useSentinelServers().getMasterName()).isEqualTo("mymaster");
         assertThat(config.useSentinelServers().getSentinelAddresses()).hasSize(2);
     }
+
+    @Test
+    void masterSlave_honorsNettyThreads() throws Exception {
+        KRedissonConfigProperties p = props(RedisClusterType.MASTER_SLAVE, "m:6379,s1:6379");
+        p.setNettyThreads(64);
+        Config config = invoke(p, "configMasterSlave");
+        assertThat(config.getNettyThreads()).isEqualTo(64);
+    }
+
+    @Test
+    void cluster_honorsNettyThreads() throws Exception {
+        KRedissonConfigProperties p = props(RedisClusterType.CLUSTER, "n1:7000,n2:7001");
+        p.setNettyThreads(64);
+        Config config = invoke(p, "configCluster");
+        assertThat(config.getNettyThreads()).isEqualTo(64);
+    }
 }

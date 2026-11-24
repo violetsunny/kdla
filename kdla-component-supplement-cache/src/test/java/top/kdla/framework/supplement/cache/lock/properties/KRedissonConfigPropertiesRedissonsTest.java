@@ -69,4 +69,11 @@ class KRedissonConfigPropertiesRedissonsTest {
         assertThrows(IllegalArgumentException.class, p::redissons,
                 "SENTINEL地址空白须fail fast");
     }
+
+    @Test
+    void nullType_failFast() {
+        KRedissonConfigProperties p = props(null, "127.0.0.1:6379", null);
+        assertThrows(IllegalArgumentException.class, p::redissons,
+                "type为null/未知须fail fast，杜绝静默空client列表致零节点RedLock锁失效");
+    }
 }
