@@ -10,6 +10,8 @@ import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
@@ -20,6 +22,17 @@ public class XxlJobRemotingUtil {
     private static Logger logger = LoggerFactory.getLogger(XxlJobRemotingUtil.class);
     public static final String XXL_JOB_ACCESS_TOKEN = "XXL-JOB-ACCESS-TOKEN";
 
+    /**
+     * accessToken 校验，fail-closed：未配置（null/空白）一律拒绝；恒时比对防时序侧信道。
+     */
+    public static boolean validAccessToken(String configured, String requested) {
+        if (configured == null || configured.trim().isEmpty() || requested == null) {
+            return false;
+        }
+        return MessageDigest.isEqual(
+                configured.getBytes(StandardCharsets.UTF_8),
+                requested.getBytes(StandardCharsets.UTF_8));
+    }
 
     // trust-https start
     private static void trustAllHosts(HttpsURLConnection connection) {

@@ -174,9 +174,7 @@ public class EmbedServer {
             if (uri == null || uri.trim().length() == 0) {
                 return new ReturnT<String>(ReturnT.FAIL_CODE, "invalid request, uri-mapping empty.");
             }
-            if (accessToken != null
-                    && accessToken.trim().length() > 0
-                    && !accessToken.equals(accessTokenReq)) {
+            if (!XxlJobRemotingUtil.validAccessToken(accessToken, accessTokenReq)) {
                 return new ReturnT<String>(ReturnT.FAIL_CODE, "The access token is wrong.");
             }
 

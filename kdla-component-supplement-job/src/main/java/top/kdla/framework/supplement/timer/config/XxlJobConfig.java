@@ -19,7 +19,7 @@ public class XxlJobConfig {
     @Value("${xxl.job.admin.addresses:127.0.0.1}")
     private String adminAddresses;
 
-    @Value("${xxl.job.accessToken:default_token}")
+    @Value("${xxl.job.accessToken:}")
     private String accessToken;
 
     @Value("${xxl.job.executor.appname:app}")

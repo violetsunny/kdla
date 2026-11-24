@@ -67,6 +67,11 @@ public class XxlJobExecutor  {
     // ---------------------- start + stop ----------------------
     public void start() throws Exception {
 
+        // accessToken fail-closed：空 token 拒绝启动，避免执行器无鉴权裸奔
+        if (accessToken == null || accessToken.trim().length() == 0) {
+            throw new IllegalStateException("xxl-job accessToken is empty, refuse to start. Please set xxl.job.accessToken.");
+        }
+
         // init logpath
         XxlJobFileAppender.initLogPath(logPath);
 
@@ -150,11 +155,6 @@ public class XxlJobExecutor  {
         if (address==null || address.trim().length()==0) {
             String ip_port_address = IpUtil.getIpPort(ip, port);   // registry-address：default use address to registry , otherwise use ip:port if address is null
             address = "http://{ip_port}/".replace("{ip_port}", ip_port_address);
-        }
-
-        // accessToken
-        if (accessToken==null || accessToken.trim().length()==0) {
-            logger.warn(">>>>>>>>>>> xxl-job accessToken is empty. To ensure system security, please set the accessToken.");
         }
 
         // start
