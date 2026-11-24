@@ -11,25 +11,25 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * 回归测试：SM4 由 ECB 迁移到 CBC+随机 IV（v1: 前缀，对齐 AESUtil 约定）。
+ * 回归测试：SM4 由 ECB 迁移到 CBC+随机 IV，再升级到 GCM（v2: 前缀，对齐 AESUtil 约定）。
  * 旧实现 ECB 无 IV，相同明文块产生相同密文块；且 generateKey 用低熵种子播种
  * SecureRandom，同 keySrc 必派生同密钥。修复后：
- * 1. 新加密输出 v1: 前缀且同明文两次加密密文不同（随机 IV 生效）；
+ * 1. 新加密输出 v2: 前缀且同明文两次加密密文不同（随机 nonce 生效）；
  * 2. 无前缀的旧 ECB 密文仍可解密（兼容分支）；
  * 3. generateSecureKey 真随机，两次生成密钥不同且可完成加解密闭环。
  */
 class Sm4UtilCbcMigrationTest {
 
     @Test
-    void encrypt_outputsV1Prefix_andRandomIvMakesCipherDifferentEachTime() throws Exception {
+    void encrypt_outputsV2Prefix_andRandomNonceMakesCipherDifferentEachTime() throws Exception {
         String key = Sm4Util.generateSecureKey();
         String plaintext = "你好，SM4！Hello, 123";
 
         String c1 = Sm4Util.encrypt(plaintext, key);
         String c2 = Sm4Util.encrypt(plaintext, key);
 
-        assertTrue(c1.startsWith("v1:"), "新密文必须带 v1: 前缀");
-        assertNotEquals(c1, c2, "随机 IV 下同一明文两次加密密文必须不同（ECB 缺陷已消除）");
+        assertTrue(c1.startsWith("v2:"), "新密文必须带 v2: 前缀");
+        assertNotEquals(c1, c2, "随机 nonce 下同一明文两次加密密文必须不同（ECB 缺陷已消除）");
         assertEquals(plaintext, Sm4Util.decrypt(c1, key));
         assertEquals(plaintext, Sm4Util.decrypt(c2, key));
     }

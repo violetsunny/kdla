@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
@@ -33,8 +34,10 @@ import java.util.Objects;
  */
 public class Sm4Util {
     private static final String ALGORITHM = "SM4";
+    /** ECB/CBC 仅用于解密存量密文 */
     private static final String ALGORITHM_ECB_PKCS5PADDING = "SM4/ECB/PKCS5Padding";
     private static final String ALGORITHM_CBC_PKCS5PADDING = "SM4/CBC/PKCS5Padding";
+    private static final String ALGORITHM_GCM_NOPADDING = "SM4/GCM/NoPadding";
     private static final String CHARSET_UTF8 = "utf-8";
     /**
      * SM4算法目前只支持128位（即密钥16字节）
@@ -45,9 +48,15 @@ public class Sm4Util {
      */
     private static final int IV_LENGTH = 16;
     /**
-     * 新密文格式前缀，对齐AESUtil既有约定：v1:Base64(IV+密文)；无前缀为旧ECB格式
+     * 存量密文格式前缀，对齐AESUtil既有约定：v1:Base64(IV+密文)；无前缀为旧ECB格式
      */
     private static final String V1_PREFIX = "v1:";
+    /**
+     * 当前密文格式前缀：v2:Base64(12字节nonce+GCM密文含16字节tag)，AEAD带完整性校验
+     */
+    private static final String V2_PREFIX = "v2:";
+    private static final int GCM_NONCE_LENGTH = 12;
+    private static final int GCM_TAG_BITS = 128;
     private static final Logger log = LoggerFactory.getLogger(Sm4Util.class);
 
     private static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
@@ -91,7 +100,7 @@ public class Sm4Util {
     }
 
     /**
-     * Sm4 加密（v1格式：CBC+随机IV，输出 v1:Base64(IV+密文)）
+     * Sm4 加密（v2格式：GCM+随机nonce，输出 v2:Base64(nonce+密文含tag)）
      *
      * @param data          ：被加密的数据
      * @param secretKeyText ：密钥文本
@@ -99,15 +108,15 @@ public class Sm4Util {
      * @throws Exception
      */
     public static String encrypt(String data, String secretKeyText) throws Exception {
-        return encryptV1(data.getBytes(CHARSET_UTF8), strKeyToSecretKey(secretKeyText));
+        return encryptV2(data.getBytes(CHARSET_UTF8), strKeyToSecretKey(secretKeyText));
     }
 
     public static String encrypt(String data, byte[] secretKeyText) throws Exception {
-        return encryptV1(data.getBytes(CHARSET_UTF8), new SecretKeySpec(secretKeyText, ALGORITHM));
+        return encryptV2(data.getBytes(CHARSET_UTF8), new SecretKeySpec(secretKeyText, ALGORITHM));
     }
 
     /**
-     * 解密（带v1前缀走CBC+随机IV；无前缀为旧ECB格式兼容分支）
+     * 解密（v2走GCM；v1走CBC+随机IV；无前缀为旧ECB格式兼容分支）
      *
      * @param cipherText    ：密文
      * @param secretKeyText :密钥文本
@@ -121,20 +130,30 @@ public class Sm4Util {
         return decryptCompat(cipherText, new SecretKeySpec(secretKeyText, ALGORITHM));
     }
 
-    private static String encryptV1(byte[] dataBytes, SecretKey secretKey) throws Exception {
-        // ECB相同明文块产生相同密文块泄露数据模式，改CBC+随机IV，格式对齐AESUtil的v1约定
-        byte[] iv = new byte[IV_LENGTH];
-        new SecureRandom().nextBytes(iv);
-        Cipher cipher = Cipher.getInstance(ALGORITHM_CBC_PKCS5PADDING, BouncyCastleProvider.PROVIDER_NAME);
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey, new IvParameterSpec(iv));
+    private static String encryptV2(byte[] dataBytes, SecretKey secretKey) throws Exception {
+        // ECB泄露数据模式、CBC无完整性校验，改GCM+随机nonce，格式对齐AESUtil的v2约定
+        byte[] nonce = new byte[GCM_NONCE_LENGTH];
+        new SecureRandom().nextBytes(nonce);
+        Cipher cipher = Cipher.getInstance(ALGORITHM_GCM_NOPADDING, BouncyCastleProvider.PROVIDER_NAME);
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(GCM_TAG_BITS, nonce));
         byte[] enc = cipher.doFinal(dataBytes);
-        byte[] combined = new byte[iv.length + enc.length];
-        System.arraycopy(iv, 0, combined, 0, iv.length);
-        System.arraycopy(enc, 0, combined, iv.length, enc.length);
-        return V1_PREFIX + Base64.getEncoder().encodeToString(combined);
+        byte[] combined = new byte[nonce.length + enc.length];
+        System.arraycopy(nonce, 0, combined, 0, nonce.length);
+        System.arraycopy(enc, 0, combined, nonce.length, enc.length);
+        return V2_PREFIX + Base64.getEncoder().encodeToString(combined);
     }
 
     private static String decryptCompat(String cipherText, SecretKey secretKey) throws Exception {
+        if (cipherText != null && cipherText.startsWith(V2_PREFIX)) {
+            byte[] combined = Base64.getDecoder().decode(cipherText.substring(V2_PREFIX.length()));
+            byte[] nonce = new byte[GCM_NONCE_LENGTH];
+            byte[] toDecrypt = new byte[combined.length - GCM_NONCE_LENGTH];
+            System.arraycopy(combined, 0, nonce, 0, GCM_NONCE_LENGTH);
+            System.arraycopy(combined, GCM_NONCE_LENGTH, toDecrypt, 0, toDecrypt.length);
+            Cipher cipher = Cipher.getInstance(ALGORITHM_GCM_NOPADDING, BouncyCastleProvider.PROVIDER_NAME);
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(GCM_TAG_BITS, nonce));
+            return new String(cipher.doFinal(toDecrypt), CHARSET_UTF8);
+        }
         if (cipherText != null && cipherText.startsWith(V1_PREFIX)) {
             byte[] combined = Base64.getDecoder().decode(cipherText.substring(V1_PREFIX.length()));
             byte[] iv = new byte[IV_LENGTH];

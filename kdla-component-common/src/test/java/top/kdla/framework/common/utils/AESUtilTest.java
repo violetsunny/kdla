@@ -53,8 +53,8 @@ class AESUtilTest {
         String password = "1234567890abcdef";
         String c1 = AESUtil.encrypt("same-plaintext", password);
         String c2 = AESUtil.encrypt("same-plaintext", password);
-        assertTrue(c1.startsWith("v1:"), "新密文必须带 v1 前缀（随机 IV 方案）");
-        assertNotEquals(c1, c2, "随机 IV 必须使同明文两次加密的密文不同，全零 IV 会产出相同密文");
+        assertTrue(c1.startsWith("v2:"), "新密文必须带 v2 前缀（GCM+随机 nonce 方案）");
+        assertNotEquals(c1, c2, "随机 nonce 必须使同明文两次加密的密文不同，全零 IV 会产出相同密文");
     }
 
     @Test
