@@ -2,10 +2,12 @@ package top.kdla.framework.common.utils;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.ObjectInputFilter;
 import java.io.Serializable;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -47,5 +49,29 @@ class ObjectUtilTest {
     void objectToByte_notSerializable_returnsNullNotThrow() {
         // 不可序列化对象：保持原有降级语义（log + 返回 null），不抛异常
         assertEquals(null, ObjectUtil.ObjectToByte(new Object()));
+    }
+
+    @Test
+    void byteToObject_filterRejects_returnsNull() {
+        // 安全回归：filter 拒绝的类不得实例化，fail-closed 返回 null
+        byte[] bytes = ObjectUtil.ObjectToByte(new Payload("x", 1));
+        ObjectInputFilter rejectAll = info -> ObjectInputFilter.Status.REJECTED;
+        assertNull(ObjectUtil.byteToObject(bytes, rejectAll), "被 filter 拒绝时必须返回 null");
+    }
+
+    @Test
+    void byteToObject_filterAllows_roundTrip() {
+        // 白名单放行目标类时正常反序列化
+        byte[] bytes = ObjectUtil.ObjectToByte(new Payload("y", 2));
+        ObjectInputFilter allowPayload = info -> {
+            Class<?> clazz = info.serialClass();
+            if (clazz != null && clazz != Payload.class) {
+                return ObjectInputFilter.Status.REJECTED;
+            }
+            return ObjectInputFilter.Status.ALLOWED;
+        };
+        Object back = ObjectUtil.byteToObject(bytes, allowPayload);
+        assertTrue(back instanceof Payload);
+        assertEquals("y", ((Payload) back).name);
     }
 }

@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
+import java.security.MessageDigest;
 
 /**
  * 国密算法 - SM3加密工具  杂凑算法 用来替换MD5、SHA-1、SHA-2
@@ -84,7 +84,7 @@ public class Sm3Util {
             byte[] keyData = keyStr.getBytes(ENCODING);
             byte[] sm3Hash = HexUtil.decodeHex(sm3HexString);
             byte[] newHash = hmac(keyData, srcData);
-            if (Arrays.equals(newHash, sm3Hash)) {
+            if (MessageDigest.isEqual(newHash, sm3Hash)) {
                 flag = true;
             }
         } catch (UnsupportedEncodingException e) {

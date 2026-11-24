@@ -8,7 +8,7 @@ import java.security.NoSuchAlgorithmException;
 
 /**
  * <p>
- * MD5加解密工具类
+ * MD5加解密工具类。MD5 已不安全，禁止用于口令存储、签名、完整性校验，仅限非安全场景的摘要。
  * </p>
  *
  * @author kll
@@ -34,7 +34,7 @@ public class Md5Util {
             // 字符数组转换成字符串返回
             return byteArrayToHex(resultByteArray);
         } catch (NoSuchAlgorithmException e) {
-            log.error("md5()-->input{},NoSuchAlgorithmException:{}", input, e.getMessage());
+            log.error("md5() NoSuchAlgorithmException:{}", e.getMessage());
             return null;
         }
     }

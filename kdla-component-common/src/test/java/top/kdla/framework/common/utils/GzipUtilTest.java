@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * 回归测试：compression/unZip 旧实现 getBytes()/toString() 用平台默认字符集，
@@ -25,5 +26,23 @@ class GzipUtilTest {
         assertEquals("", GzipUtil.compression("  "));
         assertEquals("", GzipUtil.unZip(null));
         assertEquals("", GzipUtil.unZip(""));
+    }
+
+    @Test
+    void unZip_exceedsMaxBytes_throws() throws IOException {
+        // 安全回归：zip bomb 防护，解压结果超上限必须抛 IOException 而非 OOM
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 200000; i++) {
+            sb.append('a');
+        }
+        String compressed = GzipUtil.compression(sb.toString());
+        assertThrows(IOException.class, () -> GzipUtil.unZip(compressed, 1000),
+                "解压超过 maxBytes 必须拒绝");
+    }
+
+    @Test
+    void unZip_withinMaxBytes_roundTrip() throws IOException {
+        String src = "limit-ok-中文";
+        assertEquals(src, GzipUtil.unZip(GzipUtil.compression(src), 1024 * 1024));
     }
 }

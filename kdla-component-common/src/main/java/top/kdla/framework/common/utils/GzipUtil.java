@@ -43,31 +43,48 @@ public class GzipUtil {
         return Base64.getEncoder().encodeToString(out.toByteArray());
     }
 
+    /** 默认解压上限 64MB，防 zip bomb */
+    public static final long DEFAULT_MAX_BYTES = 64L * 1024 * 1024;
+
     /**
-     * 对参数先进行转码,再解压
-     * 
+     * 对参数先进行转码,再解压（默认上限 64MB）
+     *
      * @param str
      * @return
      * @throws IOException
      */
     public static String unZip(String str) throws IOException {
+        return unZip(str, DEFAULT_MAX_BYTES);
+    }
+
+    /**
+     * 对参数先进行转码,再解压，解压结果超过 maxBytes 抛 IOException
+     *
+     * @param str
+     * @param maxBytes 解压后字节数上限
+     * @return
+     * @throws IOException
+     */
+    public static String unZip(String str, long maxBytes) throws IOException {
         if (str == null || str.trim().length() == 0) {
             return "";
         }
         byte[] t = Base64.getDecoder().decode(str);// 转码
-        ByteArrayInputStream bis = new ByteArrayInputStream(t);
-        GZIPInputStream gzip = new GZIPInputStream(bis);// 解压
-        byte[] buf = new byte[2048];
-        int num = -1;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        while ((num = gzip.read(buf, 0, buf.length)) != -1) {
-            bos.write(buf, 0, num);
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(t);
+             GZIPInputStream gzip = new GZIPInputStream(bis);
+             ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            byte[] buf = new byte[2048];
+            int num;
+            long total = 0;
+            while ((num = gzip.read(buf, 0, buf.length)) != -1) {
+                total += num;
+                if (total > maxBytes) {
+                    throw new IOException("unZip exceeds maxBytes: " + maxBytes);
+                }
+                bos.write(buf, 0, num);
+            }
+            return bos.toString(StandardCharsets.UTF_8);
         }
-        gzip.close();
-        bis.close();
-        bos.flush();
-        bos.close();
-        return bos.toString(StandardCharsets.UTF_8);
     }
 
 }

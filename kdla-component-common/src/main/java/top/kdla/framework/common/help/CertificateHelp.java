@@ -53,15 +53,18 @@ public class CertificateHelp {
 	private static String transfer(String certificateCode, int startCharLength, int endCharLength) {
 		int retainCharLength = startCharLength + endCharLength;
 
-		if (certificateCode != null && certificateCode.length() >= retainCharLength) {
+		if (certificateCode == null) {
+			return null;
+		}
+		if (certificateCode.length() >= retainCharLength) {
 			StringBuffer sb = new StringBuffer(StringUtils.left(certificateCode, startCharLength));
 			for (int i = 0; i < certificateCode.length() - retainCharLength; i++) {
 				sb.append("*");
 			}
 			return sb.append(StringUtils.right(certificateCode, endCharLength)).toString();
-		} else {
-			return certificateCode;
 		}
+		// 长度不足保留位数时全掩码，禁止原样返回
+		return StringUtils.repeat('*', certificateCode.length());
 	}
 
     /**

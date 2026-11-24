@@ -16,8 +16,10 @@ import javax.crypto.Cipher;
  * @version $Id: RSAUtil, v 0.1 2025/7/22 14:26 kanglele Exp $
  */
 public class RSAUtil {
-    // RSA 算法名称
+    // RSA 算法名称（用于 KeyPairGenerator/KeyFactory）
     private static final String ALGORITHM = "RSA";
+    // 加密填充显式用 OAEP（SHA-256 + MGF1），替代 SunJCE 默认的 PKCS#1 v1.5，防 Bleichenbacher padding oracle
+    private static final String CIPHER_TRANSFORMATION = "RSA/ECB/OAEPWithSHA-256AndMGF1Padding";
     // RSA 密钥长度
     private static final int KEY_SIZE = 2048;
 
@@ -38,7 +40,7 @@ public class RSAUtil {
      * @return 加密后的 Base64 编码字符串
      */
     public static String encrypt(String plainText, PublicKey publicKey) throws Exception {
-        Cipher cipher = Cipher.getInstance(ALGORITHM);
+        Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
         byte[] encryptedBytes = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
         return Base64.getEncoder().encodeToString(encryptedBytes);
@@ -51,7 +53,7 @@ public class RSAUtil {
      * @return 解密后的明文
      */
     public static String decrypt(String encryptedText, PrivateKey privateKey) throws Exception {
-        Cipher cipher = Cipher.getInstance(ALGORITHM);
+        Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
         cipher.init(Cipher.DECRYPT_MODE, privateKey);
         byte[] decodedBytes = Base64.getDecoder().decode(encryptedText);
         byte[] decryptedBytes = cipher.doFinal(decodedBytes);
