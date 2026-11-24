@@ -86,6 +86,6 @@ public class SelfSnowflakeGeneratorHelp {
      * 获取一个uuid,做随机字符串
      */
     public static String getUuid() {
-        return UUID.randomUUID().toString().replaceAll("-", "");
+        return UUID.randomUUID().toString().replace("-", "");
     }
 }

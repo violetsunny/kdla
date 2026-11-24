@@ -13,6 +13,7 @@
 - Vertx NetClientOptions.DEFAULT_HOSTNAME_VERIFICATION_ALGORITHM 为 null，net/MQTT 默认不校验 hostname，须显式置 "HTTPS"（HttpClientOptions 才默认开）。
 - Groovy SecureASTCustomizer 不拦 AttributeExpression(.@)/MethodPointerExpression(.&)/MethodReferenceExpression(::)，沙箱须显式拒绝这三类。
 - Vertx WebClient 默认 maxRedirects=16、HttpClient5 默认跟随重定向，302 指向内网绕过首跳 SSRF 校验，须显式关闭。
+- 无状态HMAC会话下spring-security默认HttpSessionCsrfTokenRepository失效；CSRF token可用HMAC(会话token)派生+$.ajaxSetup单点注入，零依赖。
 
 ## 技术约定
 
@@ -24,4 +25,4 @@
 
 ## 工作方式反馈
 
-- kdla 安全审计：用户裁定 B-08 默认管理员核实、DB 口令轮换、git 历史清理三项均不做（风险接受），勿再提议。
+- kdla 安全审计：用户裁定 B-08 默认管理员核实、DB 口令轮换、git 历史清理、登录限速改 Redis 四项均不做（风险接受），勿再提议。

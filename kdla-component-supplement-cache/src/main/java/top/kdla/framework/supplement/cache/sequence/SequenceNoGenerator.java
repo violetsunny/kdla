@@ -170,7 +170,7 @@ public class SequenceNoGenerator {
     }
 
     private String generateSequenceNo(final String code) {
-        String remark = UUID.randomUUID().toString();
+        String remark = UUID.randomUUID().toString().replace("-", "");
         codeGeneratorCfgMapper.update(code, remark);
         CodeGeneratorCfg cfg = getCfg(code);
         if (cfg == null) {

@@ -24,6 +24,6 @@ public class EsSourceData extends EsBaseData {
     public EsSourceData(String type, Object source) {
         this.type = type;
         this.source = source;
-        this.timestamp = System.currentTimeMillis();;
+        this.timestamp = System.currentTimeMillis();
     }
 }

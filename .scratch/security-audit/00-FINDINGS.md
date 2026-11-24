@@ -6,8 +6,8 @@
 
 ## 权威验证
 
-`mvn clean test` 全量：**602 用例，0 失败，0 错误，16/16 模块 BUILD SUCCESS**（日志 `/tmp/kdla_p3_full.log`）。
-job-application 模块 24 例（PermissionInterceptor 6 + JobCodeController 1 + LoginService 8 + CookieUtil 4 + UserController 4 + CsrfMethodRestriction 1）。
+`mvn clean test` 全量：**617 用例，0 失败，0 错误，16/16 模块 BUILD SUCCESS**（日志 `/tmp/kdla_c7_full.log`）。
+job-application 模块 39 例（PermissionInterceptor 6 + JobCodeController 1 + LoginService 8 + CookieUtil 4 + UserController 4 + CsrfMethodRestriction 1 + CsrfTokenProtectionTest 10 + CsrfTokenFrontendWiringTest 5）。
 common 模块 163 例（含 AESUtilGcmTest 6 + Sm4UtilGcmTest 7 + UrlSecurityUtilTest 33）。
 cache 模块 102 例（含 KRedisSetNxLockTest 16 + KRedisSetNxLockAutoConfigureTest 7）。
 reactor 模块 9 例（SerializeUtilSecurityTest，本阶段新建 src/test）。
@@ -52,6 +52,7 @@ supplement-job 模块 +2（ScriptUtilProcessCleanupTest）。
 | 974099c | Groovy 沙箱拒绝 .@ 直读字段与 .& / :: 方法句柄 | B-04 沙箱残余缺口（完整） |
 | 1742285 | HTTP 客户端停止跟随重定向 | D-14（重定向绕过部分） |
 | 1280975 | 脚本任务超时/中断强制销毁子进程 | 范围外线索 job/ScriptUtil 残余 |
+| 7b6b51a | job admin 会话绑定 CSRF token（零新依赖） | B-09（完整） |
 
 ## B 系列（鉴权）逐项状态
 
@@ -63,7 +64,7 @@ supplement-job 模块 +2（ScriptUtilProcessCleanupTest）。
 - **B-06 [High] 会话令牌无签名/无过期/内嵌 MD5 + Cookie 无 Secure/SameSite + 记住我 68 年**：已修（e0ba364）。token = hex(payload)+ "." +hex(HMAC-SHA256)，2h 过期；Cookie HttpOnly+SameSite=Lax+Secure(HTTPS)+2h Max-Age，会话 Cookie 不写 Max-Age。
 - **B-07 [Medium] 无盐 MD5 + 最短 4 位 + 改密不验旧 + 无限速**：已修（812510d）。BCrypt（复用 common BCryptUtil）+ 旧 MD5 登录懒迁移；策略 8-100；updatePwd 验旧口令；登录 5 次失败锁 15 分钟。
 - **B-08 [Medium] 默认 admin/123456**：**仓库内无法证实**（上游 xxl-job 初始化脚本默认值）。**用户裁定不做生产库核实，风险接受**，开放项关闭。
-- **B-09 [Medium] 状态变更接受 GET + 无 CSRF 防护**：已修（e169dae）。16 个变更端点限 POST + SameSite=Lax 缓解。前端均已 POST，兼容。
+- **B-09 [Medium] 状态变更接受 GET + 无 CSRF 防护**：**已完整闭合（e169dae + 7b6b51a）**。①16 个变更端点限 POST + SameSite=Lax（e169dae，前端均已 POST，兼容）；②会话绑定 CSRF token（7b6b51a，零新依赖，未引 spring-security）。详见下方实施记录。
 - **B-10 [Medium] /jobcode/save 缺 validPermission 横向越权 → RCE**：已修（e71f34b）。save 按 exists_jobInfo.jobGroup 鉴权。
 - **B-11 [Low] xxl.enabled.xxl 键名语义**：**本就 fail-closed**（`@ConditionalOnProperty` matchIfMissing 默认 false），是文档/键名语义问题非鉴权绕过。**仅记录，不改代码。**
 - **B-12 [Low] JwtUtil 残留：无 exp 永久有效 / 验签失败 HTTP 200 / 不校验 Bearer 前缀**：**三点均已闭合（本会话复核）**。①缺 exp 抛 BizException（JwtUtil:46-50，测试 missingExpRejected）；③强制 Bearer 前缀（JwtUtil:81，测试 nonBearerSchemeRejected/lowercaseBearerAccepted）；②验签失败 HTTP 200 已被 TrdBladeAuthFilter 闭合——过滤器 catch 全部 JwtUtil 异常直接返回 401（TrdBladeAuthFilter:33-38），注册于 /trd/* order 0 默认开启（TrdAuthAutoConfigure:23-28），控制器/VO 内联调用仅在放行后执行，BizException→200 路径对 trd 不可达。另密钥<32 字节拒绝（JwtUtil:70-72）。残留：UnifiedExceptionControllerAdvice.handleBizException:142-153 仍无 @ResponseStatus（框架级业务异常 200 约定，非 JWT 专属），仅下游显式 kdla.trd.auth.enabled=false 且裸调 JwtUtil 时才可能落 200，属 opt-out。
@@ -130,7 +131,7 @@ supplement-job 模块 +2（ScriptUtilProcessCleanupTest）。
 ## 刻意简化（ponytail 标注）
 
 - 登录限速：单实例内存 ConcurrentHashMap，重启清零、多实例不共享；升级路径=Redis 集中计数。
-- CSRF：限 POST + SameSite=Lax，未做逐请求 CSRF token；升级路径=spring-security。
+- CSRF：token 会话期内固定，非一次性；一次性 token 需服务端存 nonce，与现有无状态会话冲突（spring-security `CookieCsrfTokenRepository` 同为会话级语义）。
 - `SerializeUtil` OBJECT 分支：改长度前缀字节块 + 自建过滤流，**线格式变更**（旧数据不可读）、失去跨对象引用共享；升级路径=下游统一改用 JSON 传输。
 - `SerializeUtil`/`JdkSerializeTool` 默认白名单：仅 java.base + top.kdla（或 com.xxl.job）+ 调用方声明类型；下游自有类型须显式放宽。
 - `UrlSecurityUtil`：仅校验首跳且 opt-in，DNS rebinding 仍可绕过；升级路径=连接期绑定已校验 IP。重定向绕过已由 1742285 闭合。
@@ -190,7 +191,40 @@ reactor 模块原无 src/test 与测试依赖，本阶段按仓库范式新增 `
 
 ### 本轮未改项（设计天花板 / 需用户裁定的结构性选择）
 
-- **登录限速单实例内存**：升级 Redis 集中计数需给 job-application（叶子应用，自带 BOM）引入 Redis 依赖，属跨模块结构性选择，未擅自实施。
-- **CSRF 无逐请求 token**：升级 spring-security 属大结构改动，未擅自实施。
+- **登录限速单实例内存**：升级 Redis 集中计数需给 job-application 引入 Redis 依赖，**用户裁定不做**。
 - **B-12 残留 `UnifiedExceptionControllerAdvice.handleBizException:142-153` 无 `@ResponseStatus`**：框架级「业务异常 HTTP 200」约定，非缺陷，opt-out 场景才可达。
 - `KRedisSetNxLock` 轮询/单节点、`SerializeUtil` 白名单窄、MQTT 仅 JKS：均为设计天花板，非缺陷。
+
+## CSRF 会话绑定 token 实施记录（B-09 完整闭合，7b6b51a）
+
+用户问「引 spring-security 会带来什么问题？可直接用么？能用 JDK 21 么？」→ 取证结论：**JDK 21 兼容无问题**（Boot 3.4.0 BOM 隐式管 Security 6.4.x，基线 JDK 17），但**默认链不可直接用**，4 个冲突：
+
+1. **机器端点全断**：`/api/callback`、`/api/registry`、`/api/registryRemove`（`JobApiController:25,38-54`）+ `PermissionInterceptor:48-58` 的 jobinfo 机器兜底靠 `XXL-JOB-ACCESS-TOKEN` 头鉴权、无会话 cookie；默认认证拦成 302/401，默认 CSRF 过滤也拦掉机器 POST（执行器不可能带 token）→ 执行器注册与回调全断。
+2. **默认 CSRF 仓库不可用**：现有会话是自研 HMAC token + Cookie，**完全无状态、无 HttpSession**（`LoginService:63-112`），`HttpSessionCsrfTokenRepository` 直接失效。
+3. **双鉴权体系并存**：FilterChainProxy 跑在 Interceptor 之前，未认证请求到不了 `PermissionInterceptor`，`@PermissionLimit`、302→`/toLogin`、adminuser 角色判断、request attribute 注入均需重做。
+4. **actuator 独立上下文**（`application.properties:6`），主 security 链不覆盖。
+
+**故未引 spring-security，用 JDK 原生 `javax.crypto.Mac` 实施，零新依赖。**
+
+### 服务端
+
+- `LoginService`：新增 `CSRF_HEADER = "X-CSRF-TOKEN"`、`makeCsrfToken(String)` = `hex(HMAC("csrf|" + 会话token))`（域分隔前缀避免与会话签名混用）、`validCsrfToken(String,String)`（`MessageDigest.isEqual` 恒时比对，null/空 fail-closed）。复用既有 private `hmac(byte[])`，未新造密码学代码。
+- `PermissionInterceptor`：鉴权块后新增校验，`machineAuth` 标志仅在 accessToken **校验通过**时置位。**伪造 token 头不能绕过**——此时仍走 cookie 鉴权并要求 CSRF（有专门测试钉住）。
+- 豁免面：安全方法（GET/HEAD/OPTIONS/TRACE，即非 POST/PUT/PATCH/DELETE）、无会话 cookie 的匿名请求（login）、机器调用。`logout` 虽 `@PermissionLimit(limit=false)` 但带 cookie，**同样要求 token**。
+- 失败响应 `403`（与既有 302 风格一致，不写 body）。
+- 新增 `CsrfTokenAdvice`（`@ControllerAdvice` + `@ModelAttribute("csrfToken")`），无 cookie 返回空串。
+
+### 前端（仅 2 处单点，覆盖全部 26 个 POST 调用点）
+
+- `templates/common/common.macro.ftl:63` commonScript 宏内联脚本新增 `var csrf_token = '${csrfToken!''}';`。9 个页面全部 import 该宏。
+- `static/js/common.1.js:1-9` 顶层 `$.ajaxSetup({beforeSend})` 注入 `X-CSRF-TOKEN` 头。26 个调用点（11 `$.post` + 11 `$.ajax` + 4 DataTables）全部走 `jQuery.ajax`，一处覆盖；全仓原无 `$.ajaxSetup`/`beforeSend`，无覆盖冲突。
+- token 为 hex（安全字符集），内联 JS 无 XSS 注入面。
+
+### 验证
+
+- `CsrfTokenProtectionTest` 10 例：无 token 头 403、正确 token 放行、伪造 token 403、**他会话 token 403**、GET 不校验、机器 token 豁免、**伪造机器 token 不绕过**、匿名 login 豁免、logout 要求 token、token 确定性/域分隔/null fail-closed。
+- `CsrfTokenFrontendWiringTest` 5 例：advice 无 cookie 返空、有 cookie 返会话绑定 token、宏注入点在册、ajaxSetup 头名与 `LoginService.CSRF_HEADER` 一致（防漂移）、**FTL 模板 Freemarker 解析通过**（语法校验）。
+- **Prove-It 反证**：把校验条件中和为 `if (false && ...)` 后 5 例失败（`/tmp/kdla_c3_proveit.log`），还原后全绿。
+- 全量 617 例，16/16 SUCCESS，既有 job-application 24 例无回归。
+
+**未实测项**：应用真实启动与浏览器端到端点击（需 DB，本地不连库）；`@ControllerAdvice` 与 Freemarker 视图渲染的运行时装配仅由模板解析测试与 advice 单测覆盖，not measured end-to-end。
