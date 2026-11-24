@@ -78,6 +78,9 @@ public class KRedissonConfigProperties {
 
     private int nettyThreads = 32;
 
+    //SENTINEL模式必填：Redis主节点名（kdla.redisson.master-name）
+    private String masterName;
+
     /**
      * 解析逗号分隔的节点地址：null/空白/仅逗号一律fail fast，多节点trim并过滤空串。
      */
@@ -130,9 +133,11 @@ public class KRedissonConfigProperties {
                 }
             }
         }else if(RedisClusterType.SENTINEL.equals(type)){
-            //旧实现此处为TODO空分支，静默返回空client列表导致锁不可用；改为fail fast
-            throw new UnsupportedOperationException(
-                    "SENTINEL模式尚未实现，请勿配置 kdla.redisson.type=SENTINEL（address:" + address + "）");
+            splitNodes(address);
+            if(masterName==null || masterName.trim().isEmpty()){
+                throw new IllegalArgumentException("SENTINEL模式必须配置 kdla.redisson.master-name（Redis主节点名）");
+            }
+            clients.add(Redisson.create(configSentinel()));
         }
 
         return clients;
@@ -174,9 +179,13 @@ public class KRedissonConfigProperties {
     }
 
     private Config configMasterSlave(){
+        //address首节点为master，其余为slave
+        List<String> nodes = splitNodes(address);
+        String master = nodes.get(0);
+        String[] slaves = nodes.subList(1, nodes.size()).toArray(new String[0]);
         Config config = new Config();
-        config.useMasterSlaveServers().setMasterAddress(address)
-                .addSlaveAddress(address)
+        config.useMasterSlaveServers().setMasterAddress(master)
+                .addSlaveAddress(slaves)
                 .setMasterConnectionMinimumIdleSize(connectionMinimumIdleSize)
                 .setMasterConnectionPoolSize(connectionPoolSize)
                 .setSlaveConnectionMinimumIdleSize(connectionMinimumIdleSize)
@@ -185,14 +194,12 @@ public class KRedissonConfigProperties {
                 .setDatabase(database)
                 .setSubscriptionsPerConnection(subscriptionsPerConnection)
                 .setClientName(clientName)
-                .setFailedSlaveCheckInterval(failedAttempts)
                 .setRetryAttempts(retryAttempts)
                 .setRetryInterval(retryInterval)
                 .setFailedSlaveCheckInterval(reconnectionTimeout)
                 .setTimeout(timeout)
                 .setConnectTimeout(connectTimeout)
                 .setIdleConnectionTimeout(idleConnectionTimeout)
-//                .setPingTimeout(pingTimeout)
                 .setPassword(password)
                 .setPingConnectionInterval(pingConnectionInterval);
         Codec codec = getCodecInstance();
@@ -200,6 +207,9 @@ public class KRedissonConfigProperties {
         config.setThreads(thread);
         config.setEventLoopGroup(new NioEventLoopGroup());
         config.setTransportMode(TransportMode.NIO);
+        if (log.isInfoEnabled()) {
+            log.info("init the redisson master-slave client, master:{}, slaveCount:{}, codec:{}", master, slaves.length, codec);
+        }
         return config;
     }
 
@@ -212,7 +222,6 @@ public class KRedissonConfigProperties {
                 .setScanInterval(scanInterval)
                 .setSubscriptionsPerConnection(subscriptionsPerConnection)
                 .setClientName(clientName)
-                .setFailedSlaveCheckInterval(failedAttempts)
                 .setRetryAttempts(retryAttempts)
                 .setRetryInterval(retryInterval)
                 .setFailedSlaveCheckInterval(reconnectionTimeout)
@@ -227,6 +236,43 @@ public class KRedissonConfigProperties {
         config.setThreads(thread);
         config.setEventLoopGroup(new NioEventLoopGroup());
         config.setTransportMode(TransportMode.NIO);
+        if (log.isInfoEnabled()) {
+            log.info("init the redisson cluster client, nodeCount:{}, codec:{}", clusterNodes.size(), codec);
+        }
+        return config;
+    }
+
+    private Config configSentinel(){
+        List<String> sentinelNodes = splitNodes(address);
+        Config config = new Config();
+        config.useSentinelServers()
+                .setMasterName(masterName.trim())
+                .addSentinelAddress(sentinelNodes.toArray(new String[0]))
+                .setMasterConnectionMinimumIdleSize(connectionMinimumIdleSize)
+                .setMasterConnectionPoolSize(connectionPoolSize)
+                .setSlaveConnectionMinimumIdleSize(connectionMinimumIdleSize)
+                .setSlaveConnectionPoolSize(connectionPoolSize)
+                .setReadMode(readMode)
+                .setDatabase(database)
+                .setSubscriptionsPerConnection(subscriptionsPerConnection)
+                .setClientName(clientName)
+                .setRetryAttempts(retryAttempts)
+                .setRetryInterval(retryInterval)
+                .setFailedSlaveCheckInterval(reconnectionTimeout)
+                .setTimeout(timeout)
+                .setConnectTimeout(connectTimeout)
+                .setIdleConnectionTimeout(idleConnectionTimeout)
+                .setPassword(password)
+                .setPingConnectionInterval(pingConnectionInterval);
+        Codec codec = getCodecInstance();
+        config.setCodec(codec);
+        config.setThreads(thread);
+        config.setNettyThreads(nettyThreads);
+        config.setEventLoopGroup(new NioEventLoopGroup());
+        config.setTransportMode(TransportMode.NIO);
+        if (log.isInfoEnabled()) {
+            log.info("init the redisson sentinel client, masterName:{}, sentinelCount:{}, codec:{}", masterName, sentinelNodes.size(), codec);
+        }
         return config;
     }
 

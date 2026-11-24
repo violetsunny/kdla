@@ -68,4 +68,15 @@ class KRedissonConfigPropertiesPasswordTest {
 
         assertEquals("secret", config.useSingleServer().getPassword());
     }
+
+    @Test
+    void sentinel_withPassword_setsOnSentinelConfig() throws Exception {
+        KRedissonConfigProperties p = props(RedisClusterType.SENTINEL, "127.0.0.1:26379,127.0.0.1:26380");
+        p.setMasterName("mymaster");
+
+        Config config = invoke(p, "configSentinel", new Class<?>[0], new Object[0]);
+
+        assertEquals("secret", config.useSentinelServers().getPassword(), "密码须落在哨兵配置上");
+        assertEquals("mymaster", config.useSentinelServers().getMasterName(), "masterName须落在哨兵配置上");
+    }
 }
