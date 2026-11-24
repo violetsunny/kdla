@@ -14,8 +14,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class GroovyShellCalSandboxTest {
 
     private void assertBlocked(String code) {
+        assertBlocked(code, new HashMap<>());
+    }
+
+    private void assertBlocked(String code, Map<String, Object> vars) {
         // Groovy 将沙箱 SecurityException 包装为编译错误抛出，栈中含 SecurityException 即证明被沙箱拦截
-        assertThatThrownBy(() -> TrdPlatformCloudServerImpl.groovyShellCal(code, new HashMap<>()))
+        assertThatThrownBy(() -> TrdPlatformCloudServerImpl.groovyShellCal(code, vars))
                 .isInstanceOf(MultipleCompilationErrorsException.class)
                 .hasStackTraceContaining("java.lang.SecurityException");
     }
@@ -62,6 +66,39 @@ class GroovyShellCalSandboxTest {
     @Test
     void dosBlocked() {
         assertBlocked("Thread.sleep(60000)");
+    }
+
+    /** 公有字段 + getter 返回值不同，用于区分 .@ 直接字段访问与正常属性访问 */
+    public static class FieldBean {
+        public String secret = "classified";
+
+        public String getSecret() {
+            return "getter";
+        }
+    }
+
+    @Test
+    void directFieldAccessBlocked() {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("bean", new FieldBean());
+        assertBlocked("bean.@secret", vars);
+    }
+
+    @Test
+    void methodPointerBlocked() {
+        assertBlocked("('x'.&getClass)()");
+    }
+
+    @Test
+    void methodReferenceBlocked() {
+        assertBlocked("('x'::getClass)()");
+    }
+
+    @Test
+    void legitPropertyAccessStillWorks() {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("bean", new FieldBean());
+        assertThat(TrdPlatformCloudServerImpl.groovyShellCal("bean.secret", vars)).isEqualTo("getter");
     }
 
     @Test

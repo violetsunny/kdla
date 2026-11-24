@@ -21,7 +21,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.codehaus.groovy.ast.expr.AttributeExpression;
 import org.codehaus.groovy.ast.expr.ConstructorCallExpression;
+import org.codehaus.groovy.ast.expr.MethodPointerExpression;
+import org.codehaus.groovy.ast.expr.MethodReferenceExpression;
 import org.codehaus.groovy.ast.expr.MethodCallExpression;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.SecureASTCustomizer;
@@ -576,6 +579,12 @@ public class TrdPlatformCloudServerImpl implements TrdPlatformCloudServer {
         sandbox.setReceiversClassesBlackList(FORBIDDEN_RECEIVER_CLASSES);
         sandbox.addExpressionCheckers(expr -> {
             if (expr instanceof ConstructorCallExpression) {
+                return false;
+            }
+            // .@ 直读字段绕过 getter 与接收者黑名单；.& 与 :: 取方法句柄绕过方法名黑名单
+            if (expr instanceof AttributeExpression
+                    || expr instanceof MethodPointerExpression
+                    || expr instanceof MethodReferenceExpression) {
                 return false;
             }
             if (expr instanceof MethodCallExpression call) {
