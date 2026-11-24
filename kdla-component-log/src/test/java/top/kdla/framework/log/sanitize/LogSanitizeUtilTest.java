@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * 回归测试：请求体/Header/响应此前无脱敏无截断直接打印。
- * 修复后：黑名单Header（authorization/cookie/password/token/mobile，忽略大小写）值替换为***；
+ * 修复后：黑名单Header（authorization/cookie/password/token/mobile/blade-auth，忽略大小写）值替换为***；
  * 日志体超2KB（2048字符）截断并追加"...(truncated, total=原始长度)"。
  */
 class LogSanitizeUtilTest {
@@ -21,6 +21,9 @@ class LogSanitizeUtilTest {
         assertEquals("***", LogSanitizeUtil.maskHeader("password", "p@ss"));
         assertEquals("***", LogSanitizeUtil.maskHeader("Token", "t-123"));
         assertEquals("***", LogSanitizeUtil.maskHeader("mobile", "13800000000"));
+        // E-02：BladeX JWT 头 blade-auth 此前漏脱敏，RequestLogAspect 全量打印请求头时明文进日志可重放
+        assertEquals("***", LogSanitizeUtil.maskHeader("blade-auth", "eyJhbGciOiJIUzI1NiJ9.xxx"));
+        assertEquals("***", LogSanitizeUtil.maskHeader("Blade-Auth", "eyJhbGciOiJIUzI1NiJ9.xxx"), "忽略大小写");
     }
 
     @Test

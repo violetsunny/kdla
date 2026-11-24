@@ -13,7 +13,7 @@ import java.util.Set;
  * <p>
  * 规则：
  * <ul>
- *     <li>Header 名命中黑名单（authorization/cookie/password/token/mobile，忽略大小写）时值替换为 ***</li>
+ *     <li>Header 名命中黑名单（authorization/cookie/password/token/mobile/blade-auth，忽略大小写）时值替换为 ***</li>
  *     <li>日志体超过 2KB（2048 字符）截断，并追加 "...(truncated, total=原始长度)"</li>
  * </ul>
  *
@@ -25,7 +25,7 @@ public final class LogSanitizeUtil {
      * 敏感 Header 名黑名单（统一小写比较）
      */
     private static final Set<String> SENSITIVE_HEADER_NAMES = new HashSet<>(Arrays.asList(
-            "authorization", "cookie", "password", "token", "mobile"));
+            "authorization", "cookie", "password", "token", "mobile", "blade-auth"));
 
     /**
      * 脱敏替换值
