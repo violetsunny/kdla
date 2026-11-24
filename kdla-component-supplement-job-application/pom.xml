@@ -91,6 +91,12 @@
             <artifactId>kdla-component-supplement-job</artifactId>
         </dependency>
 
+        <!-- jbcrypt：口令 BCrypt 哈希，版本由根 pom 管理 -->
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

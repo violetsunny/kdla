@@ -8,9 +8,9 @@ import com.xxl.job.admin.dao.XxlJobGroupDao;
 import com.xxl.job.admin.dao.XxlJobUserDao;
 import com.xxl.job.admin.service.LoginService;
 import com.xxl.job.core.biz.model.ReturnT;
+import top.kdla.framework.common.utils.BCryptUtil;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,11 +89,11 @@ public class UserController {
             return new ReturnT<String>(ReturnT.FAIL_CODE, I18nUtil.getString("system_please_input")+I18nUtil.getString("user_password") );
         }
         xxlJobUser.setPassword(xxlJobUser.getPassword().trim());
-        if (!(xxlJobUser.getPassword().length()>=4 && xxlJobUser.getPassword().length()<=20)) {
-            return new ReturnT<String>(ReturnT.FAIL_CODE, I18nUtil.getString("system_lengh_limit")+"[4-20]" );
+        if (!(xxlJobUser.getPassword().length()>=8 && xxlJobUser.getPassword().length()<=100)) {
+            return new ReturnT<String>(ReturnT.FAIL_CODE, I18nUtil.getString("system_lengh_limit")+"[8-100]" );
         }
-        // md5 password
-        xxlJobUser.setPassword(DigestUtils.md5DigestAsHex(xxlJobUser.getPassword().getBytes(StandardCharsets.UTF_8)));
+        // bcrypt password
+        xxlJobUser.setPassword(BCryptUtil.hashPassword(xxlJobUser.getPassword()));
 
         // check repeat
         XxlJobUser existUser = xxlJobUserDao.loadByUserName(xxlJobUser.getUsername());
@@ -121,11 +120,11 @@ public class UserController {
         // valid password
         if (StringUtils.hasText(xxlJobUser.getPassword())) {
             xxlJobUser.setPassword(xxlJobUser.getPassword().trim());
-            if (!(xxlJobUser.getPassword().length()>=4 && xxlJobUser.getPassword().length()<=20)) {
-                return new ReturnT<String>(ReturnT.FAIL_CODE, I18nUtil.getString("system_lengh_limit")+"[4-20]" );
+            if (!(xxlJobUser.getPassword().length()>=8 && xxlJobUser.getPassword().length()<=100)) {
+                return new ReturnT<String>(ReturnT.FAIL_CODE, I18nUtil.getString("system_lengh_limit")+"[8-100]" );
             }
-            // md5 password
-            xxlJobUser.setPassword(DigestUtils.md5DigestAsHex(xxlJobUser.getPassword().getBytes(StandardCharsets.UTF_8)));
+            // bcrypt password
+            xxlJobUser.setPassword(BCryptUtil.hashPassword(xxlJobUser.getPassword()));
         } else {
             xxlJobUser.setPassword(null);
         }
@@ -152,26 +151,31 @@ public class UserController {
 
     @RequestMapping("/updatePwd")
     @ResponseBody
-    public ReturnT<String> updatePwd(HttpServletRequest request, String password){
+    public ReturnT<String> updatePwd(HttpServletRequest request, String oldPassword, String password){
 
+        // valid old password
+        if (oldPassword==null || oldPassword.trim().length()==0){
+            return new ReturnT<String>(ReturnT.FAIL.getCode(), "原密码不可为空");
+        }
         // valid password
         if (password==null || password.trim().length()==0){
             return new ReturnT<String>(ReturnT.FAIL.getCode(), "密码不可为空");
         }
         password = password.trim();
-        if (!(password.length()>=4 && password.length()<=20)) {
-            return new ReturnT<String>(ReturnT.FAIL_CODE, I18nUtil.getString("system_lengh_limit")+"[4-20]" );
+        if (!(password.length()>=8 && password.length()<=100)) {
+            return new ReturnT<String>(ReturnT.FAIL_CODE, I18nUtil.getString("system_lengh_limit")+"[8-100]" );
         }
 
-        // md5 password
-        String md5Password = DigestUtils.md5DigestAsHex(password.getBytes(StandardCharsets.UTF_8));
-
-        // update pwd
         XxlJobUser loginUser = (XxlJobUser) request.getAttribute(LoginService.LOGIN_IDENTITY_KEY);
+        XxlJobUser existUser = xxlJobUserDao.loadByUserName(loginUser.getUsername());
+
+        // 校验原密码（BCrypt，兼容旧 MD5）
+        if (existUser == null || !LoginService.matchesPassword(oldPassword.trim(), existUser.getPassword())) {
+            return new ReturnT<String>(ReturnT.FAIL.getCode(), "原密码错误");
+        }
 
         // do write
-        XxlJobUser existUser = xxlJobUserDao.loadByUserName(loginUser.getUsername());
-        existUser.setPassword(md5Password);
+        existUser.setPassword(BCryptUtil.hashPassword(password));
         xxlJobUserDao.update(existUser);
 
         return ReturnT.SUCCESS;

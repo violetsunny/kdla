@@ -9,6 +9,7 @@ import com.xxl.job.core.biz.model.ReturnT;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.DigestUtils;
+import top.kdla.framework.common.utils.BCryptUtil;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
@@ -20,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.HexFormat;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author xuxueli 2019-05-04 22:13:264
@@ -34,6 +36,12 @@ public class LoginService {
 
     // 会话 token 有效期 2H，与 Cookie maxAge 对齐
     private static final long TOKEN_TTL_MILLIS = 2 * 60 * 60 * 1000L;
+
+    // 登录失败限速：5 次失败锁定 15 分钟
+    // ponytail: 单实例内存计数，重启清零、多实例不共享；升级路径=Redis 集中计数
+    private static final int MAX_LOGIN_FAILURES = 5;
+    private static final long LOGIN_LOCK_MILLIS = 15 * 60 * 1000L;
+    private final ConcurrentHashMap<String, long[]> loginFailures = new ConcurrentHashMap<>();
 
     @Value("${xxl.job.login.tokenSecret:}")
     private String tokenSecret;
@@ -104,6 +112,38 @@ public class LoginService {
     }
 
 
+    /**
+     * 口令校验：BCrypt（$2 前缀）优先，兼容旧 MD5 十六进制。登录与改密共用此唯一路径。
+     */
+    public static boolean matchesPassword(String raw, String stored) {
+        if (raw == null || stored == null) {
+            return false;
+        }
+        if (stored.startsWith("$2")) {
+            return BCryptUtil.checkPassword(raw, stored);
+        }
+        return DigestUtils.md5DigestAsHex(raw.getBytes(StandardCharsets.UTF_8)).equals(stored);
+    }
+
+    private boolean isLoginLocked(String username) {
+        long[] rec = loginFailures.get(username);
+        return rec != null && System.currentTimeMillis() < rec[1];
+    }
+
+    private void recordLoginFailure(String username) {
+        loginFailures.compute(username, (k, rec) -> {
+            long now = System.currentTimeMillis();
+            if (rec == null || (rec[1] > 0 && now >= rec[1])) {
+                rec = new long[]{0, 0};
+            }
+            rec[0]++;
+            if (rec[0] >= MAX_LOGIN_FAILURES) {
+                rec[1] = now + LOGIN_LOCK_MILLIS;
+            }
+            return rec;
+        });
+    }
+
     public ReturnT<String> login(HttpServletRequest request, HttpServletResponse response, String username, String password, boolean ifRemember){
 
         // param
@@ -111,15 +151,25 @@ public class LoginService {
             return new ReturnT<String>(500, I18nUtil.getString("login_param_empty"));
         }
 
-        // valid passowrd
+        // 失败限速
+        if (isLoginLocked(username)) {
+            return new ReturnT<String>(500, "登录失败次数过多，请稍后再试");
+        }
+
+        // valid password（BCrypt，兼容旧 MD5）
         XxlJobUser xxlJobUser = xxlJobUserDao.loadByUserName(username);
-        if (xxlJobUser == null) {
+        if (xxlJobUser == null || !matchesPassword(password, xxlJobUser.getPassword())) {
+            recordLoginFailure(username);
             return new ReturnT<String>(500, I18nUtil.getString("login_param_unvalid"));
         }
-        String passwordMd5 = DigestUtils.md5DigestAsHex(password.getBytes(StandardCharsets.UTF_8));
-        if (!passwordMd5.equals(xxlJobUser.getPassword())) {
-            return new ReturnT<String>(500, I18nUtil.getString("login_param_unvalid"));
+
+        // 旧 MD5 口令懒迁移到 BCrypt
+        String stored = xxlJobUser.getPassword();
+        if (stored != null && !stored.startsWith("$2")) {
+            xxlJobUser.setPassword(BCryptUtil.hashPassword(password));
+            xxlJobUserDao.update(xxlJobUser);
         }
+        loginFailures.remove(username);
 
         String loginToken = makeToken(xxlJobUser);
 

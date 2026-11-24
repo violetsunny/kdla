@@ -99,15 +99,21 @@ $(function(){
         errorClass : 'help-block',
         focusInvalid : true,
         rules : {
+            oldPassword : {
+                required : true
+            },
             password : {
                 required : true ,
-                rangelength:[4,50]
+                rangelength:[8,100]
             }
         },
         messages : {
+            oldPassword : {
+                required : '请输入原密码'
+            },
             password : {
                 required : '请输入密码'  ,
-                rangelength : "密码长度限制为4~50"
+                rangelength : "密码长度限制为8~100"
             }
         },
         highlight : function(element) {
